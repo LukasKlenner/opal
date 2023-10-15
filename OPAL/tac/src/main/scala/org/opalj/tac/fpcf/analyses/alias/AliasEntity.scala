@@ -1,5 +1,5 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.br.fpcf.analyses.alias
+package org.opalj.tac.fpcf.analyses.alias
 
 import org.opalj.br.{Field, LocalVariable, Method, MethodParameter}
 
