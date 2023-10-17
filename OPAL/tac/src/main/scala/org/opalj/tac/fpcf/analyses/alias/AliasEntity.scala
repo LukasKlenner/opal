@@ -5,7 +5,7 @@ import org.opalj.br.{Field, LocalVariable, Method, MethodParameter}
 
 sealed trait AliasEntity {
 
-  def getEntity: AnyRef
+    def getEntity: AnyRef
 }
 
 case class AliasField(field: Field) extends AliasEntity {

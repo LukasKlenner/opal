@@ -12,7 +12,6 @@ import org.opalj.fpcf.SomeEOptionP
 import org.opalj.tac.TACMethodParameter
 import org.opalj.tac.TACode
 import org.opalj.tac.common.DefinitionSiteLike
-import org.opalj.tac.fpcf.analyses.cg.V
 
 import scala.collection.mutable
 
