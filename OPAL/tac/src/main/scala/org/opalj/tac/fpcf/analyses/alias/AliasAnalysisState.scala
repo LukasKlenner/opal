@@ -1,9 +1,6 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.tac.fpcf.analyses.alias
 
-import org.opalj.br.analyses.VirtualFormalParameter
-import org.opalj.br.fpcf.properties.Context
-import org.opalj.br.fpcf.properties.EscapeProperty
 import org.opalj.collection.immutable.IntTrieSet
 import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.Entity
@@ -30,12 +27,14 @@ class AliasAnalysisState {
 
   private[this] var defSite2: Int = _
 
-  private[this] var pointsTo = scala.collection.mutable.Map.empty[V, mutable.Set[V]]
+  private[this] val pointsTo = scala.collection.mutable.Map.empty[V, mutable.Set[V]]
+
+  private[this] var mayAlias: Boolean = false
 
   /**
    * Adds an entity property pair (or epk) into the set of dependees.
    */
-  @inline private[escape] final def addDependency(eOptionP: EOptionP[Entity, Property]): Unit = {
+  @inline private[alias] final def addDependency(eOptionP: EOptionP[Entity, Property]): Unit = {
     assert(!dependees.contains(eOptionP.e))
     dependees += eOptionP.e -> eOptionP
     dependeesSet += eOptionP
@@ -45,7 +44,7 @@ class AliasAnalysisState {
    * Removes the entity property pair (or epk) that correspond to the given ep from the set of
    * dependees.
    */
-  @inline private[escape] final def removeDependency(
+  @inline private[alias] final def removeDependency(
                                                       ep: EOptionP[Entity, Property]
                                                     ): Unit = {
     assert(dependees.contains(ep.e))
@@ -57,29 +56,29 @@ class AliasAnalysisState {
   /**
    * Do we already registered a dependency to that entity?
    */
-  @inline private[escape] final def containsDependency(
+  @inline private[alias] final def containsDependency(
                                                         ep: EOptionP[Entity, Property]
                                                       ): Boolean = {
     dependees.contains(ep.e)
   }
 
-  @inline private[escape] final def getDependency(e: Entity): EOptionP[Entity, Property] = {
+  @inline private[alias] final def getDependency(e: Entity): EOptionP[Entity, Property] = {
     dependees(e)
   }
 
   /**
    * The set of open dependees.
    */
-  private[escape] final def dependees: Set[SomeEOptionP] = {
+  private[alias] final def getDependees: Set[SomeEOptionP] = {
     dependeesSet
   }
 
   /**
    * Are there any dependees?
    */
-  private[escape] final def hasDependees: Boolean = dependees.nonEmpty
+  private[alias] final def hasDependees: Boolean = dependees.nonEmpty
 
-  private[escape] def updateTACAI(
+  private[alias] def updateTACAI(
                                    tacai: TACode[TACMethodParameter, V]
                                  )(implicit context: AliasAnalysisContext): Unit = {
     this.tacai = Some(tacai)
@@ -105,4 +104,10 @@ class AliasAnalysisState {
   def getDefSite2: Int = defSite2
 
   def getPointsTo: mutable.Map[V, mutable.Set[V]] = pointsTo
+
+  def getMayAlias: Boolean = mayAlias
+
+  def setMayAlias(mayAlias: Boolean): Unit = {
+    this.mayAlias = mayAlias
+  }
 }
