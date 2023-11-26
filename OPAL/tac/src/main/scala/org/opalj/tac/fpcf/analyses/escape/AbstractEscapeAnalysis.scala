@@ -80,7 +80,7 @@ trait AbstractEscapeAnalysis extends FPCFAnalysis {
         assert(state.tacai.isDefined)
         // for every use-site, check its escape state
         for (use <- state.uses) {
-          print("use: " + use + "\n")
+            print("use: "+use+"\n")
             checkStmtForEscape(state.tacai.get.stmts(use))
         }
         returnResult

@@ -1,5 +1,9 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.br.fpcf.properties
+package org
+package opalj
+package br
+package fpcf
+package properties
 
 import org.opalj.fpcf.Property
 import org.opalj.fpcf.PropertyKey

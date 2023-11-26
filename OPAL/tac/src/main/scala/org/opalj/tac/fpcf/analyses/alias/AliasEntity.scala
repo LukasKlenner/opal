@@ -1,29 +1,42 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.tac.fpcf.analyses.alias
+package org
+package opalj
+package tac
+package fpcf
+package analyses
+package alias
 
-import org.opalj.br.{Field, LocalVariable, Method, MethodParameter}
+import org.opalj.br.Method
+import org.opalj.br.analyses.VirtualFormalParameter
+import org.opalj.tac.common.DefinitionSiteLike
 
 sealed trait AliasEntity {
 
-    def getEntity: AnyRef
+    def entity: AnyRef
+
+    def method: Method
 }
 
-case class AliasField(field: Field) extends AliasEntity {
+//case class AliasField(field: Field) extends AliasEntity {
+//
+//    override def entity: Field = field
+//}
+//
+//case class AliasReturnValue(method: Method) extends AliasEntity {
+//
+//    override def entity: Method = method
+//}
 
-    override def getEntity: Field = field
+case class AliasFP(fp: VirtualFormalParameter) extends AliasEntity {
+
+    override def entity: VirtualFormalParameter = fp
+
+    override def method: Method = fp.method.definedMethod
 }
 
-case class AliasReturnValue(method: Method) extends AliasEntity {
+case class AliasDS(ds: DefinitionSiteLike) extends AliasEntity {
 
-    override def getEntity: Method = method
-}
+    override def entity: DefinitionSiteLike = ds
 
-case class AliasParameter(parameter: MethodParameter) extends AliasEntity {
-
-    override def getEntity: MethodParameter = parameter
-}
-
-case class AliasLocalVariable(variable: LocalVariable) extends AliasEntity {
-
-    override def getEntity: LocalVariable = variable
+    override def method: Method = ds.method
 }

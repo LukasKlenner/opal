@@ -15,32 +15,29 @@ import org.opalj.tac.fpcf.analyses.alias.EagerAliasAnalysis
 import java.net.URL
 
 object Alias extends ProjectAnalysisApplication {
-  override def doAnalyze(
-                          project: Project[URL],
-                          parameters: Seq[String],
-                          isInterrupted: () => Boolean
-                        ): ReportableAnalysisResult = {
+    override def doAnalyze(
+        project:       Project[URL],
+        parameters:    Seq[String],
+        isInterrupted: () => Boolean
+    ): ReportableAnalysisResult = {
 
-    project.get(RTACallGraphKey)
+        project.get(RTACallGraphKey)
 
-    val (ps, _ /*executed analyses*/ ) = project.get(FPCFAnalysesManagerKey).runAll(
-      EagerAliasAnalysis
-    )
+        val (ps, _ /*executed analyses*/ ) = project.get(FPCFAnalysesManagerKey).runAll(
+            EagerAliasAnalysis
+        )
 
-    val mayAlias = ps.finalEntities(MayAlias).toSeq
-    val noAlias = ps.finalEntities(NoAlias).toSeq
-    val mustAlias = ps.finalEntities(MustAlias).toSeq
+        val mayAlias = ps.finalEntities(MayAlias).toSeq
+        val noAlias = ps.finalEntities(NoAlias).toSeq
+        val mustAlias = ps.finalEntities(MustAlias).toSeq
 
-
-    val message =
-      s"""|# mayAlias Pairs: ${mayAlias.size}
+        val message =
+            s"""|# mayAlias Pairs: ${mayAlias.size}
           |# noAlias Pairs: ${noAlias.size}
           |# mustAlias Pairs: ${mustAlias.size}
           |"""
 
+        BasicReport(message.stripMargin('|'))
 
-
-    BasicReport(message.stripMargin('|'))
-
-  }
+    }
 }
