@@ -7,7 +7,7 @@ import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import org.opalj.ai.fpcf.properties.AIDomainFactoryKey
 import org.opalj.ai.domain.l1
-import org.opalj.br.AnnotationLike
+import org.opalj.br.{AnnotationLike, ClassValue, StringValue}
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.Project
 import org.opalj.br.analyses.VirtualFormalParameter
@@ -62,17 +62,18 @@ class AliasTests extends PropertiesTest {
 
         val properties: ArrayBuffer[((Context, AliasEntity, AliasEntity), String => String, Iterable[AnnotationLike])] = ArrayBuffer.empty
 
-        val nameToDs: Map[String, AliasDS] = allocations.map { case (ds, _, a) => a.head.elementValuePairs.filter(_.name == "thiz").head.value.asStringValue.value -> AliasDS(ds) }.toMap
-        val nameToFP: Map[String, AliasFP] = formalParameters.map { case (fp, _, a) => a.head.elementValuePairs.filter(_.name == "thiz").head.value.asStringValue.value -> AliasFP(fp) }.toMap
+        val nameToDs: Iterable[(String, AliasDS)] = allocations.map { case (ds, _, a) => getName(a.head)-> AliasDS(ds) }
+        val nameToFP: Iterable[(String, AliasFP)] = formalParameters.map { case (fp, _, a) => getName(a.head) -> AliasFP(fp) }
 
-        val nameToEntity: Map[String, AliasEntity] = nameToDs ++ nameToFP
+
+        val nameToEntity: Map[String, Iterable[AliasEntity]] = (nameToDs ++ nameToFP).groupMap(_._1)(_._2)
 
         for ((e: Entity, str: (String => String), an: Iterable[AnnotationLike]) <- allocations ++ formalParameters) {
             val entity1: AliasEntity = e match {
                 case ds: DefinitionSite         => AliasDS(ds)
                 case fp: VirtualFormalParameter => AliasFP(fp)
             }
-            val entity2: AliasEntity = nameToEntity(an.head.elementValuePairs.filter(_.name == "other").head.value.asStringValue.value)
+            val entity2: AliasEntity = nameToEntity(getName(an.head)).find(_ != entity1).getOrElse(throw new RuntimeException("No other entity found"))
 
             val context = simpleContexts(declaredMethods(entity1.method))
             val entity = if (entity1.hashCode() < entity2.hashCode()) (context, entity1, entity2) else (context, entity2, entity1)
@@ -84,6 +85,18 @@ class AliasTests extends PropertiesTest {
         validateProperties(as, properties, Set("AliasProperty"))
 
         println("reachable methods: "+as.project.get(TypeBasedPointsToCallGraphKey).reachableMethods().toList.size)
+    }
+
+    def getName(a: AnnotationLike): String = {
+        getValue(a, "testClass")+"."+getValue(a, "id")
+    }
+
+    def getValue(a: AnnotationLike, name: String): String = {
+        a.elementValuePairs.filter(_.name == name).head.value match {
+          case str: StringValue => str.value
+          case ClassValue(t) => t.asObjectType.fqn
+          case _ => throw new RuntimeException("Unexpected value type")
+        }
     }
 
 }

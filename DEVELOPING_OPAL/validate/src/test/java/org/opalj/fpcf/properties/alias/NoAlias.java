@@ -19,9 +19,9 @@ public @interface NoAlias {
     /**
      * A short reasoning of this property.
      */
-    String value();
+    String reason() default "No reason Provided";
 
-    String other();
+    Class<?> testClass();
 
-    String thiz();
+    String id();
 }

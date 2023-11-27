@@ -19,9 +19,9 @@ public @interface MayAlias {
     /**
      * A short reasoning of this property.
      */
-    String value();
+    String reason();
 
-    String other();
+    Class<?> testClass();
 
-    String thiz();
+    String id();
 }

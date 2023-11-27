@@ -12,16 +12,16 @@ public class SimpleParameters {
         mayAlias(new Object());
     }
 
-    public static void noAlias(@NoAlias(value = "noAlias", other = "NoFpDso2", thiz = "NoFpDso1") Object o1) {
+    public static void noAlias(@NoAlias(reason = "noAlias", testClass = SimpleParameters.class, id = "na") Object o1) {
 
-        Object o2 = new @NoAlias(value = "noAlias", other = "NoFpDso1", thiz = "NoFpDso2") Object();
+        Object o2 = new @NoAlias(reason = "noAlias", testClass = SimpleParameters.class, id = "na") Object();
         o1.hashCode();
         o2.hashCode();
     }
 
-    public static void mayAlias(@MayAlias(value = "mayAlias", other = "MayFpDso2", thiz = "MayFpDso1") Object o1) {
+    public static void mayAlias(@MayAlias(reason = "mayAlias", testClass = SimpleParameters.class, id = "ma") Object o1) {
 
-        Object o2 = new @MayAlias(value = "mayAlias", other = "MayFpDso1", thiz = "MayFpDso2") Object();
+        Object o2 = new @MayAlias(reason = "mayAlias", testClass = SimpleParameters.class, id = "ma") Object();
         o2.hashCode();
 
         if (a == 1) {
