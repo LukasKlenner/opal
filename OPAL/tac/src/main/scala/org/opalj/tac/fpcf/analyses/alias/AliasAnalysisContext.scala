@@ -11,15 +11,15 @@ import org.opalj.br.fpcf.properties.Context
 import org.opalj.fpcf.PropertyStore
 
 class AliasAnalysisContext(
-        val entity:        (Context, AliasEntity, AliasEntity),
+        val entity:        AliasEntity,
         val project:       SomeProject,
         val propertyStore: PropertyStore
 ) {
 
-    def context: Context = entity._1
+    def context: Context = entity.context
 
-    def entity1: AliasEntity = entity._2
+    def element1: AliasSourceElement = entity.element1
 
-    def entity2: AliasEntity = entity._3
+    def element2: AliasSourceElement = entity.element2
 
 }

@@ -83,7 +83,7 @@ class AliasAnalysisState {
     )(implicit context: AliasAnalysisContext): Unit = {
         this._tacai = Some(tacai)
 
-        (context.entity1.entity) match {
+        (context.element1.element) match {
             case (ds: DefinitionSiteLike) =>
                 _defSite1 = tacai.properStmtIndexForPC(ds.pc)
                 _uses1 = ds.usedBy(tacai)
@@ -93,7 +93,7 @@ class AliasAnalysisState {
                 _defSite1 = param.origin
         }
 
-        (context.entity2.entity) match {
+        (context.element2.element) match {
             case (ds: DefinitionSiteLike) =>
                 _defSite2 = tacai.properStmtIndexForPC(ds.pc)
                 _uses2 = ds.usedBy(tacai)

@@ -1,6 +1,9 @@
 package org.opalj.fpcf.properties.alias;
 
+import org.opalj.br.fpcf.FPCFAnalysis;
 import org.opalj.fpcf.properties.PropertyValidator;
+import org.opalj.tac.fpcf.analyses.alias.IntraProceduralNoAliasAnalysis;
+import org.opalj.tac.fpcf.analyses.alias.PointsToBasedAliasAnalysis;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -24,4 +27,7 @@ public @interface NoAlias {
     Class<?> testClass();
 
     String id();
+
+    Class<? extends FPCFAnalysis>[] analyses() default { IntraProceduralNoAliasAnalysis.class,
+            PointsToBasedAliasAnalysis.class };
 }

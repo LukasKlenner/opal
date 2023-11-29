@@ -17,7 +17,14 @@ abstract class AliasPropertyMatcher(val property: Alias) extends AbstractPropert
         as:     Set[ObjectType],
         entity: Any,
         a:      AnnotationLike
-    ): Boolean = true
+    ): Boolean = {
+        val analysesElementValues = getValue(p, a.annotationType.asObjectType, a.elementValuePairs, "analyses").asArrayValue.values
+        val analyses = analysesElementValues map {
+            _.asClassValue.value.asObjectType
+        }
+
+        analyses.exists(as.contains)
+    }
 
     override def validateProperty(
         p:          Project[_],

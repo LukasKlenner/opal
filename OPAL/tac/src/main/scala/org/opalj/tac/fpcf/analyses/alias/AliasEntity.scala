@@ -6,37 +6,14 @@ package fpcf
 package analyses
 package alias
 
-import org.opalj.br.Method
-import org.opalj.br.analyses.VirtualFormalParameter
-import org.opalj.tac.common.DefinitionSiteLike
+import org.opalj.br.fpcf.properties.Context
 
-sealed trait AliasEntity {
+case class AliasEntity(context: Context, var element1: AliasSourceElement, var element2: AliasSourceElement) {
 
-    def entity: AnyRef
+    if (element1.hashCode() > element2.hashCode()) {
+        val tmp = element1
+        element1 = element2
+        element2 = tmp
+    }
 
-    def method: Method
-}
-
-//case class AliasField(field: Field) extends AliasEntity {
-//
-//    override def entity: Field = field
-//}
-//
-//case class AliasReturnValue(method: Method) extends AliasEntity {
-//
-//    override def entity: Method = method
-//}
-
-case class AliasFP(fp: VirtualFormalParameter) extends AliasEntity {
-
-    override def entity: VirtualFormalParameter = fp
-
-    override def method: Method = fp.method.definedMethod
-}
-
-case class AliasDS(ds: DefinitionSiteLike) extends AliasEntity {
-
-    override def entity: DefinitionSiteLike = ds
-
-    override def method: Method = ds.method
 }
