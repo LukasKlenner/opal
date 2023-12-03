@@ -5,17 +5,11 @@ import org.opalj.fpcf.properties.PropertyValidator;
 import org.opalj.tac.fpcf.analyses.alias.IntraProceduralNoAliasAnalysis;
 import org.opalj.tac.fpcf.analyses.alias.PointsToBasedAliasAnalysis;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE_USE;
+import java.lang.annotation.*;
 
 @PropertyValidator(key = "AliasProperty", validator = MayAliasMatcher.class)
-@Target({ TYPE_USE, PARAMETER })
 @Documented
+@Target({})
 @Retention(RetentionPolicy.CLASS)
 public @interface MayAlias {
 
