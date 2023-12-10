@@ -16,7 +16,7 @@ import org.opalj.tac.fpcf.analyses.alias.AliasDS
 import org.opalj.tac.fpcf.analyses.alias.AliasEntity
 import org.opalj.tac.fpcf.analyses.alias.AliasSourceElement
 import org.opalj.tac.fpcf.analyses.alias.AliasFP
-import org.opalj.tac.fpcf.analyses.alias.EagerAliasAnalysis
+import org.opalj.tac.fpcf.analyses.alias.EagerPointsToBasedAliasAnalysis
 
 import java.net.URL
 import scala.collection.mutable.ArrayBuffer
@@ -46,7 +46,7 @@ class AliasTests extends PropertiesTest {
 
         val as = executeAnalyses(
             Set(
-                EagerAliasAnalysis
+                EagerPointsToBasedAliasAnalysis
             )
         )
 
@@ -60,13 +60,13 @@ class AliasTests extends PropertiesTest {
 
         val properties: ArrayBuffer[(AliasEntity, String => String, Iterable[AnnotationLike])] = ArrayBuffer.empty
 
-        val nameToDs: Iterable[(String, AliasDS)] = allocations.map { case (ds, _, a) => getName(a.head) -> AliasDS(ds) }
+        val nameToDs: Iterable[(String, AliasDS)] = allocations.map { case (ds, _, a) => getName(a.head) -> AliasDS(ds, as.project) }
         val nameToFP: Iterable[(String, AliasFP)] = formalParameters.map { case (fp, _, a) => getName(a.head) -> AliasFP(fp) }
 
         val nameToEntity: Map[String, Iterable[AliasSourceElement]] = (nameToDs ++ nameToFP).groupMap(_._1)(_._2)
 
         for ((e: Entity, str: (String => String), an: Iterable[AnnotationLike]) <- allocations ++ formalParameters) {
-            val element1: AliasSourceElement = AliasSourceElement(e)
+            val element1: AliasSourceElement = AliasSourceElement(e)(as.project)
             val element2: AliasSourceElement = nameToEntity(getName(an.head)).find(_ != element1).getOrElse(throw new RuntimeException("No other entity found"))
 
             val context = simpleContexts(declaredMethods(element1.method))

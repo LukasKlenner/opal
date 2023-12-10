@@ -10,7 +10,7 @@ import org.opalj.br.fpcf.properties.MayAlias
 import org.opalj.br.fpcf.properties.MustAlias
 import org.opalj.br.fpcf.properties.NoAlias
 import org.opalj.tac.cg.RTACallGraphKey
-import org.opalj.tac.fpcf.analyses.alias.EagerAliasAnalysis
+import org.opalj.tac.fpcf.analyses.alias.EagerIntraProceduralAliasAnalysis
 
 import java.net.URL
 
@@ -24,7 +24,7 @@ object Alias extends ProjectAnalysisApplication {
         project.get(RTACallGraphKey)
 
         val (ps, _ /*executed analyses*/ ) = project.get(FPCFAnalysesManagerKey).runAll(
-            EagerAliasAnalysis
+            EagerIntraProceduralAliasAnalysis
         )
 
         val mayAlias = ps.finalEntities(MayAlias).toSeq

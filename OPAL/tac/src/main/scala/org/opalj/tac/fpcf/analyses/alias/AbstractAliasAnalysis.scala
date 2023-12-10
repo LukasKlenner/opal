@@ -17,8 +17,8 @@ trait AbstractAliasAnalysis extends FPCFAnalysis {
 
     def doDetermineAlias(
         implicit
-        context: AliasAnalysisContext,
-        state:   AliasAnalysisState
+        context: AnalysisContext,
+        state:   AnalysisState
     ): ProperPropertyComputationResult
 
     def determineAlias(e: Entity): ProperPropertyComputationResult = {

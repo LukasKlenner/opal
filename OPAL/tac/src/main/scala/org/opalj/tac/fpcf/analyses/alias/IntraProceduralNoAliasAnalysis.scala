@@ -18,7 +18,6 @@ import org.opalj.br.fpcf.properties.Alias
 import org.opalj.br.fpcf.properties.MayAlias
 import org.opalj.br.fpcf.properties.NoAlias
 import org.opalj.br.fpcf.properties.SimpleContextsKey
-import org.opalj.br.fpcf.properties.pointsto.AllocationSitePointsToSet
 import org.opalj.fpcf.ProperPropertyComputationResult
 import org.opalj.fpcf.PropertyBounds
 import org.opalj.fpcf.PropertyStore
@@ -44,6 +43,8 @@ class IntraProceduralNoAliasAnalysis( final val project: SomeProject) extends Ta
     ): ProperPropertyComputationResult = {
         assert(state.tacai.isDefined)
 
+      state.tacai.get.stmts
+
         for (use <- state.uses1) {
 
             if (state.uses2.contains(use)) {
@@ -64,7 +65,7 @@ class IntraProceduralNoAliasAnalysis( final val project: SomeProject) extends Ta
         new AliasAnalysisContext(entity, project, propertyStore)
 }
 
-sealed trait AliasAnalysisScheduler extends FPCFAnalysisScheduler {
+sealed trait IntraProceduralAliasAnalysisScheduler extends FPCFAnalysisScheduler {
 
     override def requiredProjectInformation: ProjectInformationKeys =
         Seq(DeclaredMethodsKey, VirtualFormalParametersKey, IsOverridableMethodKey, TypeIteratorKey)
@@ -73,12 +74,11 @@ sealed trait AliasAnalysisScheduler extends FPCFAnalysisScheduler {
 
     override def uses: Set[PropertyBounds] = Set(
         PropertyBounds.ub(TACAI),
-        PropertyBounds.ub(Callees),
-        PropertyBounds.lub(Alias)
+        PropertyBounds.ub(Callees)
     )
 }
 
-object EagerAliasAnalysis extends AliasAnalysisScheduler with BasicFPCFEagerAnalysisScheduler {
+object EagerIntraProceduralAliasAnalysis extends IntraProceduralAliasAnalysisScheduler with BasicFPCFEagerAnalysisScheduler {
 
     override def requiredProjectInformation: ProjectInformationKeys =
         super.requiredProjectInformation ++ Seq(DefinitionSitesKey, SimpleContextsKey)
@@ -86,29 +86,7 @@ object EagerAliasAnalysis extends AliasAnalysisScheduler with BasicFPCFEagerAnal
     override def start(p: SomeProject, ps: PropertyStore, unused: Null): FPCFAnalysis = {
         val analysis = new IntraProceduralNoAliasAnalysis(p)
         val simpleContexts = p.get(SimpleContextsKey)
-
-        /*val declaredMethods = p.get(DeclaredMethodsKey)
-    val simpleContexts = p.get(SimpleContextsKey)
-
-    val allAllocationSites = p.get(DefinitionSitesKey).getAllocationSites
-
-    val entities: ArrayBuffer[(Context, Entity, Entity)] = ArrayBuffer.empty
-
-    for (as1 <- allAllocationSites) {
-        for (as2 <- allAllocationSites) {
-          if (as1 != as2 && as1.method == as2.method) {
-            val dm = declaredMethods(as1.method)
-            val entity = (simpleContexts(dm), as1, as2)
-            if (!entities.contains(entity) && !entities.contains((simpleContexts(dm), as2, as1))) {
-              entities.addOne(entity)
-            }
-          }
-
-      }
-    }*/
-
         val declaredMethods = p.get(DeclaredMethodsKey)
-        //implicit val typeIterator: TypeIterator = p.get(TypeIteratorKey)
 
         val methods = declaredMethods.declaredMethods
         val callersProperties = ps(methods.to(Iterable), Callers)
@@ -130,7 +108,7 @@ object EagerAliasAnalysis extends AliasAnalysisScheduler with BasicFPCFEagerAnal
             .virtualFormalParameters
             .filter(fp => reachableMethods.contains(fp.method))
 
-        val aliasEntities: Seq[AliasSourceElement] = allocationSites.map(AliasDS) ++ formalParameters
+        val aliasEntities: Seq[AliasSourceElement] = allocationSites.map(AliasDS(_, p)) ++ formalParameters
             .map(AliasFP)
 
         val entities: ArrayBuffer[AliasEntity] = ArrayBuffer.empty
@@ -144,16 +122,6 @@ object EagerAliasAnalysis extends AliasAnalysisScheduler with BasicFPCFEagerAnal
                     if (!entities.contains(entity)) {
                         entities.addOne(entity)
                     }
-                    //                        val dm = declaredMethods(as1.method)
-                    //                        entities.addAll(
-                    //                            reachableMethods(dm)
-                    //                                .calleeContexts(dm)
-                    //                                .iterator
-                    //                                .filter(
-                    //                                    c => !(entities.contains((c, as1, as2)) || entities.contains((c, as2, as1)))
-                    //                                )
-                    //                                .map((_, as1, as2))
-                    //                        )
                 }
             }
 
@@ -165,7 +133,7 @@ object EagerAliasAnalysis extends AliasAnalysisScheduler with BasicFPCFEagerAnal
 
     override def derivesEagerly: Set[PropertyBounds] = Set(derivedProperty)
 
-    override def uses: Set[PropertyBounds] = super.uses + PropertyBounds.finalP(Callers) + PropertyBounds.finalP(AllocationSitePointsToSet)
+    override def uses: Set[PropertyBounds] = super.uses + PropertyBounds.finalP(Callers)
 
     override def derivesCollaboratively: Set[PropertyBounds] = Set.empty
 

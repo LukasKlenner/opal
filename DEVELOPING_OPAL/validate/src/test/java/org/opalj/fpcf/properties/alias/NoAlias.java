@@ -5,10 +5,7 @@ import org.opalj.fpcf.properties.PropertyValidator;
 import org.opalj.tac.fpcf.analyses.alias.IntraProceduralNoAliasAnalysis;
 import org.opalj.tac.fpcf.analyses.alias.PointsToBasedAliasAnalysis;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE_USE;
@@ -30,4 +27,6 @@ public @interface NoAlias {
 
     Class<? extends FPCFAnalysis>[] analyses() default { IntraProceduralNoAliasAnalysis.class,
             PointsToBasedAliasAnalysis.class };
+
+    // see DirectCall Annotation[] a();
 }

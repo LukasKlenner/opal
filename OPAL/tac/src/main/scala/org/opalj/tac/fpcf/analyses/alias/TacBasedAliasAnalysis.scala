@@ -22,8 +22,8 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
 
     override def doDetermineAlias(
         implicit
-        context: AliasAnalysisContext,
-        state:   AliasAnalysisState
+        context: AnalysisContext,
+        state:  AnalysisState
     ): ProperPropertyComputationResult = {
         assert(context.element1.isInstanceOf[AliasSourceElement])
         assert(context.element2.isInstanceOf[AliasSourceElement])
@@ -50,16 +50,16 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
 
     protected[this] def analyzeTAC()(
         implicit
-        context: AliasAnalysisContext,
-        state:   AliasAnalysisState
+        context: AnalysisContext,
+        state:   AnalysisState
     ): ProperPropertyComputationResult
 
     private[this] def retrieveTAC(
         m: Method
     )(
         implicit
-        context: AliasAnalysisContext,
-        state:   AliasAnalysisState
+        context: AnalysisContext,
+        state:   AnalysisState
     ): Unit = {
         val tacai = propertyStore(m, TACAI.key)
 
@@ -76,8 +76,8 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
         someEPS: SomeEPS
     )(
         implicit
-        context: AliasAnalysisContext,
-        state:   AliasAnalysisState
+        context: AnalysisContext,
+        state:   AnalysisState
     ): ProperPropertyComputationResult = {
         someEPS match {
             case UBP(ub: TACAI) =>
