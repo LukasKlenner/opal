@@ -7,7 +7,8 @@ import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import org.opalj.ai.fpcf.properties.AIDomainFactoryKey
 import org.opalj.ai.domain.l1
-import org.opalj.br.{AnnotationLike, ClassValue, StringValue}
+import org.opalj.br.AnnotationLike
+import org.opalj.br.{ClassValue, StringValue}
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.Project
 import org.opalj.br.fpcf.properties.SimpleContextsKey
@@ -16,7 +17,7 @@ import org.opalj.tac.fpcf.analyses.alias.AliasDS
 import org.opalj.tac.fpcf.analyses.alias.AliasEntity
 import org.opalj.tac.fpcf.analyses.alias.AliasSourceElement
 import org.opalj.tac.fpcf.analyses.alias.AliasFP
-import org.opalj.tac.fpcf.analyses.alias.EagerPointsToBasedAliasAnalysis
+import org.opalj.tac.fpcf.analyses.alias.EagerIntraProceduralAliasAnalysis
 
 import java.net.URL
 import scala.collection.mutable.ArrayBuffer
@@ -46,33 +47,34 @@ class AliasTests extends PropertiesTest {
 
         val as = executeAnalyses(
             Set(
-                EagerPointsToBasedAliasAnalysis
+                EagerIntraProceduralAliasAnalysis
             )
         )
 
         as.propertyStore.shutdown()
 
-        val allocations = allocationSitesWithAnnotations(as.project)
-        val formalParameters = explicitFormalParametersWithAnnotations(as.project)
+        val allocations = allocationSitesWithAnnotations(as.project).flatMap { case (ds, fun, a) => getAliasAnnotations(a.head).map((ds, fun, _)) }
+        val formalParameters = explicitFormalParametersWithAnnotations(as.project).flatMap { case (ds, fun, a) => getAliasAnnotations(a.head).map((ds, fun, _)) }
+
 
         val simpleContexts = as.project.get(SimpleContextsKey)
         val declaredMethods = as.project.get(DeclaredMethodsKey)
 
         val properties: ArrayBuffer[(AliasEntity, String => String, Iterable[AnnotationLike])] = ArrayBuffer.empty
 
-        val nameToDs: Iterable[(String, AliasDS)] = allocations.map { case (ds, _, a) => getName(a.head) -> AliasDS(ds, as.project) }
-        val nameToFP: Iterable[(String, AliasFP)] = formalParameters.map { case (fp, _, a) => getName(a.head) -> AliasFP(fp) }
+        val nameToDs: Iterable[(String, AliasDS)] = allocations.map { case (ds, _, a) => getName(a) -> AliasDS(ds, as.project) }
+        val nameToFP: Iterable[(String, AliasFP)] = formalParameters.map { case (fp, _, a) => getName(a) -> AliasFP(fp) }
 
         val nameToEntity: Map[String, Iterable[AliasSourceElement]] = (nameToDs ++ nameToFP).groupMap(_._1)(_._2)
 
-        for ((e: Entity, str: (String => String), an: Iterable[AnnotationLike]) <- allocations ++ formalParameters) {
+        for ((e: Entity, str: (String => String), an: AnnotationLike) <- allocations ++ formalParameters) {
             val element1: AliasSourceElement = AliasSourceElement(e)(as.project)
-            val element2: AliasSourceElement = nameToEntity(getName(an.head)).find(_ != element1).getOrElse(throw new RuntimeException("No other entity found"))
+            val element2: AliasSourceElement = nameToEntity(getName(an)).find(_ != element1).getOrElse(throw new RuntimeException("No other entity found"))
 
             val context = simpleContexts(declaredMethods(element1.method))
             val entity = AliasEntity(context, element1, element2)
             if (!properties.exists(_._1 == entity)) {
-                properties.addOne((entity, str, an))
+                properties.addOne((entity, str, Seq(an)))
             }
         }
 
@@ -91,6 +93,14 @@ class AliasTests extends PropertiesTest {
             case ClassValue(t)    => t.asObjectType.fqn
             case _                => throw new RuntimeException("Unexpected value type")
         }
+    }
+
+    def getAliasAnnotations(a: AnnotationLike): Iterable[AnnotationLike] = {
+        getAliasAnnotations(a, "noAlias") ++ getAliasAnnotations(a, "mayAlias") ++ getAliasAnnotations(a, "mustAlias")
+    }
+
+    def getAliasAnnotations(a: AnnotationLike, name: String): Iterable[AnnotationLike] = {
+        a.elementValuePairs.filter(_.name == name).collect { case ev => ev.value.asArrayValue.values.map(_.asAnnotationValue.annotation) }.flatten
     }
 
 }

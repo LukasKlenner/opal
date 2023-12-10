@@ -7,12 +7,9 @@ import org.opalj.tac.fpcf.analyses.alias.PointsToBasedAliasAnalysis;
 
 import java.lang.annotation.*;
 
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE_USE;
-
 @PropertyValidator(key = "AliasProperty", validator = NoAliasMatcher.class)
-@Target({ TYPE_USE, PARAMETER })
 @Documented
+@Target({})
 @Retention(RetentionPolicy.CLASS)
 public @interface NoAlias {
 
