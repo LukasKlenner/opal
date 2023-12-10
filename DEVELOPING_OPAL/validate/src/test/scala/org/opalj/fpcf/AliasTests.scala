@@ -56,7 +56,6 @@ class AliasTests extends PropertiesTest {
         val allocations = allocationSitesWithAnnotations(as.project).flatMap { case (ds, fun, a) => getAliasAnnotations(a.head).map((ds, fun, _)) }
         val formalParameters = explicitFormalParametersWithAnnotations(as.project).flatMap { case (ds, fun, a) => getAliasAnnotations(a.head).map((ds, fun, _)) }
 
-
         val simpleContexts = as.project.get(SimpleContextsKey)
         val declaredMethods = as.project.get(DeclaredMethodsKey)
 

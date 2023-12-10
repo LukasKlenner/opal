@@ -23,7 +23,7 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
     override def doDetermineAlias(
         implicit
         context: AnalysisContext,
-        state:  AnalysisState
+        state:   AnalysisState
     ): ProperPropertyComputationResult = {
         assert(context.element1.isInstanceOf[AliasSourceElement])
         assert(context.element2.isInstanceOf[AliasSourceElement])

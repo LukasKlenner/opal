@@ -51,18 +51,18 @@ case class AliasFP(fp: VirtualFormalParameter) extends AliasSourceElement {
 
     override def method: Method = fp.method.definedMethod
 
-  override def definitionSite: Int = fp.origin
+    override def definitionSite: Int = fp.origin
 
-  override def declaredMethod: DeclaredMethod = fp.method
+    override def declaredMethod: DeclaredMethod = fp.method
 }
 
-case class AliasDS(ds: DefinitionSiteLike, project: SomeProject) extends AliasSourceElement {//TODO nur DefSite ohne only
+case class AliasDS(ds: DefinitionSiteLike, project: SomeProject) extends AliasSourceElement { //TODO nur DefSite ohne only
 
     override def element: DefinitionSiteLike = ds
 
     override def method: Method = ds.method
 
-  override def definitionSite: Int = ds.pc
+    override def definitionSite: Int = ds.pc
 
-  override def declaredMethod: DeclaredMethod = project.get(DeclaredMethodsKey)(method)
+    override def declaredMethod: DeclaredMethod = project.get(DeclaredMethodsKey)(method)
 }

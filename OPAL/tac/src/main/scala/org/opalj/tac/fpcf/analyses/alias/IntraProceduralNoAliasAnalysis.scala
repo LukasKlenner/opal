@@ -43,7 +43,7 @@ class IntraProceduralNoAliasAnalysis( final val project: SomeProject) extends Ta
     ): ProperPropertyComputationResult = {
         assert(state.tacai.isDefined)
 
-      state.tacai.get.stmts
+        state.tacai.get.stmts
 
         for (use <- state.uses1) {
 
