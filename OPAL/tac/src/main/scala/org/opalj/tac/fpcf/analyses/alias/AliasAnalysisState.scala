@@ -6,6 +6,7 @@ package fpcf
 package analyses
 package alias
 
+import org.opalj.br.Method
 import org.opalj.br.analyses.VirtualFormalParameter
 import org.opalj.collection.immutable.IntTrieSet
 import org.opalj.fpcf.EOptionP
@@ -91,6 +92,11 @@ class AliasAnalysisState {
                 val param = tacai.params.parameter(fp.origin)
                 _uses1 = param.useSites
                 _defSite1 = param.origin
+            case (m: Method) =>
+            case _ => {
+                println("Unknown entity type: "+context.element1.element.getClass)
+                throw new UnknownError("unhandled entity type")
+            }
         }
 
         (context.element2.element) match {
@@ -101,6 +107,12 @@ class AliasAnalysisState {
                 val param = tacai.params.parameter(fp.origin)
                 _uses2 = param.useSites
                 _defSite2 = param.origin
+
+            case (m: Method) =>
+            case _ => {
+                println("Unknown entity type: "+context.element2.element.getClass)
+                throw new UnknownError("unhandled entity type")
+            }
         }
     }
 

@@ -17,6 +17,7 @@ import org.opalj.tac.fpcf.analyses.alias.AliasDS
 import org.opalj.tac.fpcf.analyses.alias.AliasEntity
 import org.opalj.tac.fpcf.analyses.alias.AliasSourceElement
 import org.opalj.tac.fpcf.analyses.alias.AliasFP
+import org.opalj.tac.fpcf.analyses.alias.AliasReturnValue
 import org.opalj.tac.fpcf.analyses.alias.EagerIntraProceduralAliasAnalysis
 
 import java.net.URL
@@ -55,6 +56,7 @@ class AliasTests extends PropertiesTest {
 
         val allocations = allocationSitesWithAnnotations(as.project).flatMap { case (ds, fun, a) => getAliasAnnotations(a.head).map((ds, fun, _)) }
         val formalParameters = explicitFormalParametersWithAnnotations(as.project).flatMap { case (ds, fun, a) => getAliasAnnotations(a.head).map((ds, fun, _)) }
+        val methods = methodsWithAnnotations(as.project).flatMap { case (m, fun, a) => getAliasAnnotations(a.head).map((m, fun, _)) }
 
         val simpleContexts = as.project.get(SimpleContextsKey)
         val declaredMethods = as.project.get(DeclaredMethodsKey)
@@ -63,10 +65,11 @@ class AliasTests extends PropertiesTest {
 
         val nameToDs: Iterable[(String, AliasDS)] = allocations.map { case (ds, _, a) => getName(a) -> AliasDS(ds, as.project) }
         val nameToFP: Iterable[(String, AliasFP)] = formalParameters.map { case (fp, _, a) => getName(a) -> AliasFP(fp) }
+        val nameToM: Iterable[(String, AliasReturnValue)] = methods.map { case (m, _, a) => getName(a) -> AliasReturnValue(m, as.project) }
 
-        val nameToEntity: Map[String, Iterable[AliasSourceElement]] = (nameToDs ++ nameToFP).groupMap(_._1)(_._2)
+        val nameToEntity: Map[String, Iterable[AliasSourceElement]] = (nameToDs ++ nameToFP ++ nameToM).groupMap(_._1)(_._2)
 
-        for ((e: Entity, str: (String => String), an: AnnotationLike) <- allocations ++ formalParameters) {
+        for ((e: Entity, str: (String => String), an: AnnotationLike) <- allocations ++ formalParameters ++ methods) {
             val element1: AliasSourceElement = AliasSourceElement(e)(as.project)
             val element2: AliasSourceElement = nameToEntity(getName(an)).find(_ != element1).getOrElse(throw new RuntimeException("No other entity found"))
 

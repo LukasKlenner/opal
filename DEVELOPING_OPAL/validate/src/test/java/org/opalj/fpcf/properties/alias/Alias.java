@@ -2,10 +2,9 @@ package org.opalj.fpcf.properties.alias;
 
 import java.lang.annotation.*;
 
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE_USE;
+import static java.lang.annotation.ElementType.*;
 
-@Target({ TYPE_USE, PARAMETER })
+@Target({ TYPE_USE, PARAMETER, METHOD })
 @Retention(RetentionPolicy.CLASS)
 @Documented
 public @interface Alias {

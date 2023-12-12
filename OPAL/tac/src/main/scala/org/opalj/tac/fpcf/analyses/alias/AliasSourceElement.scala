@@ -30,6 +30,7 @@ object AliasSourceElement {
         element match {
             case fp: VirtualFormalParameter => AliasFP(fp)
             case ds: DefinitionSiteLike     => AliasDS(ds, project)
+            case dm: Method                 => AliasReturnValue(dm, project)
             case _                          => throw new UnknownError("unhandled entity type")
         }
     }
@@ -40,10 +41,13 @@ object AliasSourceElement {
 //    override def entity: Field = field
 //}
 //
-//case class AliasReturnValue(method: Method) extends AliasEntity {
-//
-//    override def entity: Method = method
-//}
+case class AliasReturnValue(method: Method, project: SomeProject) extends AliasSourceElement {
+    override def element: AnyRef = method
+
+    override def definitionSite: Int = throw new UnsupportedOperationException("No definition site for return value")
+
+    override def declaredMethod: DeclaredMethod = project.get(DeclaredMethodsKey)(method)
+}
 
 case class AliasFP(fp: VirtualFormalParameter) extends AliasSourceElement {
 

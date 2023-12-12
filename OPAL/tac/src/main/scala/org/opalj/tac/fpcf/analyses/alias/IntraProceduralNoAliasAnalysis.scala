@@ -6,6 +6,7 @@ package fpcf
 package analyses
 package alias
 
+import org.opalj.br.VirtualDeclaredMethod
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.ProjectInformationKeys
 import org.opalj.br.analyses.SomeProject
@@ -109,7 +110,7 @@ object EagerIntraProceduralAliasAnalysis extends IntraProceduralAliasAnalysisSch
             .filter(fp => reachableMethods.contains(fp.method))
 
         val aliasEntities: Seq[AliasSourceElement] = allocationSites.map(AliasDS(_, p)) ++ formalParameters
-            .map(AliasFP)
+            .map(AliasFP) ++ reachableMethods.keys.filter(!_.isInstanceOf[VirtualDeclaredMethod]).map(m => AliasReturnValue(m.definedMethod, p))
 
         val entities: ArrayBuffer[AliasEntity] = ArrayBuffer.empty
 
