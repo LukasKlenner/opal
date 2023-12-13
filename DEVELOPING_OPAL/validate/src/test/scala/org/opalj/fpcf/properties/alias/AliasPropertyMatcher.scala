@@ -1,6 +1,5 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org
-package opalj
+package org.opalj
 package fpcf
 package properties
 package alias
@@ -34,6 +33,9 @@ abstract class AliasPropertyMatcher(val property: Alias) extends AbstractPropert
         properties: Iterable[Property]
     ): Option[String] = {
 
+        if (properties.isEmpty) {
+            return Some("No Properties assigned to entity")
+        }
         if (properties.count(_.isInstanceOf[Alias]) > 1) {
             return Some("Multiple alias properties found")
         }

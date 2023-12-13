@@ -5,19 +5,21 @@ package fpcf
 
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-import org.opalj.ai.fpcf.properties.AIDomainFactoryKey
 import org.opalj.ai.domain.l1
+import org.opalj.ai.fpcf.properties.AIDomainFactoryKey
 import org.opalj.br.AnnotationLike
-import org.opalj.br.{ClassValue, StringValue}
-import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.Project
+import org.opalj.br.ClassValue
+import org.opalj.br.StringValue
+import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.fpcf.properties.SimpleContextsKey
 import org.opalj.tac.cg.TypeBasedPointsToCallGraphKey
 import org.opalj.tac.fpcf.analyses.alias.AliasDS
 import org.opalj.tac.fpcf.analyses.alias.AliasEntity
-import org.opalj.tac.fpcf.analyses.alias.AliasSourceElement
 import org.opalj.tac.fpcf.analyses.alias.AliasFP
+import org.opalj.tac.fpcf.analyses.alias.AliasNull
 import org.opalj.tac.fpcf.analyses.alias.AliasReturnValue
+import org.opalj.tac.fpcf.analyses.alias.AliasSourceElement
 import org.opalj.tac.fpcf.analyses.alias.EagerIntraProceduralAliasAnalysis
 
 import java.net.URL
@@ -63,20 +65,24 @@ class AliasTests extends PropertiesTest {
 
         val properties: ArrayBuffer[(AliasEntity, String => String, Iterable[AnnotationLike])] = ArrayBuffer.empty
 
-        val nameToDs: Iterable[(String, AliasDS)] = allocations.map { case (ds, _, a) => getName(a) -> AliasDS(ds, as.project) }
-        val nameToFP: Iterable[(String, AliasFP)] = formalParameters.map { case (fp, _, a) => getName(a) -> AliasFP(fp) }
-        val nameToM: Iterable[(String, AliasReturnValue)] = methods.map { case (m, _, a) => getName(a) -> AliasReturnValue(m, as.project) }
+        val nameToDs: Iterable[(String, (AliasDS, String => String))] = allocations.map { case (ds, str, a) => getName(a) -> (AliasDS(ds, as.project), str) }
+        val nameToFP: Iterable[(String, (AliasFP, String => String))] = formalParameters.map { case (fp, str, a) => getName(a) -> (AliasFP(fp), str) }
+        val nameToM: Iterable[(String, (AliasReturnValue, String => String))] = methods.map { case (m, str, a) => getName(a) -> (AliasReturnValue(m, as.project), str) }
 
-        val nameToEntity: Map[String, Iterable[AliasSourceElement]] = (nameToDs ++ nameToFP ++ nameToM).groupMap(_._1)(_._2)
+        val nameToEntity: Map[String, Iterable[(AliasSourceElement, String => String)]] = (nameToDs ++ nameToFP ++ nameToM).groupMap(_._1)(_._2)
 
         for ((e: Entity, str: (String => String), an: AnnotationLike) <- allocations ++ formalParameters ++ methods) {
             val element1: AliasSourceElement = AliasSourceElement(e)(as.project)
-            val element2: AliasSourceElement = nameToEntity(getName(an)).find(_ != element1).getOrElse(throw new RuntimeException("No other entity found"))
+            val other: (AliasSourceElement, String => String) = if (isNullAlias(an, "aliasWithNull")) {
+                (new AliasNull, s => "null")
+            } else {
+                nameToEntity(getName(an)).find(_._1 != element1).getOrElse(throw new RuntimeException("No other entity found"))
+            }
 
             val context = simpleContexts(declaredMethods(element1.method))
-            val entity = AliasEntity(context, element1, element2)
+            val entity = AliasEntity(context, element1, other._1)
             if (!properties.exists(_._1 == entity)) {
-                properties.addOne((entity, str, Seq(an)))
+                properties.addOne((entity, s => str(s) + other._2(s), Seq(an)))
             }
         }
 
@@ -86,15 +92,19 @@ class AliasTests extends PropertiesTest {
     }
 
     def getName(a: AnnotationLike): String = {
-        getValue(a, "testClass")+"."+getValue(a, "id")
+        getStringValue(a, "testClass")+"."+getStringValue(a, "id")
     }
 
-    def getValue(a: AnnotationLike, name: String): String = {
+    def getStringValue(a: AnnotationLike, name: String): String = {
         a.elementValuePairs.filter(_.name == name).head.value match {
             case str: StringValue => str.value
             case ClassValue(t)    => t.asObjectType.fqn
             case _                => throw new RuntimeException("Unexpected value type")
         }
+    }
+
+    def isNullAlias(a: AnnotationLike, name: String): Boolean = {
+        a.elementValuePairs.find(_.name == name).exists(_.value.asBooleanValue.value)
     }
 
     def getAliasAnnotations(a: AnnotationLike): Iterable[AnnotationLike] = {

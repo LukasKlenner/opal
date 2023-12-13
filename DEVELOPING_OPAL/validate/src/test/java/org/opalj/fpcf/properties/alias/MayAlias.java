@@ -24,4 +24,6 @@ public @interface MayAlias {
 
     Class<? extends FPCFAnalysis>[] analyses() default { IntraProceduralNoAliasAnalysis.class,
             PointsToBasedAliasAnalysis.class };
+
+    boolean aliasWithNull() default false;
 }

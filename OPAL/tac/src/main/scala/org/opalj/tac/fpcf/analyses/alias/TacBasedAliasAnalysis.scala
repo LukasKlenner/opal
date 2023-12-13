@@ -7,15 +7,11 @@ package analyses
 package alias
 
 import org.opalj.br.Method
-import org.opalj.br.analyses.VirtualFormalParameter
 import org.opalj.br.fpcf.properties.MayAlias
-import org.opalj.br.fpcf.properties.MustAlias
 import org.opalj.fpcf.InterimResult
 import org.opalj.fpcf.ProperPropertyComputationResult
-import org.opalj.fpcf.Result
 import org.opalj.fpcf.SomeEPS
 import org.opalj.fpcf.UBP
-import org.opalj.tac.common.DefinitionSiteLike
 import org.opalj.tac.fpcf.properties.TACAI
 
 trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
@@ -27,17 +23,8 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
     ): ProperPropertyComputationResult = {
         assert(context.element1.isInstanceOf[AliasSourceElement])
         assert(context.element2.isInstanceOf[AliasSourceElement])
-        assert(context.element1.method == context.element2.method)
 
-        val method = context.element1.method
-
-        if (context.element1 == context.element2) {
-            context.element1.element match {
-                case _: DefinitionSiteLike     => return Result(context.entity, MayAlias) //DS might be inside loop
-                case _: VirtualFormalParameter => return Result(context.entity, MustAlias)
-                case _                         => throw new UnknownError("unhandled entity type")
-            }
-        }
+        val method = if (context.element1.isMethodBound) context.element1.method else context.element2.method
 
         retrieveTAC(method)
         if (state.tacai.isDefined) {

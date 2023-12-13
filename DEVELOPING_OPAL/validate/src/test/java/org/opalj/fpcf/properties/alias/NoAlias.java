@@ -25,5 +25,5 @@ public @interface NoAlias {
     Class<? extends FPCFAnalysis>[] analyses() default { IntraProceduralNoAliasAnalysis.class,
             PointsToBasedAliasAnalysis.class };
 
-    // see DirectCall Annotation[] a();
+    boolean aliasWithNull() default false;
 }

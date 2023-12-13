@@ -6,8 +6,6 @@ package fpcf
 package analyses
 package alias
 
-import org.opalj.br.Method
-import org.opalj.br.analyses.VirtualFormalParameter
 import org.opalj.collection.immutable.IntTrieSet
 import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.Entity
@@ -15,7 +13,6 @@ import org.opalj.fpcf.Property
 import org.opalj.fpcf.SomeEOptionP
 import org.opalj.tac.TACMethodParameter
 import org.opalj.tac.TACode
-import org.opalj.tac.common.DefinitionSiteLike
 
 class AliasAnalysisState {
 
@@ -84,35 +81,26 @@ class AliasAnalysisState {
     )(implicit context: AliasAnalysisContext): Unit = {
         this._tacai = Some(tacai)
 
-        (context.element1.element) match {
-            case (ds: DefinitionSiteLike) =>
-                _defSite1 = tacai.properStmtIndexForPC(ds.pc)
-                _uses1 = ds.usedBy(tacai)
-            case (fp: VirtualFormalParameter) =>
-                val param = tacai.params.parameter(fp.origin)
+        (context.element1) match {
+            case (ds: AliasDS) =>
+                _defSite1 = tacai.properStmtIndexForPC(ds.element.pc)
+                _uses1 = ds.element.usedBy(tacai)
+            case (fp: AliasFP) =>
+                val param = tacai.params.parameter(fp.element.origin)
                 _uses1 = param.useSites
                 _defSite1 = param.origin
-            case (m: Method) =>
-            case _ => {
-                println("Unknown entity type: "+context.element1.element.getClass)
-                throw new UnknownError("unhandled entity type")
-            }
+            case _ =>
         }
 
-        (context.element2.element) match {
-            case (ds: DefinitionSiteLike) =>
-                _defSite2 = tacai.properStmtIndexForPC(ds.pc)
-                _uses2 = ds.usedBy(tacai)
-            case (fp: VirtualFormalParameter) =>
-                val param = tacai.params.parameter(fp.origin)
+        (context.element2) match {
+            case (ds: AliasDS) =>
+                _defSite2 = tacai.properStmtIndexForPC(ds.element.pc)
+                _uses2 = ds.element.usedBy(tacai)
+            case (fp: AliasFP) =>
+                val param = tacai.params.parameter(fp.element.origin)
                 _uses2 = param.useSites
                 _defSite2 = param.origin
-
-            case (m: Method) =>
-            case _ => {
-                println("Unknown entity type: "+context.element2.element.getClass)
-                throw new UnknownError("unhandled entity type")
-            }
+            case _ =>
         }
     }
 
