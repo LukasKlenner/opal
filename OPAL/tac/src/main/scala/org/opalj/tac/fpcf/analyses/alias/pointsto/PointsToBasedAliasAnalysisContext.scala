@@ -1,14 +1,13 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj
-package tac
-package fpcf
-package analyses
-package alias
+package org.opalj.tac.fpcf.analyses.alias.pointsto
 
-import org.opalj.br.analyses.{SomeProject, VirtualFormalParametersKey}
+import org.opalj.br.analyses.SomeProject
+import org.opalj.br.analyses.VirtualFormalParametersKey
 import org.opalj.fpcf.PropertyStore
 import org.opalj.tac.cg.TypeIteratorKey
 import org.opalj.tac.common.DefinitionSitesKey
+import org.opalj.tac.fpcf.analyses.alias.AliasAnalysisContext
+import org.opalj.tac.fpcf.analyses.alias.AliasEntity
 
 class PointsToBasedAliasAnalysisContext(
         override val entity:        AliasEntity,

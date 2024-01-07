@@ -3,7 +3,7 @@ package org.opalj.fpcf.properties.alias;
 import org.opalj.br.fpcf.FPCFAnalysis;
 import org.opalj.fpcf.properties.PropertyValidator;
 import org.opalj.tac.fpcf.analyses.alias.IntraProceduralNoAliasAnalysis;
-import org.opalj.tac.fpcf.analyses.alias.PointsToBasedAliasAnalysis;
+import org.opalj.tac.fpcf.analyses.alias.pointsto.AbstractPointsToBasedAliasAnalysis;
 
 import java.lang.annotation.*;
 
@@ -23,7 +23,7 @@ public @interface NoAlias {
     String id();
 
     Class<? extends FPCFAnalysis>[] analyses() default { IntraProceduralNoAliasAnalysis.class,
-            PointsToBasedAliasAnalysis.class };
+            AbstractPointsToBasedAliasAnalysis.class };
 
     boolean aliasWithNull() default false;
 }
