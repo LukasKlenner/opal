@@ -5,6 +5,25 @@ package fpcf
 package analyses
 package pointsto
 
+import scala.collection.immutable.ArraySeq
+
+import org.opalj.br.BooleanType
+import org.opalj.br.DeclaredMethod
+import org.opalj.br.IntegerType
+import org.opalj.br.LongType
+import org.opalj.br.MethodDescriptor
+import org.opalj.br.ObjectType
+import org.opalj.br.ReferenceType
+import org.opalj.br.VoidType
+import org.opalj.br.analyses.DeclaredMethods
+import org.opalj.br.analyses.DeclaredMethodsKey
+import org.opalj.br.analyses.ProjectInformationKeys
+import org.opalj.br.analyses.SomeProject
+import org.opalj.br.fpcf.BasicFPCFEagerAnalysisScheduler
+import org.opalj.br.fpcf.FPCFAnalysis
+import org.opalj.br.fpcf.properties.cg.Callers
+import org.opalj.br.fpcf.properties.pointsto.AllocationSitePointsToSet
+import org.opalj.br.fpcf.properties.pointsto.TypeBasedPointsToSet
 import org.opalj.fpcf.FinalEP
 import org.opalj.fpcf.ProperPropertyComputationResult
 import org.opalj.fpcf.PropertyBounds
@@ -13,30 +32,7 @@ import org.opalj.fpcf.PropertyKey
 import org.opalj.fpcf.PropertyMetaInformation
 import org.opalj.fpcf.PropertyStore
 import org.opalj.fpcf.Results
-import org.opalj.br.analyses.SomeProject
-import org.opalj.br.DeclaredMethod
-import org.opalj.br.LongType
-import org.opalj.br.MethodDescriptor
-import org.opalj.br.ObjectType
-import org.opalj.br.analyses.DeclaredMethodsKey
-import org.opalj.br.analyses.ProjectInformationKeys
-import org.opalj.br.analyses.VirtualFormalParametersKey
-import org.opalj.br.fpcf.BasicFPCFEagerAnalysisScheduler
-import org.opalj.tac.fpcf.properties.cg.Callers
-import org.opalj.br.fpcf.FPCFAnalysis
-import org.opalj.br.fpcf.properties.pointsto.AllocationSitePointsToSet
-import org.opalj.br.fpcf.properties.pointsto.TypeBasedPointsToSet
-import org.opalj.br.BooleanType
-import org.opalj.br.IntegerType
-import org.opalj.br.ReferenceType
-import org.opalj.br.VoidType
-import org.opalj.br.analyses.DeclaredMethods
-import org.opalj.tac.cg.TypeIteratorKey
-import org.opalj.tac.common.DefinitionSitesKey
-import org.opalj.tac.fpcf.analyses.cg.V
 import org.opalj.tac.fpcf.properties.TheTACAI
-
-import scala.collection.immutable.ArraySeq
 
 /**
  * Models effects of `sun.misc.Unsafe` to points-to sets.
@@ -254,7 +250,7 @@ trait UnsafePointsToAnalysisScheduler extends BasicFPCFEagerAnalysisScheduler {
     override type InitializationData = Null
 
     override def requiredProjectInformation: ProjectInformationKeys =
-        Seq(DeclaredMethodsKey, VirtualFormalParametersKey, DefinitionSitesKey, TypeIteratorKey)
+        AbstractPointsToBasedAnalysis.requiredProjectInformation :+ DeclaredMethodsKey
 
     override def uses: Set[PropertyBounds] = PropertyBounds.ubs(Callers, propertyKind)
 

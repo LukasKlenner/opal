@@ -4,31 +4,32 @@ package fpcf
 package analyses
 
 import java.net.URL
-import org.opalj.tac.cg.RTACallGraphKey
-import org.opalj.tac.fpcf.analyses.escape.LazyInterProceduralEscapeAnalysis
-import org.opalj.util.PerformanceEvaluation.time
-import org.opalj.util.Seconds
 
-import org.opalj.br.analyses.ProjectAnalysisApplication
-import org.opalj.tac.fpcf.analyses.LazyFieldLocalityAnalysis
-import org.opalj.tac.fpcf.analyses.escape.LazyReturnValueFreshnessAnalysis
-import org.opalj.tac.fpcf.analyses.LazyFieldImmutabilityAnalysis
-import org.opalj.br.fpcf.analyses.immutability.LazyClassImmutabilityAnalysis
-import org.opalj.br.fpcf.analyses.immutability.LazyTypeImmutabilityAnalysis
-import org.opalj.tac.fpcf.analyses.fieldassignability.EagerL2FieldAssignabilityAnalysis
-import org.opalj.tac.fpcf.analyses.purity.LazyL2PurityAnalysis
+import org.opalj.br.Field
 import org.opalj.br.analyses.BasicReport
 import org.opalj.br.analyses.Project
+import org.opalj.br.analyses.ProjectAnalysisApplication
 import org.opalj.br.fpcf.FPCFAnalysesManagerKey
 import org.opalj.br.fpcf.analyses.LazyL0CompileTimeConstancyAnalysis
 import org.opalj.br.fpcf.analyses.LazyStaticDataUsageAnalysis
-import org.opalj.br.Field
+import org.opalj.br.fpcf.analyses.immutability.LazyClassImmutabilityAnalysis
+import org.opalj.br.fpcf.analyses.immutability.LazyTypeImmutabilityAnalysis
 import org.opalj.br.fpcf.properties.immutability.Assignable
 import org.opalj.br.fpcf.properties.immutability.EffectivelyNonAssignable
-import org.opalj.br.fpcf.properties.immutability.NonAssignable
 import org.opalj.br.fpcf.properties.immutability.FieldAssignability
 import org.opalj.br.fpcf.properties.immutability.LazilyInitialized
+import org.opalj.br.fpcf.properties.immutability.NonAssignable
 import org.opalj.br.fpcf.properties.immutability.UnsafelyLazilyInitialized
+import org.opalj.tac.cg.RTACallGraphKey
+import org.opalj.tac.fpcf.analyses.LazyFieldImmutabilityAnalysis
+import org.opalj.tac.fpcf.analyses.LazyFieldLocalityAnalysis
+import org.opalj.tac.fpcf.analyses.escape.LazyInterProceduralEscapeAnalysis
+import org.opalj.tac.fpcf.analyses.escape.LazyReturnValueFreshnessAnalysis
+import org.opalj.tac.fpcf.analyses.fieldaccess.EagerFieldAccessInformationAnalysis
+import org.opalj.tac.fpcf.analyses.fieldassignability.EagerL2FieldAssignabilityAnalysis
+import org.opalj.tac.fpcf.analyses.purity.LazyL2PurityAnalysis
+import org.opalj.util.PerformanceEvaluation.time
+import org.opalj.util.Seconds
 
 /**
  * Runs the EagerL2FieldAssignabilityAnalysis including all analysis needed for improving the result.
@@ -60,6 +61,7 @@ object FieldAssignabilityAnalysisDemo extends ProjectAnalysisApplication {
         time {
             propertyStore = analysesManager
                 .runAll(
+                    EagerFieldAccessInformationAnalysis,
                     EagerL2FieldAssignabilityAnalysis,
                     LazyFieldImmutabilityAnalysis,
                     LazyClassImmutabilityAnalysis,
@@ -81,9 +83,9 @@ object FieldAssignabilityAnalysisDemo extends ProjectAnalysisApplication {
 
         val allFieldsInProjectClassFiles = project.allProjectClassFiles.iterator.flatMap { _.fields }.toSet
 
-        val groupedResults = propertyStore.entities(FieldAssignability.key).
-            filter(field => allFieldsInProjectClassFiles.contains(field.asInstanceOf[Field]))
-            .iterator.to(Iterable).groupBy(_.toFinalEP.p)
+        val groupedResults = propertyStore.entities(FieldAssignability.key)
+            .filter(eps => allFieldsInProjectClassFiles.contains(eps.e.asInstanceOf[Field]))
+            .iterator.to(Iterable).groupBy(_.toFinalEP.p).withDefaultValue(Seq.empty)
 
         val order = (eps1: EPS[Entity, FieldAssignability], eps2: EPS[Entity, FieldAssignability]) =>
             eps1.e.toString < eps2.e.toString

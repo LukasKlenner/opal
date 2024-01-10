@@ -1,10 +1,10 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.collection
+package org.opalj
+package collection
 package immutable
 
 import scala.annotation.tailrec
 
-import org.opalj.collection.LongIterator
 import java.lang.Long.{hashCode => lHashCode}
 
 sealed abstract class LongTrieSet extends LongSet { intSet =>
@@ -658,7 +658,7 @@ private[immutable] sealed abstract class LongTrieSetNode2_7 extends LongTrieSetN
             }
             i += 1
         }
-        s+")"
+        s + ")"
     }
 
     final override def equals(other: Any): Boolean = {
@@ -1337,7 +1337,7 @@ private[immutable] final class LongTrieSetNode8(
             s += s"\n$indent${bitsToString(i)}=>${n.toString(level + 1)}"
             i += 1
         }
-        s+")"
+        s + ")"
     }
 
     override def equals(other: Any): Boolean = {

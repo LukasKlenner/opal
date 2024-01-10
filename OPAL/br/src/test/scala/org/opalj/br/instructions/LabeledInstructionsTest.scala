@@ -1,12 +1,14 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.br.instructions
-
-import org.junit.runner.RunWith
-import org.scalatestplus.junit.JUnitRunner
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+package org.opalj
+package br
+package instructions
 
 import scala.collection.immutable.ArraySeq
+
+import org.junit.runner.RunWith
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.junit.JUnitRunner
 
 /**
  * Tests instantiation and resolving of LabeledInstructions.

@@ -5,6 +5,24 @@ package fpcf
 package analyses
 package pointsto
 
+import org.opalj.br.ArrayType
+import org.opalj.br.DeclaredMethod
+import org.opalj.br.FieldType
+import org.opalj.br.ObjectType
+import org.opalj.br.ReferenceType
+import org.opalj.br.analyses.DeclaredMethods
+import org.opalj.br.analyses.DeclaredMethodsKey
+import org.opalj.br.analyses.ProjectInformationKeys
+import org.opalj.br.analyses.SomeProject
+import org.opalj.br.analyses.VirtualFormalParametersKey
+import org.opalj.br.fpcf.FPCFAnalysis
+import org.opalj.br.fpcf.FPCFTriggeredAnalysisScheduler
+import org.opalj.br.fpcf.analyses.SimpleContextProvider
+import org.opalj.br.fpcf.properties.cg.Callers
+import org.opalj.br.fpcf.properties.cg.NoCallers
+import org.opalj.br.fpcf.properties.pointsto.AllocationSitePointsToSet
+import org.opalj.br.fpcf.properties.pointsto.PointsToSetLike
+import org.opalj.br.fpcf.properties.pointsto.TypeBasedPointsToSet
 import org.opalj.collection.immutable.IntTrieSet
 import org.opalj.fpcf.Entity
 import org.opalj.fpcf.EOptionP
@@ -20,26 +38,6 @@ import org.opalj.fpcf.PropertyMetaInformation
 import org.opalj.fpcf.PropertyStore
 import org.opalj.fpcf.Results
 import org.opalj.fpcf.SomeEPS
-import org.opalj.br.analyses.SomeProject
-import org.opalj.br.fpcf.FPCFAnalysis
-import org.opalj.br.fpcf.FPCFTriggeredAnalysisScheduler
-import org.opalj.br.DeclaredMethod
-import org.opalj.br.analyses.DeclaredMethods
-import org.opalj.br.analyses.DeclaredMethodsKey
-import org.opalj.br.ObjectType
-import org.opalj.tac.fpcf.properties.cg.Callers
-import org.opalj.tac.fpcf.properties.cg.NoCallers
-import org.opalj.br.fpcf.properties.pointsto.AllocationSitePointsToSet
-import org.opalj.br.FieldType
-import org.opalj.br.fpcf.properties.pointsto.TypeBasedPointsToSet
-import org.opalj.br.analyses.VirtualFormalParametersKey
-import org.opalj.br.fpcf.properties.pointsto.PointsToSetLike
-import org.opalj.br.ArrayType
-import org.opalj.br.ReferenceType
-import org.opalj.br.analyses.ProjectInformationKeys
-import org.opalj.tac.cg.TypeIteratorKey
-import org.opalj.tac.common.DefinitionSitesKey
-import org.opalj.tac.fpcf.analyses.cg.SimpleContextProvider
 import org.opalj.tac.fpcf.analyses.cg.TypeConsumerAnalysis
 
 /**
@@ -178,10 +176,8 @@ abstract class ConfiguredMethodsPointsToAnalysis private[analyses] (
                     PointsToSetLike.noFilter
                 )
 
-            case sfd: StaticFieldDescription =>
-                val fieldOption = sfd.fieldOption(p)
-                if (fieldOption.isDefined)
-                    handleGetStatic(fieldOption.get, pc, checkForCast = false)
+            case StaticFieldDescription(cf, name, fieldType) =>
+                handleGetStatic(declaredFields(ObjectType(cf), name, FieldType(fieldType)), pc, checkForCast = false)
 
             case pd: ParameterDescription =>
                 val method = pd.method(declaredMethods)
@@ -271,10 +267,8 @@ abstract class ConfiguredMethodsPointsToAnalysis private[analyses] (
                     filter
                 )
 
-            case sfd: StaticFieldDescription =>
-                val fieldOption = sfd.fieldOption(p)
-                if (fieldOption.isDefined)
-                    handlePutStatic(fieldOption.get, IntTrieSet(0))
+            case StaticFieldDescription(cf, name, fieldType) =>
+                handlePutStatic(declaredFields(ObjectType(cf), name, FieldType(fieldType)), IntTrieSet(0))
 
             case pd: ParameterDescription =>
                 val method = pd.method(declaredMethods)
@@ -317,7 +311,7 @@ trait ConfiguredMethodsPointsToAnalysisScheduler extends FPCFTriggeredAnalysisSc
     override type InitializationData = Null
 
     override def requiredProjectInformation: ProjectInformationKeys =
-        Seq(DeclaredMethodsKey, VirtualFormalParametersKey, DefinitionSitesKey, TypeIteratorKey)
+        AbstractPointsToBasedAnalysis.requiredProjectInformation :+ DeclaredMethodsKey
 
     override def uses: Set[PropertyBounds] = PropertyBounds.ubs(
         Callers,

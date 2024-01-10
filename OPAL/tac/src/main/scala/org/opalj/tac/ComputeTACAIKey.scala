@@ -1,14 +1,15 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.tac
+package org.opalj
+package tac
 
-import org.opalj.value.ValueInformation
+import org.opalj.ai.BaseAI
+import org.opalj.ai.Domain
+import org.opalj.ai.domain.RecordDefUse
+import org.opalj.ai.domain.l1.DefaultDomainWithCFGAndDefUse
 import org.opalj.br.Method
 import org.opalj.br.analyses.ProjectInformationKey
 import org.opalj.br.analyses.SomeProject
-import org.opalj.ai.domain.l1.DefaultDomainWithCFGAndDefUse
-import org.opalj.ai.BaseAI
-import org.opalj.ai.domain.RecordDefUse
-import org.opalj.ai.Domain
+import org.opalj.value.ValueInformation
 
 /**
  * ''Key'' to compute the 3-address based code of a method computed using the configured

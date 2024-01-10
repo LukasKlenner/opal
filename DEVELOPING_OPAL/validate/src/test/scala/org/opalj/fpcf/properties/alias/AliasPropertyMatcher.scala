@@ -9,6 +9,10 @@ import org.opalj.br.ObjectType
 import org.opalj.br.analyses.Project
 import org.opalj.br.fpcf.properties.Alias
 
+/**
+ * Base class for matching the assigned alias property of an entity with the expected alias property.
+ * @param property The expected alias property
+ */
 abstract class AliasPropertyMatcher(val property: Alias) extends AbstractPropertyMatcher {
 
     override def isRelevant(
@@ -48,8 +52,17 @@ abstract class AliasPropertyMatcher(val property: Alias) extends AbstractPropert
     }
 }
 
+/**
+ * Matches if the entity has the [[org.opalj.br.fpcf.properties.NoAlias]] property.
+ */
 class NoAliasMatcher extends AliasPropertyMatcher(org.opalj.br.fpcf.properties.NoAlias)
 
+/**
+ * Matches if the entity has the [[org.opalj.br.fpcf.properties.MayAlias]] property.
+ */
 class MayAliasMatcher extends AliasPropertyMatcher(org.opalj.br.fpcf.properties.MayAlias)
 
+/**
+ * Matches if the entity has the [[org.opalj.br.fpcf.properties.MustAlias]] property.
+ */
 class MustAliasMatcher extends AliasPropertyMatcher(org.opalj.br.fpcf.properties.MustAlias)

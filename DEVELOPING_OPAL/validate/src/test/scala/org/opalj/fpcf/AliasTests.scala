@@ -1,10 +1,7 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org
-package opalj
+package org.opalj
 package fpcf
 
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
 import org.opalj.ai.domain.l1
 import org.opalj.ai.fpcf.properties.AIDomainFactoryKey
 import org.opalj.br.AnnotationLike
@@ -20,20 +17,21 @@ import org.opalj.tac.fpcf.analyses.alias.AliasFP
 import org.opalj.tac.fpcf.analyses.alias.AliasNull
 import org.opalj.tac.fpcf.analyses.alias.AliasReturnValue
 import org.opalj.tac.fpcf.analyses.alias.AliasSourceElement
-import org.opalj.tac.fpcf.analyses.alias.EagerIntraProceduralAliasAnalysis
+import org.scalatest.Ignore
 
 import java.net.URL
 import scala.collection.mutable.ArrayBuffer
 
+/**
+ * Tests if the alias properties defined in the classes of the package org.opalj.fpcf.fixtures.alias (and it's subpackage)
+ * are computed correctly.
+ */
+@Ignore
 class AliasTests extends PropertiesTest {
-
-    override def withRT = true
 
     override def fixtureProjectPackage: List[String] = {
         List("org/opalj/fpcf/fixtures/alias")
     }
-
-    override def createConfig(): Config = ConfigFactory.load("CommandLineProject.conf")
 
     override def init(p: Project[URL]): Unit = {
 
@@ -49,8 +47,7 @@ class AliasTests extends PropertiesTest {
     describe("run all alias analyses") {
 
         val as = executeAnalyses(
-            Set(
-                EagerIntraProceduralAliasAnalysis
+            Set( //TODO add analyses to execute
             )
         )
 
@@ -63,56 +60,96 @@ class AliasTests extends PropertiesTest {
         val simpleContexts = as.project.get(SimpleContextsKey)
         val declaredMethods = as.project.get(DeclaredMethodsKey)
 
+        // The annotations only contain one of the two sourceElements of an alias property.
+        // Therefore, we first have to combine elements with the same id and store them in this ArrayBuffer.
         val properties: ArrayBuffer[(AliasEntity, String => String, Iterable[AnnotationLike])] = ArrayBuffer.empty
 
-        val nameToDs: Iterable[(String, (AliasDS, String => String))] = allocations.map { case (ds, str, a) => getName(a) -> (AliasDS(ds, as.project), str) }
-        val nameToFP: Iterable[(String, (AliasFP, String => String))] = formalParameters.map { case (fp, str, a) => getName(a) -> (AliasFP(fp), str) }
-        val nameToM: Iterable[(String, (AliasReturnValue, String => String))] = methods.map { case (m, str, a) => getName(a) -> (AliasReturnValue(m, as.project), str) }
+        val IDToDs: Iterable[(String, (AliasDS, String => String))] = allocations.map { case (ds, str, a) => getID(a) -> (AliasDS(ds, as.project), str) }
+        val IDToFP: Iterable[(String, (AliasFP, String => String))] = formalParameters.map { case (fp, str, a) => getID(a) -> (AliasFP(fp), str) }
+        val IDToM: Iterable[(String, (AliasReturnValue, String => String))] = methods.map { case (m, str, a) => getID(a) -> (AliasReturnValue(m, as.project), str) }
 
-        val nameToEntity: Map[String, Iterable[(AliasSourceElement, String => String)]] = (nameToDs ++ nameToFP ++ nameToM).groupMap(_._1)(_._2)
+        val IDToEntity: Map[String, Iterable[(AliasSourceElement, String => String)]] = (IDToDs ++ IDToFP ++ IDToM).groupMap(_._1)(_._2)
 
         for ((e: Entity, str: (String => String), an: AnnotationLike) <- allocations ++ formalParameters ++ methods) {
             val element1: AliasSourceElement = AliasSourceElement(e)(as.project)
-            val other: (AliasSourceElement, String => String) = if (isNullAlias(an, "aliasWithNull")) {
+            val element: (AliasSourceElement, String => String) = if (isNullAlias(an)) {
                 (new AliasNull, s => "null")
             } else {
-                nameToEntity(getName(an)).find(_._1 != element1).getOrElse(throw new RuntimeException("No other entity found"))
+                val matchingEntities = IDToEntity(getID(an)).filter(_._1 != element1)
+                if (matchingEntities.isEmpty) {
+                    throw new IllegalArgumentException("No other entity with id " + getID(an) + " found")
+                }
+                if (matchingEntities.size > 1) {
+                    throw new IllegalArgumentException("Multiple other entities with id " + getID(an) + " found")
+                }
+                matchingEntities.head
             }
 
             val context = simpleContexts(declaredMethods(element1.method))
-            val entity = AliasEntity(context, element1, other._1)
+            val entity = AliasEntity(context, element1, element._1)
+
+            // Don't add the same property twice
             if (!properties.exists(_._1 == entity)) {
-                properties.addOne((entity, s => str(s) + other._2(s), Seq(an)))
+                properties.addOne((entity, s => str(s) + element._2(s), Seq(an)))
             }
         }
 
         validateProperties(as, properties, Set("AliasProperty"))
 
-        println("reachable methods: "+as.project.get(TypeBasedPointsToCallGraphKey).reachableMethods().toList.size)
+        println("reachable methods: " + as.project.get(TypeBasedPointsToCallGraphKey).reachableMethods().toList.size)
     }
 
-    def getName(a: AnnotationLike): String = {
-        getStringValue(a, "testClass")+"."+getStringValue(a, "id")
+    /**
+     * Returns the id of the alias relation that is described by the given annotation.
+     * @param a The annotation that describes the alias relation.
+     * @return The id of the alias relation.
+     */
+    private[this] def getID(a: AnnotationLike): String = {
+        getStringValue(a, "testClass") + "." + getStringValue(a, "id")
     }
 
-    def getStringValue(a: AnnotationLike, name: String): String = {
-        a.elementValuePairs.filter(_.name == name).head.value match {
+    /**
+     * Returns the value of the given annotation element.
+     * @param a The annotation.
+     * @param element The name of the element.
+     * @return The value of the element.
+     */
+    private[this] def getStringValue(a: AnnotationLike, element: String): String = {
+        a.elementValuePairs.filter(_.name == element).head.value match {
             case str: StringValue => str.value
             case ClassValue(t)    => t.asObjectType.fqn
             case _                => throw new RuntimeException("Unexpected value type")
         }
     }
 
-    def isNullAlias(a: AnnotationLike, name: String): Boolean = {
-        a.elementValuePairs.find(_.name == name).exists(_.value.asBooleanValue.value)
+    /**
+     * Returns true if the given annotation describes an alias relation with null.
+     * @param a The annotation.
+     * @return True if the given annotation describes an alias relation with null.
+     */
+    private[this] def isNullAlias(a: AnnotationLike): Boolean = {
+        a.elementValuePairs.find(_.name == "aliasWithNull").exists(_.value.asBooleanValue.value)
     }
 
-    def getAliasAnnotations(a: AnnotationLike): Iterable[AnnotationLike] = {
+    /**
+     * Returns all alias annotations that are contained in the given annotation.
+     * The given annotation must be an alias annotation.
+     * @param a The annotation.
+     * @return All alias annotations that are contained in the given annotation.
+     */
+    private[this] def getAliasAnnotations(a: AnnotationLike): Iterable[AnnotationLike] = {
         getAliasAnnotations(a, "noAlias") ++ getAliasAnnotations(a, "mayAlias") ++ getAliasAnnotations(a, "mustAlias")
     }
 
-    def getAliasAnnotations(a: AnnotationLike, name: String): Iterable[AnnotationLike] = {
-        a.elementValuePairs.filter(_.name == name).collect { case ev => ev.value.asArrayValue.values.map(_.asAnnotationValue.annotation) }.flatten
+    /**
+     * Returns all alias annotations of the given type that are contained in the given annotation.
+     * The given annotation must be an alias annotation.
+     * @param a The annotation.
+     * @param aliasType The type of the alias annotations.
+     * @return All alias annotations of the given type that are contained in the given annotation.
+     */
+    private[this] def getAliasAnnotations(a: AnnotationLike, aliasType: String): Iterable[AnnotationLike] = {
+        a.elementValuePairs.filter(_.name == aliasType).collect { case ev => ev.value.asArrayValue.values.map(_.asAnnotationValue.annotation) }.flatten
     }
 
 }

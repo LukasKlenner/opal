@@ -1,17 +1,21 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.fpcf
+package org.opalj
+package fpcf
 
 import java.util.concurrent.atomic.AtomicInteger
+import scala.collection
 import scala.collection.immutable
 import scala.collection.mutable
+
+import org.opalj.fpcf.fixtures._
+import org.opalj.log.GlobalLogContext
+import org.opalj.log.LogContext
+
 import org.junit.runner.RunWith
-import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
-import org.opalj.log.GlobalLogContext
-import org.opalj.log.LogContext
-import org.opalj.fpcf.fixtures._
+import org.scalatestplus.junit.JUnitRunner
 
 /**
  * Tests a property store implementation. All of the following tests should be passed by
@@ -39,18 +43,18 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
 
     describe(s"PropertyStore") {
 
-        import Palindromes.NoAnalysisForPalindromeProperty
-        import Palindromes.NoPalindrome
-        import Palindromes.NoSuperPalindrome
-        import Palindromes.Palindrome
-        import Palindromes.PalindromeKey
-        import Palindromes.PalindromePropertyNotAnalyzed
-        import Palindromes.SuperPalindrome
-        import Palindromes.SuperPalindromeKey
-        import Palindromes.PalindromeFragmentsKey
-        import Palindromes.PalindromeFragments
-        import ReachableEntities.ReachedEntities
-        import ReachableEntities.ReachedEntitiesKey
+        import org.opalj.fpcf.fixtures.Palindromes.NoAnalysisForPalindromeProperty
+        import org.opalj.fpcf.fixtures.Palindromes.NoPalindrome
+        import org.opalj.fpcf.fixtures.Palindromes.NoSuperPalindrome
+        import org.opalj.fpcf.fixtures.Palindromes.Palindrome
+        import org.opalj.fpcf.fixtures.Palindromes.PalindromeFragments
+        import org.opalj.fpcf.fixtures.Palindromes.PalindromeFragmentsKey
+        import org.opalj.fpcf.fixtures.Palindromes.PalindromeKey
+        import org.opalj.fpcf.fixtures.Palindromes.PalindromePropertyNotAnalyzed
+        import org.opalj.fpcf.fixtures.Palindromes.SuperPalindrome
+        import org.opalj.fpcf.fixtures.Palindromes.SuperPalindromeKey
+        import org.opalj.fpcf.fixtures.ReachableEntities.ReachedEntities
+        import org.opalj.fpcf.fixtures.ReachableEntities.ReachedEntitiesKey
 
         it("should be possible to query an empty property store") {
             val ps = createPropertyStore()
@@ -150,7 +154,7 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                             .take(25)
                             .map(_.toString)
                             .mkString(
-                                s"unexpected exception (${t.getClass.getSimpleName}): "+
+                                s"unexpected exception (${t.getClass.getSimpleName}): " +
                                     s"${t.getMessage}\n\t",
                                 "\n\t",
                                 ""
@@ -182,8 +186,8 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
             ps.shutdown()
         }
 
-        it("should not crash when e1 has two dependencies e2 and e3 and e2 is set "+
-            "while e1 was not yet executed but had an EPK for e2 in its dependencies "+
+        it("should not crash when e1 has two dependencies e2 and e3 and e2 is set " +
+            "while e1 was not yet executed but had an EPK for e2 in its dependencies " +
             "(test for a lost updated)") {
 
             val ps = createPropertyStore()
@@ -258,7 +262,7 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
             ps.shutdown()
         }
 
-        it("should be possible to test if a store has a property "+
+        it("should be possible to test if a store has a property " +
             "even if the analysis is scheduled later") {
             val ps = createPropertyStore()
             info(s"PropertyStore@${System.identityHashCode(ps).toHexString}")
@@ -546,7 +550,7 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
         {
             val ps = createPropertyStore()
             if (ps.MaxEvaluationDepth == 0) {
-                it("should complete the computation of dependent lazy computations "+
+                it("should complete the computation of dependent lazy computations " +
                     "before the phase ends") {
 
                     info(s"PropertyStore@${System.identityHashCode(ps).toHexString}")
@@ -697,7 +701,7 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
         }
 
         it(
-            "should be possible to register multiple triggered computations, "+
+            "should be possible to register multiple triggered computations, " +
                 "even if the first triggered computation is already potentially triggered"
         ) {
                 val ps = createPropertyStore()
@@ -1014,7 +1018,7 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                 }
 
                 override def toString(): String = {
-                    "ReachableNodesCountAnalysis@"+System.identityHashCode(this).toHexString
+                    "ReachableNodesCountAnalysis@" + System.identityHashCode(this).toHexString
                 }
             }
 
@@ -1048,7 +1052,7 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                 }
 
                 override def toString(): String = {
-                    "ReachableNodesCountViaReachableNodesAnalysis@"+
+                    "ReachableNodesCountViaReachableNodesAnalysis@" +
                         System.identityHashCode(this).toHexString
                 }
             }
@@ -1075,7 +1079,7 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                 )
 
                 override def toString(): String = {
-                    "ReachedEntitiesAnalysis@"+System.identityHashCode(this).toHexString
+                    "ReachedEntitiesAnalysis@" + System.identityHashCode(this).toHexString
                 }
             }
 
@@ -1129,10 +1133,10 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                         ps.setupPhase(Set.empty, Set.empty)
 
                         info(
-                            s"(id of first permutation = ${dropCount + 1}; this permutation="+
-                                s"${nodeEntitiesPermutation.mkString("[", ",", "]")} "+
-                                "; number of executed tasks:"+ps.scheduledTasksCount+
-                                "; number of scheduled onUpdateContinuations:"+
+                            s"(id of first permutation = ${dropCount + 1}; this permutation=" +
+                                s"${nodeEntitiesPermutation.mkString("[", ",", "]")} " +
+                                "; number of executed tasks:" + ps.scheduledTasksCount +
+                                "; number of scheduled onUpdateContinuations:" +
                                 ps.scheduledOnUpdateComputationsCount
                         )
                         try {
@@ -1190,10 +1194,10 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                         ps.setupPhase(Set.empty, Set.empty)
 
                         info(
-                            s"(id of first permutation = ${dropCount + 1}; this permutation="+
-                                s"${nodeEntitiesPermutation.mkString("[", ",", "]")} "+
-                                "; number of executed tasks:"+ps.scheduledTasksCount+
-                                "; number of scheduled onUpdateContinuations:"+
+                            s"(id of first permutation = ${dropCount + 1}; this permutation=" +
+                                s"${nodeEntitiesPermutation.mkString("[", ",", "]")} " +
+                                "; number of executed tasks:" + ps.scheduledTasksCount +
+                                "; number of scheduled onUpdateContinuations:" +
                                 ps.scheduledOnUpdateComputationsCount
                         )
                         try {
@@ -1273,8 +1277,8 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                 )
                 nodeEntities foreach { node => ps.force(node, ReachableNodesCount.Key) }
                 ps.waitOnPhaseCompletion()
-                info("scheduledTasksCount="+ps.scheduledTasksCount)
-                info("scheduledOnUpdateComputationsCount="+ps.scheduledOnUpdateComputationsCount)
+                info("scheduledTasksCount=" + ps.scheduledTasksCount)
+                info("scheduledOnUpdateComputationsCount=" + ps.scheduledOnUpdateComputationsCount)
 
                 try {
                     ps(nodeA, ReachableNodes.Key) should be(
@@ -1325,7 +1329,7 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
             }
 
             it(
-                "should be possible to use lazily scheduled mutually dependent computations "+
+                "should be possible to use lazily scheduled mutually dependent computations " +
                     "without intermediate results propagation"
             ) {
                     val ps = createPropertyStore()
@@ -1346,9 +1350,9 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                     nodeEntities foreach { node => ps.force(node, ReachableNodesCount.Key) }
 
                     ps.waitOnPhaseCompletion()
-                    info("scheduledTasksCount="+ps.scheduledTasksCount)
+                    info("scheduledTasksCount=" + ps.scheduledTasksCount)
                     info(
-                        "scheduledOnUpdateComputationsCount="+
+                        "scheduledOnUpdateComputationsCount=" +
                             ps.scheduledOnUpdateComputationsCount
                     )
 
@@ -1389,7 +1393,7 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                 }
 
             it(
-                "should be possible to force the results of transformers "+
+                "should be possible to force the results of transformers " +
                     "based on lazy properties"
             ) {
                     val ps = createPropertyStore()
@@ -1409,8 +1413,8 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                     }
                     nodeEntities foreach { node => ps.force(node, ReachableNodesCount.Key) }
                     ps.waitOnPhaseCompletion()
-                    info("scheduledTasksCount="+ps.scheduledTasksCount)
-                    info("scheduledOnUpdateComputationsCount="+ps.scheduledOnUpdateComputationsCount)
+                    info("scheduledTasksCount=" + ps.scheduledTasksCount)
+                    info("scheduledOnUpdateComputationsCount=" + ps.scheduledOnUpdateComputationsCount)
 
                     ps(nodeA, RNCKey) should be(
                         FinalEP(nodeA, ReachableNodesCount(nodeEntities.size - 1))
@@ -1426,7 +1430,7 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                 }
 
             it(
-                "should be possible to force the results of "+
+                "should be possible to force the results of " +
                     "multiple transformers based on a lazy property"
             ) {
                     val ps = createPropertyStore()
@@ -1453,8 +1457,8 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                     }
                     nodeEntities foreach { node => ps.force(node, Marker.Key) }
                     ps.waitOnPhaseCompletion()
-                    info("scheduledTasksCount="+ps.scheduledTasksCount)
-                    info("scheduledOnUpdateComputationsCount="+ps.scheduledOnUpdateComputationsCount)
+                    info("scheduledTasksCount=" + ps.scheduledTasksCount)
+                    info("scheduledOnUpdateComputationsCount=" + ps.scheduledOnUpdateComputationsCount)
 
                     ps(nodeA, RNCKey) should be(
                         FinalEP(nodeA, ReachableNodesCount(nodeEntities.size - 1))
@@ -1478,7 +1482,7 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                 }
 
             it(
-                "should be possible to force the results of "+
+                "should be possible to force the results of " +
                     "a chain of transformers based on lazy properties"
             ) {
                     val ps = createPropertyStore()
@@ -1505,8 +1509,8 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                     }
                     nodeEntities foreach { node => ps.force(node, Marker.Key) }
                     ps.waitOnPhaseCompletion()
-                    info("scheduledTasksCount="+ps.scheduledTasksCount)
-                    info("scheduledOnUpdateComputationsCount="+ps.scheduledOnUpdateComputationsCount)
+                    info("scheduledTasksCount=" + ps.scheduledTasksCount)
+                    info("scheduledOnUpdateComputationsCount=" + ps.scheduledOnUpdateComputationsCount)
                     val MKey = Marker.Key
                     ps(nodeA, MKey) should be(FinalEP(nodeA, Marker.IsMarked))
                     ps(nodeB, MKey) should be(FinalEP(nodeB, Marker.IsMarked))
@@ -1520,7 +1524,7 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                 }
 
             it(
-                "should be possible to force the results of a lazy property which depends "+
+                "should be possible to force the results of a lazy property which depends " +
                     "on the results of a transformer backed by an eager analysis"
             ) {
                     val ps = createPropertyStore()
@@ -1555,8 +1559,8 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                     ps.scheduleEagerComputationsForEntities(nodeEntities)(reachableNodesAnalysis(ps))
                     nodeEntities foreach { node => ps.force(node, Marker.Key) }
                     ps.waitOnPhaseCompletion()
-                    info("scheduledTasksCount="+ps.scheduledTasksCount)
-                    info("scheduledOnUpdateComputationsCount="+ps.scheduledOnUpdateComputationsCount)
+                    info("scheduledTasksCount=" + ps.scheduledTasksCount)
+                    info("scheduledOnUpdateComputationsCount=" + ps.scheduledOnUpdateComputationsCount)
                     val MKey = Marker.Key
                     ps.get(nodeA, MKey) should be(Some(FinalEP(nodeA, Marker.IsMarked)))
                     ps.get(nodeB, MKey) should be(Some(FinalEP(nodeB, Marker.IsMarked)))
@@ -1570,7 +1574,7 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                 }
 
             it(
-                "should be possible when a lazy computation depends on properties "+
+                "should be possible when a lazy computation depends on properties " +
                     "for which no analysis is scheduled"
             ) {
                     val ps = createPropertyStore()
@@ -1603,8 +1607,8 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
                     ps.shutdown()
                 }
 
-            it("should be possible that a lazy computation depends on properties "+
-                "for which an analysis is seemingly scheduled, "+
+            it("should be possible that a lazy computation depends on properties " +
+                "for which an analysis is seemingly scheduled, " +
                 "but no analysis actually produces results") {
 
                 val ps = createPropertyStore()
@@ -1687,8 +1691,8 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
             ps.setupPhase(Set(TreeLevelKey), Set.empty)
 
             /* The following analysis only uses the new information given to it and updates
-                 * the set of observed dependees.
-                 */
+             * the set of observed dependees.
+             */
             def analysis(level: Int)(n: Node): PropertyComputationResult = {
                 val nextPCs = n.targets.map(t => (analysis(level + 1) _, t)).iterator
                 IncrementalResult(Result(n, TreeLevel(level)), nextPCs)
@@ -1803,14 +1807,14 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
 
                 info(s"test succeeded with $testSize node(s) in a circle")
                 info(
-                    s"number of executed tasks:"+ps.scheduledTasksCount+
-                        "; number of scheduled onUpdateContinuations:"+
+                    s"number of executed tasks:" + ps.scheduledTasksCount +
+                        "; number of scheduled onUpdateContinuations:" +
                         ps.scheduledOnUpdateComputationsCount
                 )
             }
         }
 
-        it("should be possible to execute an analysis which analyzes a huge circle "+
+        it("should be possible to execute an analysis which analyzes a huge circle " +
             "to compute the upper bound only") {
             import scala.collection.mutable
 
@@ -1871,8 +1875,8 @@ sealed abstract class PropertyStoreTest[PS <: PropertyStore]
 
                 info(s"test succeeded with $testSize node(s) in a circle")
                 info(
-                    s"number of executed tasks:"+ps.scheduledTasksCount+
-                        "; number of scheduled onUpdateContinuations:"+
+                    s"number of executed tasks:" + ps.scheduledTasksCount +
+                        "; number of scheduled onUpdateContinuations:" +
                         ps.scheduledOnUpdateComputationsCount
                 )
             }
@@ -2015,7 +2019,7 @@ abstract class PropertyStoreTestWithDebugging[PS <: PropertyStore] extends Prope
                 val nodeD = Node("d")
 
                 info(
-                    s"PropertyStore(MaxEvaluationDepth=${ps.MaxEvaluationDepth})"+
+                    s"PropertyStore(MaxEvaluationDepth=${ps.MaxEvaluationDepth})" +
                         s"@${System.identityHashCode(ps).toHexString}"
                 )
 

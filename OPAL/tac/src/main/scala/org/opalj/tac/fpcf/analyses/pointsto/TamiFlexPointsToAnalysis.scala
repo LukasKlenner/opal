@@ -5,6 +5,26 @@ package fpcf
 package analyses
 package pointsto
 
+import scala.collection.immutable.ArraySeq
+
+import org.opalj.br.ArrayType
+import org.opalj.br.BooleanType
+import org.opalj.br.DeclaredMethod
+import org.opalj.br.IntegerType
+import org.opalj.br.MethodDescriptor
+import org.opalj.br.ObjectType
+import org.opalj.br.ReferenceType
+import org.opalj.br.VoidType
+import org.opalj.br.analyses.DeclaredMethods
+import org.opalj.br.analyses.DeclaredMethodsKey
+import org.opalj.br.analyses.ProjectInformationKeys
+import org.opalj.br.analyses.SomeProject
+import org.opalj.br.fpcf.BasicFPCFEagerAnalysisScheduler
+import org.opalj.br.fpcf.FPCFAnalysis
+import org.opalj.br.fpcf.properties.cg.Callers
+import org.opalj.br.fpcf.properties.pointsto.AllocationSitePointsToSet
+import org.opalj.br.fpcf.properties.pointsto.PointsToSetLike
+import org.opalj.br.fpcf.properties.pointsto.TypeBasedPointsToSet
 import org.opalj.fpcf.FinalEP
 import org.opalj.fpcf.ProperPropertyComputationResult
 import org.opalj.fpcf.PropertyBounds
@@ -13,31 +33,7 @@ import org.opalj.fpcf.PropertyKey
 import org.opalj.fpcf.PropertyMetaInformation
 import org.opalj.fpcf.PropertyStore
 import org.opalj.fpcf.Results
-import org.opalj.br.DeclaredMethod
-import org.opalj.br.analyses.SomeProject
-import org.opalj.br.ArrayType
-import org.opalj.br.MethodDescriptor
-import org.opalj.br.ObjectType
-import org.opalj.br.analyses.DeclaredMethodsKey
-import org.opalj.br.fpcf.FPCFAnalysis
-import org.opalj.br.IntegerType
-import org.opalj.tac.fpcf.properties.cg.Callers
-import org.opalj.br.fpcf.properties.pointsto.AllocationSitePointsToSet
-import org.opalj.br.fpcf.BasicFPCFEagerAnalysisScheduler
-import org.opalj.br.BooleanType
-import org.opalj.br.ReferenceType
-import org.opalj.br.VoidType
-import org.opalj.br.analyses.DeclaredMethods
-import org.opalj.br.analyses.ProjectInformationKeys
-import org.opalj.br.analyses.VirtualFormalParametersKey
-import org.opalj.br.fpcf.properties.pointsto.PointsToSetLike
-import org.opalj.br.fpcf.properties.pointsto.TypeBasedPointsToSet
-import org.opalj.tac.cg.TypeIteratorKey
-import org.opalj.tac.common.DefinitionSitesKey
-import org.opalj.tac.fpcf.analyses.cg.V
 import org.opalj.tac.fpcf.properties.TheTACAI
-
-import scala.collection.immutable.ArraySeq
 
 /**
  * Handles the effect of tamiflex logs for the points-to sets.
@@ -191,13 +187,8 @@ trait TamiFlexPointsToAnalysisScheduler extends BasicFPCFEagerAnalysisScheduler 
     val propertyKind: PropertyMetaInformation
     val createAnalysis: SomeProject => TamiFlexPointsToAnalysis
 
-    override def requiredProjectInformation: ProjectInformationKeys = Seq(
-        DeclaredMethodsKey,
-        VirtualFormalParametersKey,
-        DefinitionSitesKey,
-        TamiFlexKey,
-        TypeIteratorKey
-    )
+    override def requiredProjectInformation: ProjectInformationKeys =
+        AbstractPointsToBasedAnalysis.requiredProjectInformation :++ Seq(DeclaredMethodsKey, TamiFlexKey)
 
     override def uses: Set[PropertyBounds] = PropertyBounds.ubs(Callers, propertyKind)
 
@@ -473,9 +464,9 @@ abstract class TamiFlexPointsToFieldGetAnalysis(
         val fields = tamiFlexLogData.fields(callerContext.method, "Field.get*", line)
         for (field <- fields) {
             if (field.isStatic) {
-                handleGetStatic(field, pc)
+                handleGetStatic(declaredFields(field), pc)
             } else if (theObject.isDefined) {
-                handleGetField(Some(field), pc, theObject.get.asVar.definedBy)
+                handleGetField(Some(declaredFields(field)), pc, theObject.get.asVar.definedBy)
             }
         }
 
@@ -520,10 +511,10 @@ abstract class TamiFlexPointsToFieldSetAnalysis(
             val fields = tamiFlexLogData.fields(callerContext.method, "Field.set*", line)
             for (field <- fields) {
                 if (field.isStatic) {
-                    handlePutStatic(field, storeVal.get.asVar.definedBy)
+                    handlePutStatic(declaredFields(field), storeVal.get.asVar.definedBy)
                 } else if (theObject.isDefined) {
                     handlePutField(
-                        Some(field), theObject.get.asVar.definedBy, storeVal.get.asVar.definedBy
+                        Some(declaredFields(field)), theObject.get.asVar.definedBy, storeVal.get.asVar.definedBy
                     )
                 }
             }

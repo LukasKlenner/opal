@@ -4,12 +4,12 @@ package ai
 package domain
 package l1
 
+import org.opalj.br.ObjectType
+
 import org.junit.runner.RunWith
-import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
-
-import org.opalj.br.ObjectType
+import org.scalatestplus.junit.JUnitRunner
 
 /**
  * Tests the `ConstraintsBetweenIntegerValuesTest` Domain extension.
@@ -43,7 +43,7 @@ class ConstraintsBetweenIntegerValuesTest extends AnyFunSpec with Matchers {
 
     describe("with constraint tracking between integer values") {
 
-        val testProject = org.opalj.br.TestSupport.biProject("ai.jar")
+        val testProject = org.opalj.br.TestSupport.biProject("ai-9.jar")
         val IntegerValues = testProject.classFile(ObjectType("ai/domain/IntegerValuesFrenzy")).get
 
         it("it should handle cases where we constrain and compare unknown values (without join)") {

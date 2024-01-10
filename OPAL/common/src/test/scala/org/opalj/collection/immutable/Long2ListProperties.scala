@@ -1,12 +1,13 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.collection
+package org.opalj
+package collection
 package immutable
 
 import org.junit.runner.RunWith
-import org.scalatestplus.junit.JUnitRunner
-import org.scalacheck.Properties
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Prop.propBoolean
+import org.scalacheck.Properties
+import org.scalatestplus.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 object Long2ListProperties extends Properties("Long2List") {

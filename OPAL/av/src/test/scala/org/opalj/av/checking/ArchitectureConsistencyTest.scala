@@ -1,17 +1,18 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.av
+package org.opalj
+package av
 package checking
-
-import org.junit.runner.RunWith
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.BeforeAndAfterAll
-import org.scalatestplus.junit.JUnitRunner
 
 import org.opalj.bi.TestResources.locateTestResources
 import org.opalj.br.BooleanValue
 import org.opalj.br.StringValue
 import org.opalj.br.reader.Java8Framework.ClassFiles
+
+import org.junit.runner.RunWith
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.junit.JUnitRunner
 
 /**
  * Tests for architectural Specifications.

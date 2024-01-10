@@ -1,33 +1,83 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org
-package opalj
+package org.opalj
 package tac
 package fpcf
 package analyses
 package alias
 
 import org.opalj.br.DeclaredMethod
+import org.opalj.br.Field
 import org.opalj.br.Method
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.SomeProject
 import org.opalj.br.analyses.VirtualFormalParameter
 import org.opalj.tac.common.DefinitionSite
 
+/**
+ * Represents a source code element which can be part of an alias relation.
+ *
+ * Valid elements are:
+ * - [[AliasFP]]: A formal parameter
+ * - [[AliasDS]]: A definition site
+ * - [[AliasReturnValue]]: A method return value
+ * - [[AliasNull]]: The null value
+ */
 sealed trait AliasSourceElement {
 
+    /**
+     * The underlying element that is represented.
+     */
     def element: AnyRef
 
-    def method: Method
+    /**
+     * Returns the [[Method]] this element is associated with.
+     * If such a method does not exist, an exception is thrown.
+     *
+     * @throws UnsupportedOperationException if the element is not associated with a method
+     * @return The [[Method]] this element is associated with.
+     *
+     * @see [[isMethodBound]]
+     */
+    def method: Method = throw new UnsupportedOperationException()
 
-    def declaredMethod: DeclaredMethod
+    /**
+     * Returns the [[DeclaredMethod]] this element is associated with.
+     * If such a method does not exist, an exception is thrown.
+     *
+     * @throws UnsupportedOperationException if the element is not associated with a method
+     * @return The [[DeclaredMethod]] this element is associated with.
+     *
+     * @see [[isMethodBound]]
+     */
+    def declaredMethod: DeclaredMethod = throw new UnsupportedOperationException()
 
-    def definitionSite: Int
+    /**
+     * Returns the definition site of this element.
+     * If such a definition site does not exist, an exception is thrown.
+     *
+     * @throws UnsupportedOperationException if the element is not associated with a definition site
+     * @return The definition site of this element.
+     */
+    def definitionSite: Int = throw new UnsupportedOperationException()
 
+    /**
+     * Returns `true` if this element is associated with a method.
+     * If this method returns `true`, [[method]] and [[declaredMethod]] can be safely called.
+     *
+     * @return `true` if this element is associated with a method.
+     */
     def isMethodBound: Boolean
 }
 
 object AliasSourceElement {
 
+    /**
+     * Creates an [[AliasSourceElement]] that represents the given element.
+     *
+     * @param element The element to represent
+     * @param project The project the element is part of
+     * @return An [[AliasSourceElement]] that represents the given element
+     */
     def apply(element: AnyRef)(implicit project: SomeProject): AliasSourceElement = {
         element match {
             case fp: VirtualFormalParameter => AliasFP(fp)
@@ -38,34 +88,39 @@ object AliasSourceElement {
     }
 }
 
-//case class AliasField(field: Field) extends AliasEntity {
-//
-//    override def entity: Field = field
-//}
-//
+/**
+ * Represents a field that is part of an alias relation.
+ */
+case class AliasField(field: Field) extends AliasSourceElement {
 
-case class AliasNull() extends AliasSourceElement {
-    override def element: AnyRef = throw new UnsupportedOperationException()
-
-    override def method: Method = throw new UnsupportedOperationException()
-
-    override def declaredMethod: DeclaredMethod = throw new UnsupportedOperationException()
-
-    override def definitionSite: UByte = throw new UnsupportedOperationException()
+    override def element: Field = field
 
     override def isMethodBound: Boolean = false
 }
 
-case class AliasReturnValue(method: Method, project: SomeProject) extends AliasSourceElement {
-    override def element: AnyRef = method
+/**
+ * Represents the null value that is part of an alias relation.
+ */
+case class AliasNull() extends AliasSourceElement {
+    override def element: AnyRef = throw new UnsupportedOperationException()
 
-    override def definitionSite: Int = throw new UnsupportedOperationException("No definition site for return value")
+    override def isMethodBound: Boolean = false
+}
+
+/**
+ * Represents a method return value of a method that is part of an alias relation.
+ */
+case class AliasReturnValue(override val method: Method, project: SomeProject) extends AliasSourceElement {
+    override def element: AnyRef = method
 
     override def declaredMethod: DeclaredMethod = project.get(DeclaredMethodsKey)(method)
 
     override def isMethodBound: Boolean = true
 }
 
+/**
+ * Represents a formal parameter of a method that is part of an alias relation.
+ */
 case class AliasFP(fp: VirtualFormalParameter) extends AliasSourceElement {
 
     override def element: VirtualFormalParameter = fp
@@ -79,6 +134,9 @@ case class AliasFP(fp: VirtualFormalParameter) extends AliasSourceElement {
     override def isMethodBound: Boolean = true
 }
 
+/**
+ * Represents a definition site that is part of an alias relation.
+ */
 case class AliasDS(ds: DefinitionSite, project: SomeProject) extends AliasSourceElement {
 
     override def element: DefinitionSite = ds

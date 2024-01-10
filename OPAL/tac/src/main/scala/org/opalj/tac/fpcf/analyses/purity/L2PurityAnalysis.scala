@@ -9,8 +9,55 @@ import scala.annotation.switch
 
 import scala.collection.immutable.IntMap
 
-import net.ceedubs.ficus.Ficus._
-
+import org.opalj.ai.isImmediateVMException
+import org.opalj.br.ComputationalTypeReference
+import org.opalj.br.DeclaredMethod
+import org.opalj.br.Field
+import org.opalj.br.Method
+import org.opalj.br.MethodDescriptor
+import org.opalj.br.ObjectType
+import org.opalj.br.analyses.DeclaredMethodsKey
+import org.opalj.br.analyses.ProjectInformationKeys
+import org.opalj.br.analyses.SomeProject
+import org.opalj.br.cfg.CFG
+import org.opalj.br.fpcf.ContextProviderKey
+import org.opalj.br.fpcf.FPCFAnalysis
+import org.opalj.br.fpcf.FPCFAnalysisScheduler
+import org.opalj.br.fpcf.FPCFEagerAnalysisScheduler
+import org.opalj.br.fpcf.FPCFLazyAnalysisScheduler
+import org.opalj.br.fpcf.analyses.ConfiguredPurityKey
+import org.opalj.br.fpcf.properties.ClassifiedImpure
+import org.opalj.br.fpcf.properties.CompileTimePure
+import org.opalj.br.fpcf.properties.Context
+import org.opalj.br.fpcf.properties.ContextuallyPure
+import org.opalj.br.fpcf.properties.ExtensibleGetter
+import org.opalj.br.fpcf.properties.ExtensibleLocalField
+import org.opalj.br.fpcf.properties.ExtensibleLocalFieldWithGetter
+import org.opalj.br.fpcf.properties.FieldLocality
+import org.opalj.br.fpcf.properties.FreshReturnValue
+import org.opalj.br.fpcf.properties.Getter
+import org.opalj.br.fpcf.properties.ImpureByAnalysis
+import org.opalj.br.fpcf.properties.LocalField
+import org.opalj.br.fpcf.properties.LocalFieldWithGetter
+import org.opalj.br.fpcf.properties.NoFreshReturnValue
+import org.opalj.br.fpcf.properties.NoLocalField
+import org.opalj.br.fpcf.properties.PrimitiveReturnValue
+import org.opalj.br.fpcf.properties.Pure
+import org.opalj.br.fpcf.properties.Purity
+import org.opalj.br.fpcf.properties.ReturnValueFreshness
+import org.opalj.br.fpcf.properties.SideEffectFree
+import org.opalj.br.fpcf.properties.SimpleContext
+import org.opalj.br.fpcf.properties.SimpleContextsKey
+import org.opalj.br.fpcf.properties.StaticDataUsage
+import org.opalj.br.fpcf.properties.UsesConstantDataOnly
+import org.opalj.br.fpcf.properties.UsesNoStaticData
+import org.opalj.br.fpcf.properties.UsesVaryingData
+import org.opalj.br.fpcf.properties.cg.Callees
+import org.opalj.br.fpcf.properties.cg.Callers
+import org.opalj.br.fpcf.properties.cg.NoCallers
+import org.opalj.br.fpcf.properties.immutability.ClassImmutability
+import org.opalj.br.fpcf.properties.immutability.FieldAssignability
+import org.opalj.br.fpcf.properties.immutability.TypeImmutability
 import org.opalj.collection.immutable.EmptyIntTrieSet
 import org.opalj.collection.immutable.IntTrieSet
 import org.opalj.fpcf.EOptionP
@@ -26,57 +73,11 @@ import org.opalj.fpcf.Result
 import org.opalj.fpcf.SomeEOptionP
 import org.opalj.fpcf.SomeEPS
 import org.opalj.fpcf.UBP
-import org.opalj.value.ASObjectValue
-import org.opalj.br.ComputationalTypeReference
-import org.opalj.br.DeclaredMethod
-import org.opalj.br.Field
-import org.opalj.br.Method
-import org.opalj.br.ObjectType
-import org.opalj.br.analyses.DeclaredMethodsKey
-import org.opalj.br.analyses.ProjectInformationKeys
-import org.opalj.br.analyses.SomeProject
-import org.opalj.br.cfg.CFG
-import org.opalj.br.fpcf.properties.ClassifiedImpure
-import org.opalj.br.fpcf.properties.CompileTimePure
-import org.opalj.br.fpcf.properties.ContextuallyPure
-import org.opalj.br.fpcf.properties.ExtensibleGetter
-import org.opalj.br.fpcf.properties.ExtensibleLocalField
-import org.opalj.br.fpcf.properties.ExtensibleLocalFieldWithGetter
-import org.opalj.br.fpcf.properties.FieldLocality
-import org.opalj.br.fpcf.properties.FreshReturnValue
-import org.opalj.br.fpcf.properties.Getter
-import org.opalj.br.fpcf.properties.ImpureByAnalysis
-import org.opalj.br.fpcf.properties.LocalField
-import org.opalj.br.fpcf.properties.LocalFieldWithGetter
-import org.opalj.br.fpcf.properties.NoFreshReturnValue
-import org.opalj.br.fpcf.properties.NoLocalField
-import org.opalj.br.fpcf.properties.PrimitiveReturnValue
-import org.opalj.br.fpcf.properties.Pure
-import org.opalj.br.fpcf.properties.ReturnValueFreshness
-import org.opalj.br.fpcf.properties.SideEffectFree
-import org.opalj.br.fpcf.properties.StaticDataUsage
-import org.opalj.br.fpcf.properties.UsesConstantDataOnly
-import org.opalj.br.fpcf.properties.UsesNoStaticData
-import org.opalj.br.fpcf.properties.UsesVaryingData
-import org.opalj.br.fpcf.FPCFAnalysis
-import org.opalj.br.fpcf.FPCFEagerAnalysisScheduler
-import org.opalj.br.fpcf.FPCFLazyAnalysisScheduler
-import org.opalj.br.fpcf.properties.Purity
-import org.opalj.br.fpcf.FPCFAnalysisScheduler
-import org.opalj.br.fpcf.analyses.ConfiguredPurityKey
-import org.opalj.tac.fpcf.properties.cg.Callees
-import org.opalj.tac.fpcf.properties.cg.Callers
-import org.opalj.br.MethodDescriptor
-import org.opalj.br.fpcf.properties.Context
-import org.opalj.br.fpcf.properties.SimpleContext
-import org.opalj.br.fpcf.properties.SimpleContextsKey
-import org.opalj.ai.isImmediateVMException
-import org.opalj.br.fpcf.properties.immutability.ClassImmutability
-import org.opalj.br.fpcf.properties.immutability.FieldAssignability
-import org.opalj.br.fpcf.properties.immutability.TypeImmutability
 import org.opalj.tac.cg.CallGraphKey
 import org.opalj.tac.fpcf.properties.TACAI
-import org.opalj.tac.fpcf.properties.cg.NoCallers
+import org.opalj.value.ASObjectValue
+
+import net.ceedubs.ficus.Ficus._
 
 /**
  * An inter-procedural analysis to determine a method's purity.
@@ -835,7 +836,7 @@ class L2PurityAnalysis private[analyses] (val project: SomeProject) extends Abst
             candidate foreach { mdc =>
                 if (mdc.method.classFile.thisType != ObjectType.Throwable) {
                     val fISTMethod = declaredMethods(mdc.method)
-                    val fISTContext = typeIterator.expandContext(state.context, fISTMethod, 0)
+                    val fISTContext = contextProvider.expandContext(state.context, fISTMethod, 0)
                     val fISTPurity = propertyStore(fISTContext, Purity.key)
                     val self = UVar(
                         ASObjectValue(isNull = No, isPrecise = false, state.declClass),
@@ -956,7 +957,7 @@ trait L2PurityAnalysisScheduler extends FPCFAnalysisScheduler {
     final def derivedProperty: PropertyBounds = PropertyBounds.lub(Purity)
 
     override def requiredProjectInformation: ProjectInformationKeys =
-        Seq(DeclaredMethodsKey, SimpleContextsKey, ConfiguredPurityKey)
+        Seq(DeclaredMethodsKey, SimpleContextsKey, ConfiguredPurityKey, ContextProviderKey)
 
     override def uses: Set[PropertyBounds] = {
         Set(

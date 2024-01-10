@@ -1,5 +1,6 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.fpcf
+package org.opalj
+package fpcf
 
 import org.opalj.collection.ForeachRefIterator
 
@@ -141,7 +142,7 @@ object MultiResult { private[fpcf] final val id = 2 }
  */
 final class InterimResult[P >: Null <: Property] private (
         val eps:       InterimEP[Entity, P],
-        val dependees: Set[SomeEOptionP], //IMPROVE: require EOptionPSets?
+        val dependees: Set[SomeEOptionP], // IMPROVE: require EOptionPSets?
         val c:         ProperOnUpdateContinuation
 ) extends ProperPropertyComputationResult { result =>
 
@@ -150,7 +151,7 @@ final class InterimResult[P >: Null <: Property] private (
     if (PropertyStore.Debug) { // TODO move to generic handleResult method ...
         if (dependees.isEmpty) {
             throw new IllegalArgumentException(
-                s"intermediate result without dependencies: $this"+
+                s"intermediate result without dependencies: $this" +
                     " (use PartialResults for collaboratively computed results)"
             )
         }
@@ -162,7 +163,7 @@ final class InterimResult[P >: Null <: Property] private (
 
         if (dependees.exists(eOptP => eOptP.e == eps.e && eOptP.pk == result.key)) {
             throw new IllegalArgumentException(
-                s"intermediate result with an illegal self-dependency: "+this
+                s"intermediate result with an illegal self-dependency: " + this
             )
         }
     }
@@ -390,7 +391,7 @@ object PartialResult { private[fpcf] final val id = 6 }
  */
 case class InterimPartialResult[SE >: Null <: Property](
         us:        Iterable[SomePartialResult], // can be empty!
-        dependees: Set[SomeEOptionP], //IMPROVE: require EOptionPSets?
+        dependees: Set[SomeEOptionP], // IMPROVE: require EOptionPSets?
         c:         OnUpdateContinuation
 ) extends ProperPropertyComputationResult {
 
@@ -437,4 +438,3 @@ object InterimPartialResult {
         new InterimPartialResult[SE](List(pruc), dependees, c)
     }
 }
-

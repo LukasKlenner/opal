@@ -1,15 +1,14 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.hermes.queries.jcg
+package org.opalj
+package hermes
+package queries
+package jcg
 
 import scala.collection.immutable.ArraySeq
 
-import org.opalj.da
-import org.opalj.hermes.DefaultFeatureQuery
-import org.opalj.hermes.HermesConfig
-import org.opalj.hermes.InstructionLocation
-import org.opalj.hermes.LocationsContainer
-import org.opalj.hermes.ProjectConfiguration
-
+import org.opalj.ai.Domain
+import org.opalj.ai.InterruptableAI
+import org.opalj.ai.domain.l1.DefaultDomainWithCFGAndDefUse
 import org.opalj.bi.REF_invokeInterface
 import org.opalj.bi.REF_invokeSpecial
 import org.opalj.bi.REF_invokeStatic
@@ -21,15 +20,13 @@ import org.opalj.br.Method
 import org.opalj.br.MethodCallMethodHandle
 import org.opalj.br.MethodDescriptor
 import org.opalj.br.MethodWithBody
+import org.opalj.br.ObjectType.LambdaMetafactory
 import org.opalj.br.analyses.Project
 import org.opalj.br.instructions.AASTORE
 import org.opalj.br.instructions.ARETURN
-import org.opalj.br.instructions.INVOKEDYNAMIC
 import org.opalj.br.instructions.Instruction
-import org.opalj.br.ObjectType.LambdaMetafactory
-import org.opalj.ai.Domain
-import org.opalj.ai.InterruptableAI
-import org.opalj.ai.domain.l1.DefaultDomainWithCFGAndDefUse
+import org.opalj.br.instructions.INVOKEDYNAMIC
+import org.opalj.da
 
 /**
  * This feature query corresponds to the Java8Invokedynamics.md test cases from the JCG call
@@ -46,15 +43,15 @@ class Java8Invokedynamics(
 
     override def featureIDs: Seq[String] =
         /* There are 16 test cases, 7 pertaining to method references and 9 pertaining to lambdas
-        * Lambda5 = Java10 string concat
-        * Lambda6 = Scala serialization
-        * Lambda7 = Scala symbols
-        * Lambda8 = Scala structural call site
-        * Lambda9 = Groovy invDyn - no test case available
-        *
-        * Note: Scala's method references use the same mechanism as Java 8 and are therefore not
-        * covered within this query.
-        * */
+         * Lambda5 = Java10 string concat
+         * Lambda6 = Scala serialization
+         * Lambda7 = Scala symbols
+         * Lambda8 = Scala structural call site
+         * Lambda9 = Groovy invDyn - no test case available
+         *
+         * Note: Scala's method references use the same mechanism as Java 8 and are therefore not
+         * covered within this query.
+         * */
         (1 to 7).map(num => s"MR$num") ++ (1 to 9).map(num => s"Lambda$num")
 
     def evaluate[S](
@@ -174,7 +171,7 @@ class Java8Invokedynamics(
             }
             case REF_invokeVirtual    => 6 /* MR 7 */
             case REF_newInvokeSpecial => 5 /* MR 6 */
-            case hk                   => throw new RuntimeException("Unexpected handle Kind."+hk)
+            case hk                   => throw new RuntimeException("Unexpected handle Kind." + hk)
         }
     }
 }

@@ -49,14 +49,16 @@ public class ShapeTest {
         shapeTest.getLastOrCircle(new Square(1.0));
     }
 
+    @Alias(mayAlias = {@MayAlias(reason = "param might be added to field", id = "ShapeTest.shapesAddParam")},
+            noAlias = {@NoAlias(reason = "param is never added to field", id = "ShapeTest.shapeGetLastOrParam")})
     Shape[] shapes = new Shape[10];
     int index = 0;
 
     Shape currentShape;
-
-//    @Alias(mayAlias = {@MayAlias(reason = "", testClass = ShapeTest.class, id = "addRectangle")})
+    
+    @Alias(mayAlias = {@MayAlias(reason = "", id = "ShapeTest.addRectangle")})
     public Shape addRectangle(
-//            @Alias(mayAlias = {@MayAlias(reason = "", testClass = ShapeTest.class, id = "addRectangle")})
+            @Alias(mayAlias = {@MayAlias(reason = "", id = "ShapeTest.addRectangle"), @MayAlias(reason = "param might be assigned to field", id = "ShapeTest.shapesAddParam")})
             Shape shape) {
 
         if (shape instanceof Rectangle) {
@@ -68,10 +70,11 @@ public class ShapeTest {
 
     }
 
-    @Alias(mayAlias = {@MayAlias(reason = "return value might be param", testClass = ShapeTest.class, id = "getLastOrParam"),
-                       @MayAlias(reason = "return value might be null", testClass = ShapeTest.class, id = "getLastOrNull", aliasWithNull = true)})
+    @Alias(mayAlias = {@MayAlias(reason = "return value might be param", id = "ShapeTest.getLastOrParam"),
+                       @MayAlias(reason = "return value might be null", id = "ShapeTest.getLastOrNull", aliasWithNull = true)})
     public Shape getLastOr(
-            @Alias(mayAlias = {@MayAlias(reason = "return value might be param", testClass = ShapeTest.class, id = "getLastOrParam")})
+            @Alias(mayAlias = {@MayAlias(reason = "return value might be param", id = "ShapeTest.getLastOrParam")}, 
+                    noAlias = {@NoAlias(reason = "param is never added to field", id = "ShapeTest.shapeGetLastOrParam")})
             Shape shape) {
 
         Shape currentShape = shape;
@@ -87,21 +90,20 @@ public class ShapeTest {
         return currentShape;
     }
 
-    @Alias(mayAlias = {@MayAlias(reason = "return value might be param", testClass = ShapeTest.class, id = "getLastOrCircleParam"),
-            @MayAlias(reason = "return value might be new circle", testClass = ShapeTest.class, id = "getLastOrCircleNewCircle"),
-            @MayAlias(reason = "return value might be null", testClass = ShapeTest.class, id = "getLastOrNull", aliasWithNull = true)})
+    @Alias(mayAlias = {@MayAlias(reason = "return value might be param", id = "ShapeTest.getLastOrCircleParam"),
+            @MayAlias(reason = "return value might be new circle", id = "ShapeTest.getLastOrCircleNewCircle"),
+            @MayAlias(reason = "return value might be null", id = "ShapeTest.getLastOrNull", aliasWithNull = true)})
     public Shape getLastOrCircle(
-            @Alias(mayAlias = {@MayAlias(reason = "return value might be param", testClass = ShapeTest.class, id = "getLastOrCircleParam")}
-                   //noAlias = {@NoAlias(reason = "param new circle", testClass = ShapeTest.class, id = "getLastOrCircleParamNewCircle")}
+            @Alias(mayAlias = {@MayAlias(reason = "return value might be param", id = "ShapeTest.getLastOrCircleParam")},
+                   noAlias = {@NoAlias(reason = "param is never new circle", id = "ShapeTest.getLastOrCircleParamNewCircle")}
             )
             Shape shape) {
 
         Shape currentShape = shape;
 
-        Shape circle = new @Alias(mayAlias = {@MayAlias(reason = "return value might be new circle", testClass = ShapeTest.class, id = "getLastOrCircleNewCircle")}
-                                 // noAlias = {@NoAlias(reason = "param new circle", testClass = ShapeTest.class, id = "getLastOrCircleParamNewCircle")}
-        )
-                Circle(2.0);
+        Shape circle = new @Alias(mayAlias = {@MayAlias(reason = "return value might be new circle", id = "ShapeTest.getLastOrCircleNewCircle")},
+                                  noAlias = {@NoAlias(reason = "param is never new circle", id = "ShapeTest.getLastOrCircleParamNewCircle")}
+        ) Circle(2.0);
 
         for (int i = 0; i < shapes.length; i++) {
 
@@ -118,10 +120,10 @@ public class ShapeTest {
         return currentShape;
     }
 
-    @Alias(mayAlias = {@MayAlias(reason = "return value may be parameter", testClass = ShapeTest.class, id = "setCurrentRectangle"),
-                       @MayAlias(reason = "return value might be null", testClass = ShapeTest.class, id = "setCurrentRectangleNull", aliasWithNull = true)})
+    @Alias(mayAlias = {@MayAlias(reason = "return value may be parameter", id = "ShapeTest.setCurrentRectangle"),
+                       @MayAlias(reason = "return value might be null", id = "ShapeTest.setCurrentRectangleNull", aliasWithNull = true)})
     public Shape setCurrentRectangle(
-            @Alias(mayAlias = {@MayAlias(reason = "return value may be parameter", testClass = ShapeTest.class, id = "setCurrentRectangle")})
+            @Alias(mayAlias = {@MayAlias(reason = "return value may be parameter", id = "ShapeTest.setCurrentRectangle")})
             Shape shape) {
         if (shape instanceof Rectangle) {
             currentShape = shape;
@@ -132,7 +134,7 @@ public class ShapeTest {
 
     }
 
-    @Alias(noAlias = {@NoAlias(reason = "Method never returns null", testClass = ShapeTest.class, id = "createCircleNull", aliasWithNull = true)})
+    @Alias(noAlias = {@NoAlias(reason = "Method never returns null", id = "ShapeTest.createCircleNull", aliasWithNull = true)})
     public static Circle createCircle(double radius) {
         return new Circle(radius);
     }
@@ -145,12 +147,12 @@ public class ShapeTest {
         return new Square(side);
     }
 
-    @Alias(mustAlias = {@MustAlias(reason = "Method always returns null", testClass = ShapeTest.class, id = "createNull", aliasWithNull = true)})
+    @Alias(mustAlias = {@MustAlias(reason = "Method always returns null", id = "ShapeTest.createNull", aliasWithNull = true)})
     public static Shape createNull() {
         return null;
     }
 
-    @Alias(mayAlias = {@MayAlias(reason = "Method may return null", testClass = ShapeTest.class, id = "createCircleNull", aliasWithNull = true)})
+    @Alias(mayAlias = {@MayAlias(reason = "Method may return null", id = "ShapeTest.createCircleNull", aliasWithNull = true)})
     public static Shape createShapeNullPossible(String name, double length) {
         switch (name) {
             case "circle":
@@ -164,7 +166,7 @@ public class ShapeTest {
         }
     }
 
-    @Alias(noAlias = {@NoAlias(reason = "Method never returns null", testClass = ShapeTest.class, id = "createCircleNull", aliasWithNull = true)})
+    @Alias(noAlias = {@NoAlias(reason = "Method never returns null", id = "ShapeTest.createCircleNull", aliasWithNull = true)})
     public static Shape createShapeNullImpossible(String name, double length) {
         switch (name) {
             case "circle":

@@ -1,14 +1,15 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.fpcf
+package org.opalj
+package fpcf
 
 import scala.collection.immutable.IntMap
 import scala.collection.mutable
 
-import org.scalatest.funsuite.AnyFunSuite
-
 import org.opalj.fpcf.fixtures.InitializedPropertyStore
 import org.opalj.fpcf.fixtures.Marker
 import org.opalj.fpcf.fixtures.Palindromes
+
+import org.scalatest.funsuite.AnyFunSuite
 
 class EOptionPSetTest extends AnyFunSuite {
 

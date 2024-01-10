@@ -5,12 +5,13 @@ package fpcf
 package analyses
 package cg
 package reflection
-import org.opalj.collection.immutable.IntArraySetBuilder
-import org.opalj.br.FieldType
-import org.opalj.br.FieldTypes
+import scala.reflect.ClassTag
 
 import scala.collection.immutable.ArraySeq
-import scala.reflect.ClassTag
+
+import org.opalj.br.FieldType
+import org.opalj.br.FieldTypes
+import org.opalj.collection.immutable.IntArraySetBuilder
 
 /**
  * Utility class to retrieve types or expressions for varargs.
@@ -35,7 +36,7 @@ object VarargsUtil {
      * Only handles the case of a simple array of class constants or primitive types' classes!
      * In case [[None]] is returned, the caller must mark the callsite as incomplete.
      */
-    private[reflection] def getTypesFromVararg(
+    def getTypesFromVararg(
         expr:  Expr[V],
         stmts: Array[Stmt[V]]
     ): Option[FieldTypes] = {

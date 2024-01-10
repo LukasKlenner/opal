@@ -1,12 +1,20 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.ai.tutorial.ex1
+package org.opalj
+package ai
+package tutorial
+package ex1
 
 import java.net.URL
+
+import org.opalj.br.Method
+import org.opalj.br.ObjectType
+import org.opalj.br.SingleArgumentMethodDescriptor
+import org.opalj.br.VoidType
+import org.opalj.br.analyses.BasicReport
+import org.opalj.br.analyses.Project
+import org.opalj.br.analyses.ProjectAnalysisApplication
+import org.opalj.br.instructions.INVOKESPECIAL
 import org.opalj.util.PerformanceEvaluation.time
-import org.opalj.br._
-import org.opalj.br.analyses._
-import org.opalj.br.instructions._
-import org.opalj.ai._
 
 import scala.collection.parallel.CollectionConverters.IterableIsParallelizable
 
@@ -92,10 +100,9 @@ object IdentifyResourcesAnalysis extends ProjectAnalysisApplication {
 
         BasicReport(
             if (callSitesWithConstantStringParameter.isEmpty)
-                "Only found "+callSites.size+" candidates."
+                "Only found " + callSites.size + " candidates."
             else
-                callSitesWithConstantStringParameter.map(callSiteToString).
-                    mkString("Methods:\n", "\n", ".\n")
+                callSitesWithConstantStringParameter.map(callSiteToString).mkString("Methods:\n", "\n", ".\n")
         )
     }
 

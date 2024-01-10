@@ -6,15 +6,8 @@ package analyses
 package cg
 package reflection
 
-import org.opalj.collection.immutable.IntTrieSet
-import org.opalj.fpcf.ProperPropertyComputationResult
-import org.opalj.fpcf.PropertyBounds
-import org.opalj.fpcf.PropertyComputationResult
-import org.opalj.fpcf.PropertyStore
-import org.opalj.fpcf.Results
-import org.opalj.value.ValueInformation
-import org.opalj.br.analyses.SomeProject
-import org.opalj.br.fpcf.FPCFAnalysis
+import scala.collection.immutable.ArraySeq
+
 import org.opalj.br.ArrayType
 import org.opalj.br.DeclaredMethod
 import org.opalj.br.MethodDescriptor
@@ -22,19 +15,27 @@ import org.opalj.br.ObjectType
 import org.opalj.br.analyses.DeclaredMethods
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.ProjectInformationKeys
+import org.opalj.br.analyses.SomeProject
 import org.opalj.br.fpcf.BasicFPCFEagerAnalysisScheduler
-import org.opalj.tac.fpcf.properties.cg.Callees
-import org.opalj.tac.fpcf.properties.cg.Callers
+import org.opalj.br.fpcf.FPCFAnalysis
+import org.opalj.br.fpcf.properties.cg.Callees
+import org.opalj.br.fpcf.properties.cg.Callers
+import org.opalj.collection.immutable.IntTrieSet
+import org.opalj.fpcf.ProperPropertyComputationResult
+import org.opalj.fpcf.PropertyBounds
+import org.opalj.fpcf.PropertyComputationResult
+import org.opalj.fpcf.PropertyStore
+import org.opalj.fpcf.Results
 import org.opalj.tac.cg.TypeIteratorKey
 import org.opalj.tac.fpcf.analyses.pointsto.TamiFlexKey
 import org.opalj.tac.fpcf.properties.TACAI
-
-import scala.collection.immutable.ArraySeq
+import org.opalj.value.ValueInformation
 
 /**
  * Adds the specified calls from the tamiflex.log to the call graph.
  * TODO: Merge with reflection analysis
  * TODO: Also handle class-forName -> Loaded classes
+ *
  * @author Florian Kuebler
  */
 class TamiFlexCallGraphAnalysis private[analyses] (

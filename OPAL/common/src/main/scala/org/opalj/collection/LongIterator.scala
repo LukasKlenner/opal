@@ -1,10 +1,11 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.collection
+package org.opalj
+package collection
 
-import java.util.function.LongPredicate
 import java.util.function.LongConsumer
-
+import java.util.function.LongPredicate
 import scala.collection.AbstractIterator
+
 import org.opalj.collection.immutable.LongTrieSet
 
 /**

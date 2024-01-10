@@ -6,7 +6,16 @@ package analyses
 package cg
 package xta
 
-import org.opalj.br._
+import scala.collection.mutable.ArrayBuffer
+
+import org.opalj.br.ArrayType
+import org.opalj.br.DeclaredMethod
+import org.opalj.br.Field
+import org.opalj.br.ObjectType
+import org.opalj.br.PCAndInstruction
+import org.opalj.br.ReferenceType
+import org.opalj.br.Type
+import org.opalj.br.analyses.DeclaredFieldsKey
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.ProjectInformationKeys
 import org.opalj.br.analyses.SomeProject
@@ -14,10 +23,13 @@ import org.opalj.br.analyses.cg.ClosedPackagesKey
 import org.opalj.br.analyses.cg.InitialEntryPointsKey
 import org.opalj.br.analyses.cg.InitialInstantiatedTypesKey
 import org.opalj.br.fpcf.BasicFPCFTriggeredAnalysisScheduler
+import org.opalj.br.fpcf.ContextProviderKey
 import org.opalj.br.fpcf.FPCFAnalysis
-import org.opalj.tac.fpcf.properties.cg.Callers
-import org.opalj.tac.fpcf.properties.cg.InstantiatedTypes
-import org.opalj.tac.fpcf.properties.cg.NoCallers
+import org.opalj.br.fpcf.analyses.ContextProvider
+import org.opalj.br.fpcf.properties.Context
+import org.opalj.br.fpcf.properties.cg.Callers
+import org.opalj.br.fpcf.properties.cg.InstantiatedTypes
+import org.opalj.br.fpcf.properties.cg.NoCallers
 import org.opalj.br.instructions.INVOKESPECIAL
 import org.opalj.br.instructions.NEW
 import org.opalj.collection.immutable.UIDSet
@@ -37,10 +49,6 @@ import org.opalj.fpcf.PropertyStore
 import org.opalj.fpcf.Results
 import org.opalj.fpcf.SomeEPS
 import org.opalj.fpcf.UBP
-import org.opalj.br.fpcf.properties.Context
-import org.opalj.tac.cg.TypeIteratorKey
-
-import scala.collection.mutable.ArrayBuffer
 
 /**
  * Marks types as instantiated if their constructor is invoked. Constructors invoked by subclass
@@ -50,7 +58,6 @@ import scala.collection.mutable.ArrayBuffer
  * This analysis is adapted from the RTA version. Instead of adding the instantiations to the type
  * set of the Project, they are added to the type set of the calling method. Which entity the type
  * is attached to depends on the call graph variant used.
- *
  *
  * TODO: Refactor this and the rta version in order to provide a common base-class.
  *
@@ -62,12 +69,9 @@ class InstantiatedTypesAnalysis private[analyses] (
         val setEntitySelector: TypeSetEntitySelector
 ) extends FPCFAnalysis {
 
-    private[this] implicit val typeIterator: TypeIterator = project.get(TypeIteratorKey)
+    private[this] implicit val contextProvider: ContextProvider = project.get(ContextProviderKey)
 
     def analyze(declaredMethod: DeclaredMethod): PropertyComputationResult = {
-        // only constructors may initialize a class
-        if (declaredMethod.name != "<init>")
-            return NoResult;
 
         val callersEOptP = propertyStore(declaredMethod, Callers.key)
 
@@ -88,26 +92,35 @@ class InstantiatedTypesAnalysis private[analyses] (
         }
 
         val declaredType = declaredMethod.declaringClassType.asObjectType
+        val loadConstantTypes = getLoadConstantTypes(declaredMethod)
+
+        val instantiatedTypes = PartialResult[TypeSetEntity, InstantiatedTypes](
+            declaredMethod,
+            InstantiatedTypes.key,
+            InstantiatedTypes.update(declaredMethod, loadConstantTypes)
+        )
 
         val cfOpt = project.classFile(declaredType)
 
-        // abstract classes can never be instantiated
-        cfOpt.foreach { cf =>
-            if (cf.isAbstract)
+        // only constructors may initialize a class; abstract classes can never be instantiated
+        if (declaredMethod.name != "<init>" || cfOpt.isDefined && cfOpt.get.isAbstract) {
+            if (loadConstantTypes.isEmpty)
                 return NoResult;
+            else
+                return Results(instantiatedTypes)
         }
 
-        processCallers(declaredMethod, declaredType, callersEOptP, callersUB, null)
+        processCallers(declaredMethod, declaredType, ArrayBuffer(instantiatedTypes), callersEOptP, callersUB, null)
     }
 
     private[this] def processCallers(
         declaredMethod: DeclaredMethod,
         declaredType:   ObjectType,
+        partialResults: ArrayBuffer[PartialResult[TypeSetEntity, InstantiatedTypes]],
         callersEOptP:   EOptionP[DeclaredMethod, Callers],
         callersUB:      Callers,
         seenCallers:    Callers
     ): PropertyComputationResult = {
-        val partialResults = ArrayBuffer.empty[PartialResult[TypeSetEntity, InstantiatedTypes]]
         callersUB.forNewCallerContexts(seenCallers, callersEOptP.e) {
             (_, callerContext, _, isDirect) =>
                 processCaller(declaredMethod, declaredType, callerContext, isDirect, partialResults)
@@ -208,9 +221,8 @@ class InstantiatedTypesAnalysis private[analyses] (
         // there must either be a new of the `declaredType` or it is a super call.
         val newInstr = NEW(declaredType)
         val hasNew = callerMethod.body.get.exists(pcInst => pcInst.instruction == newInstr)
-        if (hasNew) {
+        if (hasNew)
             partialResults += partialResult(declaredType, caller)
-        }
     }
 
     private[this] def continuation(
@@ -219,7 +231,7 @@ class InstantiatedTypesAnalysis private[analyses] (
         seenCallers:    Callers
     )(someEPS: SomeEPS): PropertyComputationResult = {
         val eps = someEPS.asInstanceOf[EPS[DeclaredMethod, Callers]]
-        processCallers(declaredMethod, declaredType, eps, eps.ub, seenCallers)
+        processCallers(declaredMethod, declaredType, ArrayBuffer.empty, eps, eps.ub, seenCallers)
     }
 
     private def partialResult(
@@ -256,7 +268,7 @@ class InstantiatedTypesAnalysisScheduler(
 ) extends BasicFPCFTriggeredAnalysisScheduler {
 
     override def requiredProjectInformation: ProjectInformationKeys = Seq(
-        TypeIteratorKey, ClosedPackagesKey, DeclaredMethodsKey, InitialEntryPointsKey,
+        ContextProviderKey, ClosedPackagesKey, DeclaredMethodsKey, InitialEntryPointsKey,
         InitialInstantiatedTypesKey
     )
 
@@ -284,9 +296,9 @@ class InstantiatedTypesAnalysisScheduler(
     def assignInitialTypeSets(p: SomeProject, ps: PropertyStore): Unit = {
         val packageIsClosed = p.get(ClosedPackagesKey)
         val declaredMethods = p.get(DeclaredMethodsKey)
+        val declaredFields = p.get(DeclaredFieldsKey)
         val entryPoints = p.get(InitialEntryPointsKey)
-        val initialInstantiatedTypes =
-            UIDSet[ReferenceType](p.get(InitialInstantiatedTypesKey).toSeq: _*)
+        val initialInstantiatedTypes = UIDSet[ReferenceType](p.get(InitialInstantiatedTypesKey).toSeq: _*)
 
         // While processing entry points and fields, we keep track of all array types we see, as
         // well as subtypes and lower-dimensional types. These types also need to be
@@ -414,7 +426,7 @@ class InstantiatedTypesAnalysisScheduler(
                             }.result()
                         }
 
-                        val fieldSetEntity = selectSetEntity(f)
+                        val fieldSetEntity = selectSetEntity(declaredFields(f))
                         initialize(fieldSetEntity, initialAssignments)
                     }
                 case None =>

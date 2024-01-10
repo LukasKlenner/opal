@@ -6,6 +6,22 @@ package analyses
 package cg
 package rta
 
+import scala.collection.immutable.ArraySeq
+
+import org.opalj.br.ArrayType
+import org.opalj.br.DeclaredMethod
+import org.opalj.br.FieldType
+import org.opalj.br.ObjectType
+import org.opalj.br.ReferenceType
+import org.opalj.br.analyses.DeclaredMethods
+import org.opalj.br.analyses.DeclaredMethodsKey
+import org.opalj.br.analyses.ProjectInformationKeys
+import org.opalj.br.analyses.SomeProject
+import org.opalj.br.fpcf.BasicFPCFTriggeredAnalysisScheduler
+import org.opalj.br.fpcf.FPCFAnalysis
+import org.opalj.br.fpcf.properties.cg.Callers
+import org.opalj.br.fpcf.properties.cg.InstantiatedTypes
+import org.opalj.br.fpcf.properties.cg.NoCallers
 import org.opalj.collection.immutable.UIDSet
 import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.EPS
@@ -16,21 +32,6 @@ import org.opalj.fpcf.PropertyBounds
 import org.opalj.fpcf.PropertyComputationResult
 import org.opalj.fpcf.PropertyKind
 import org.opalj.fpcf.PropertyStore
-import org.opalj.br.ArrayType
-import org.opalj.br.DeclaredMethod
-import org.opalj.br.FieldType
-import org.opalj.br.ObjectType
-import org.opalj.br.analyses.DeclaredMethods
-import org.opalj.br.analyses.DeclaredMethodsKey
-import org.opalj.br.analyses.ProjectInformationKeys
-import org.opalj.br.analyses.SomeProject
-import org.opalj.br.fpcf.BasicFPCFTriggeredAnalysisScheduler
-import org.opalj.br.fpcf.FPCFAnalysis
-import org.opalj.tac.fpcf.properties.cg.Callers
-import org.opalj.tac.fpcf.properties.cg.InstantiatedTypes
-import org.opalj.tac.fpcf.properties.cg.NoCallers
-import org.opalj.br.ReferenceType
-import scala.collection.immutable.ArraySeq
 
 /**
  * Handles the effect of certain (configured native methods) to the set of instantiated types.

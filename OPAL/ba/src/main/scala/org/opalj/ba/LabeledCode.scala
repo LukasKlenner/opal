@@ -1,20 +1,22 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.ba
+package org.opalj
+package ba
 
+import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
-import it.unimi.dsi.fastutil.ints.Int2IntAVLTreeMap
+
 import org.opalj.br
-import org.opalj.br.PC
 import org.opalj.br.Code
-import org.opalj.br.StackMapTable
+import org.opalj.br.CodeAttribute
 import org.opalj.br.LineNumber
 import org.opalj.br.LineNumberTable
-import org.opalj.br.CodeAttribute
+import org.opalj.br.PC
+import org.opalj.br.StackMapTable
 import org.opalj.br.UnpackedLineNumberTable
 import org.opalj.br.instructions.InstructionLabel
 import org.opalj.br.instructions.PCLabel
 
-import scala.collection.immutable.ArraySeq
+import it.unimi.dsi.fastutil.ints.Int2IntAVLTreeMap
 
 /**
  * Mutable container for some labeled code.

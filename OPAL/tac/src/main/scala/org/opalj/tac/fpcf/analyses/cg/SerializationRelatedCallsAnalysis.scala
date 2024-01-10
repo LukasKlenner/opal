@@ -7,6 +7,23 @@ package cg
 
 import scala.annotation.tailrec
 
+import org.opalj.br.DeclaredMethod
+import org.opalj.br.ElementReferenceType
+import org.opalj.br.Method
+import org.opalj.br.MethodDescriptor
+import org.opalj.br.MethodDescriptor.JustReturnsObject
+import org.opalj.br.MethodDescriptor.NoArgsAndReturnVoid
+import org.opalj.br.ObjectType
+import org.opalj.br.ObjectType.{ObjectInputStream => ObjectInputStreamType}
+import org.opalj.br.ObjectType.{ObjectOutputStream => ObjectOutputStreamType}
+import org.opalj.br.ReferenceType
+import org.opalj.br.analyses.DeclaredMethodsKey
+import org.opalj.br.analyses.ProjectInformationKeys
+import org.opalj.br.analyses.SomeProject
+import org.opalj.br.fpcf.BasicFPCFEagerAnalysisScheduler
+import org.opalj.br.fpcf.FPCFAnalysis
+import org.opalj.br.fpcf.properties.cg.Callees
+import org.opalj.br.fpcf.properties.cg.Callers
 import org.opalj.collection.immutable.IntTrieSet
 import org.opalj.fpcf.Entity
 import org.opalj.fpcf.EPS
@@ -18,28 +35,11 @@ import org.opalj.fpcf.PropertyComputationResult
 import org.opalj.fpcf.PropertyStore
 import org.opalj.fpcf.Results
 import org.opalj.fpcf.SomeEPS
-import org.opalj.value.ASObjectValue
-import org.opalj.value.ValueInformation
-import org.opalj.br.analyses.SomeProject
-import org.opalj.br.fpcf.BasicFPCFEagerAnalysisScheduler
-import org.opalj.br.fpcf.FPCFAnalysis
-import org.opalj.br.DeclaredMethod
-import org.opalj.br.ElementReferenceType
-import org.opalj.br.MethodDescriptor
-import org.opalj.br.MethodDescriptor.JustReturnsObject
-import org.opalj.br.MethodDescriptor.NoArgsAndReturnVoid
-import org.opalj.br.ObjectType
-import org.opalj.br.ObjectType.{ObjectOutputStream => ObjectOutputStreamType}
-import org.opalj.br.ObjectType.{ObjectInputStream => ObjectInputStreamType}
-import org.opalj.br.analyses.DeclaredMethodsKey
-import org.opalj.br.analyses.ProjectInformationKeys
-import org.opalj.tac.fpcf.properties.cg.Callees
-import org.opalj.tac.fpcf.properties.cg.Callers
-import org.opalj.br.Method
-import org.opalj.br.ReferenceType
 import org.opalj.tac.cg.TypeIteratorKey
 import org.opalj.tac.fpcf.properties.TACAI
 import org.opalj.tac.fpcf.properties.TheTACAI
+import org.opalj.value.ASObjectValue
+import org.opalj.value.ValueInformation
 
 /**
  * Analysis handling the specifics of java.io.ObjectOutputStream.writeObject.
@@ -198,17 +198,18 @@ class OOSWriteObjectAnalysis private[analyses] (
                 "writeObject",
                 WriteObjectDescriptor
             )
-            indirectCalls.addCallOrFallback(
-                callContext,
-                callPC,
-                writeObjectMethod,
-                ObjectType.Object.packageName,
-                ObjectType.Object,
-                "writeObject",
-                WriteObjectDescriptor,
-                parameters,
-                receiver
-            )
+            if (writeObjectMethod.hasValue)
+                indirectCalls.addCallOrFallback(
+                    callContext,
+                    callPC,
+                    writeObjectMethod,
+                    ObjectType.Object.packageName,
+                    ObjectType.Object,
+                    "writeObject",
+                    WriteObjectDescriptor,
+                    parameters,
+                    receiver
+                )
         }
 
         val writeReplaceMethod = project.specialCall(
@@ -308,17 +309,16 @@ class OISReadObjectAnalysis private[analyses] (
                     t <- ch.allSubtypes(castType, reflexive = true)
                     cf <- project.classFile(t) // we ignore cases were no class file exists
                     if !cf.isInterfaceDeclaration
-                    if ch.isSubtypeOf(castType, ObjectType.Serializable)
+                    if ch.isSubtypeOf(t, ObjectType.Serializable)
                 } {
 
                     val receiver = Some(
                         (ASObjectValue(isNull = No, isPrecise = false, castType), IntTrieSet(pc))
                     )
 
-                    if (ch.isSubtypeOf(castType, ObjectType.Externalizable)) {
+                    if (ch.isSubtypeOf(t, ObjectType.Externalizable)) {
                         // call to `readExternal`
-                        val readExternal =
-                            p.instanceCall(t, t, "readExternal", ReadExternalDescriptor)
+                        val readExternal = p.instanceCall(t, t, "readExternal", ReadExternalDescriptor)
 
                         calleesAndCallers.addCallOrFallback(
                             context,
@@ -344,15 +344,16 @@ class OISReadObjectAnalysis private[analyses] (
                         val readObjectMethod = p.specialCall(
                             t, t, isInterface = false, "readObject", ReadObjectDescriptor
                         )
-                        calleesAndCallers.addCallOrFallback(
-                            context, pc, readObjectMethod,
-                            ObjectType.Object.packageName,
-                            ObjectType.Object,
-                            "readObject",
-                            ReadObjectDescriptor,
-                            parameterList,
-                            receiver
-                        )
+                        if (readObjectMethod.hasValue)
+                            calleesAndCallers.addCallOrFallback(
+                                context, pc, readObjectMethod,
+                                ObjectType.Object.packageName,
+                                ObjectType.Object,
+                                "readObject",
+                                ReadObjectDescriptor,
+                                parameterList,
+                                receiver
+                            )
 
                         // call to first super no-arg constructor
                         val nonSerializableSuperclass = firstNotSerializableSupertype(t)
@@ -419,6 +420,8 @@ class OISReadObjectAnalysis private[analyses] (
                             receiver
                         )
                     }
+
+                    // IMPROVE: Also handle readObjectNoData method
                 }
             case _ =>
         }
@@ -484,4 +487,3 @@ object SerializationRelatedCallsAnalysisScheduler extends BasicFPCFEagerAnalysis
         analysis
     }
 }
-

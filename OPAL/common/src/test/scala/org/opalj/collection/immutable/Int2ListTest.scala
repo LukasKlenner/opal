@@ -1,12 +1,14 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.collection.immutable
-
-import org.junit.runner.RunWith
-import org.scalatestplus.junit.JUnitRunner
-import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers
+package org.opalj
+package collection
+package immutable
 
 import org.opalj.util.PerformanceEvaluation
+
+import org.junit.runner.RunWith
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.junit.JUnitRunner
 
 /**
  * Tests Int2List.

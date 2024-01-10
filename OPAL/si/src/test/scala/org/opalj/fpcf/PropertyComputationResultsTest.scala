@@ -1,11 +1,12 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.fpcf
-
-import org.scalatest.funsuite.AnyFunSuite
+package org.opalj
+package fpcf
 
 import org.opalj.fpcf.fixtures.NilProperty
 import org.opalj.fpcf.fixtures.Palindromes.NoPalindrome
 import org.opalj.fpcf.fixtures.Palindromes.Palindrome
+
+import org.scalatest.funsuite.AnyFunSuite
 
 class PropertyComputationResultsTest extends AnyFunSuite {
 

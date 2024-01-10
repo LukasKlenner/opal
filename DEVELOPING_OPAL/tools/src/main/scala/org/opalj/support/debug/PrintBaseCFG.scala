@@ -1,13 +1,15 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.support.debug
+package org.opalj
+package support
+package debug
 
 import java.net.URL
 
-import org.opalj.io.writeAndOpen
-import org.opalj.graphs.toDot
-import org.opalj.br.cfg
 import org.opalj.br.Method
 import org.opalj.br.analyses.Project
+import org.opalj.br.cfg
+import org.opalj.graphs.toDot
+import org.opalj.io.writeAndOpen
 
 /**
  * Prints the CFG of a method using a data-flow independent analysis.
@@ -33,13 +35,13 @@ object PrintBaseCFG {
 
         val file = new java.io.File(fileName)
         if (!file.exists()) {
-            println(RED+"[error] the file does not exist: "+fileName+"."+RESET)
+            println(RED + "[error] the file does not exist: " + fileName + "." + RESET)
             return ;
         }
 
         val project = try { Project(file) } catch {
             case e: Exception =>
-                println(RED+"[error] cannot process file: "+e.getMessage+"."+RESET)
+                println(RED + "[error] cannot process file: " + e.getMessage + "." + RESET)
                 return ;
         }
 
@@ -50,7 +52,7 @@ object PrintBaseCFG {
                 else
                     className
             project.allClassFiles.find(_.fqn == fqn).getOrElse {
-                println(RED+"[error] cannot find the class: "+className+"."+RESET)
+                println(RED + "[error] cannot find the class: " + className + "." + RESET)
                 return ;
             }
         }
@@ -66,7 +68,7 @@ object PrintBaseCFG {
                 if (method.body.isDefined)
                     method
                 else {
-                    println(RED+"[error] the method: "+methodName+" does not have a body"+RESET)
+                    println(RED + "[error] the method: " + methodName + " does not have a body" + RESET)
                     return ;
                 }
             case None =>
@@ -87,7 +89,7 @@ object PrintBaseCFG {
         val rootNodes = Set(theCFG.startBlock) ++ theCFG.catchNodes
         val graph = toDot(rootNodes)
 
-        writeAndOpen(graph, classFile.thisType.toJava+"."+method.name, ".cfg.dot")
+        writeAndOpen(graph, classFile.thisType.toJava + "." + method.name, ".cfg.dot")
 
         println(code.cfJoins.mkString("JoinPCs (conservative):", ", ", ""))
         val (cfJoins, _, cfForks) = code.cfPCs

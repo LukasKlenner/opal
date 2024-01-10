@@ -4,15 +4,15 @@ package ai
 package domain
 package tracing
 
-import org.junit.runner.RunWith
-import org.scalatestplus.junit.JUnitRunner
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
-
-import org.opalj.bi.TestResources.locateTestResources
 import org.opalj.ai.common.XHTML.dumpOnFailureDuringValidation
+import org.opalj.bi.TestResources.locateTestResources
 import org.opalj.br._
 import org.opalj.br.reader.Java8Framework.ClassFiles
+
+import org.junit.runner.RunWith
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.junit.JUnitRunner
 
 /**
  * This test(suite) basically tests OPAL's support for tracing a property.
@@ -150,7 +150,7 @@ class PropertyTracingTest extends AnyFlatSpec with Matchers {
 
 private object PropertyTracingTest {
 
-    val classFiles = ClassFiles(locateTestResources("ai.jar", "bi"))
+    val classFiles = ClassFiles(locateTestResources("ai-9.jar", "bi"))
 
     val classFile = classFiles.map(_._1).find(_.thisType.fqn == "ai/domain/Sanitization").get
 }
