@@ -9,6 +9,7 @@ import org.opalj.br.fpcf.FPCFAnalysisScheduler
 import org.opalj.br.fpcf.properties.Alias
 import org.opalj.br.fpcf.properties.MayAlias
 import org.opalj.br.fpcf.properties.NoAlias
+import org.opalj.br.fpcf.properties.cg.Callees
 import org.opalj.br.fpcf.properties.pointsto.AllocationSitePointsToSet
 import org.opalj.fpcf.EPK
 import org.opalj.fpcf.ProperPropertyComputationResult
@@ -21,7 +22,6 @@ import org.opalj.tac.fpcf.analyses.alias.TacBasedAliasAnalysis
 import org.opalj.tac.fpcf.analyses.pointsto
 import org.opalj.tac.fpcf.analyses.pointsto.AbstractPointsToBasedAnalysis
 import org.opalj.tac.fpcf.properties.TACAI
-import org.opalj.tac.fpcf.properties.cg.Callees
 
 trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with AbstractPointsToBasedAnalysis {
 
@@ -32,7 +32,7 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
 
       try {
         val epk = EPK(
-          pointsto.toEntity(context.element1.definitionSite, context.context, state.tacai.get.stmts),
+          pointsto.toEntity(context.element1.definitionSite, context.context, state.tacai1.get.stmts),
           pointsToPropertyKey
         )
 

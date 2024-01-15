@@ -24,10 +24,11 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
         assert(context.element1.isInstanceOf[AliasSourceElement])
         assert(context.element2.isInstanceOf[AliasSourceElement])
 
-        val method = if (context.element1.isMethodBound) context.element1.method else context.element2.method
+        if (context.element1.isMethodBound) retrieveTAC(context.element1.method)
+        if (context.element2.isMethodBound) retrieveTAC(context.element2.method)
 
-        retrieveTAC(method)
-        if (state.tacai.isDefined) {
+        if ((!context.element1.isMethodBound || state.tacai1.isDefined) &&
+            (!context.element2.isMethodBound || state.tacai2.isDefined)) {
             analyzeTAC()
         } else {
             InterimResult(context.entity, MayAlias, MayAlias, state.getDependees, continuation)
@@ -55,7 +56,7 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
         }
 
         if (tacai.hasUBP && tacai.ub.tac.isDefined) {
-            state.updateTACAI(tacai.ub.tac.get)
+            state.updateTACAI(m, tacai.ub.tac.get)
         }
     }
 
@@ -73,7 +74,7 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
                     state.addDependency(someEPS)
                 }
                 if (ub.tac.isDefined) {
-                    state.updateTACAI(ub.tac.get)
+                    //state.updateTACAI(ub.tac.get)
                     analyzeTAC()
                 } else {
                     InterimResult(

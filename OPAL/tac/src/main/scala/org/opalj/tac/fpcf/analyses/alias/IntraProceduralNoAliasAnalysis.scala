@@ -21,6 +21,9 @@ import org.opalj.br.fpcf.properties.MayAlias
 import org.opalj.br.fpcf.properties.MustAlias
 import org.opalj.br.fpcf.properties.NoAlias
 import org.opalj.br.fpcf.properties.SimpleContextsKey
+import org.opalj.br.fpcf.properties.cg.Callees
+import org.opalj.br.fpcf.properties.cg.Callers
+import org.opalj.br.fpcf.properties.cg.NoCallers
 import org.opalj.fpcf.ProperPropertyComputationResult
 import org.opalj.fpcf.PropertyBounds
 import org.opalj.fpcf.PropertyStore
@@ -29,9 +32,6 @@ import org.opalj.tac.cg.TypeIteratorKey
 import org.opalj.tac.common.DefinitionSiteLike
 import org.opalj.tac.common.DefinitionSitesKey
 import org.opalj.tac.fpcf.properties.TACAI
-import org.opalj.tac.fpcf.properties.cg.Callees
-import org.opalj.tac.fpcf.properties.cg.Callers
-import org.opalj.tac.fpcf.properties.cg.NoCallers
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -45,7 +45,7 @@ class IntraProceduralNoAliasAnalysis( final val project: SomeProject) extends Ta
         context: AliasAnalysisContext,
         state:   AliasAnalysisState
     ): ProperPropertyComputationResult = {
-        assert(state.tacai.isDefined)
+        assert(state.tacai1.isDefined)
 
         if (context.entity.bothElementsMethodBound && !context.entity.elementsInSameMethod) {
             return result(MayAlias) //two elements in different methods are not yet supported
@@ -76,7 +76,7 @@ class IntraProceduralNoAliasAnalysis( final val project: SomeProject) extends Ta
                                 val defSites = expr.asVar.definedBy.filter(_ >= 0)
                                 var nonNewDefSite = false
                                 for (defSite <- defSites) {
-                                    val defStmt = state.tacai.get.stmts(defSite)
+                                    val defStmt = state.tacai1.get.stmts(defSite)
                                     if (!defStmt.isAssignment || !defStmt.asAssignment.expr.isNew) {
                                         nonNewDefSite = true
                                     }
@@ -130,7 +130,7 @@ class IntraProceduralNoAliasAnalysis( final val project: SomeProject) extends Ta
     }
 
     private[this] def allReturnExpr(implicit state: AliasAnalysisState): Array[Expr[V]] = {
-        state.tacai.get.stmts.filter(stmt => stmt.isReturnValue).map(_.asReturnValue.expr)
+        state.tacai1.get.stmts.filter(stmt => stmt.isReturnValue).map(_.asReturnValue.expr)
     }
 
     private[this] def isNullReturn(expr: Expr[V]): Boolean = {

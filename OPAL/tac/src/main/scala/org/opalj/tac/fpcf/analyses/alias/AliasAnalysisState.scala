@@ -6,6 +6,7 @@ package fpcf
 package analyses
 package alias
 
+import org.opalj.br.Method
 import org.opalj.collection.immutable.IntTrieSet
 import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.Entity
@@ -19,7 +20,8 @@ class AliasAnalysisState {
     private[this] var _dependees = Map.empty[Entity, EOptionP[Entity, Property]]
     private[this] var _dependeesSet = Set.empty[SomeEOptionP]
 
-    private[this] var _tacai: Option[TACode[TACMethodParameter, V]] = None
+    private[this] var _tacai1: Option[TACode[TACMethodParameter, V]] = None
+    private[this] var _tacai2: Option[TACode[TACMethodParameter, V]] = None
 
     private[this] var _uses1: IntTrieSet = _
 
@@ -77,34 +79,42 @@ class AliasAnalysisState {
     private[alias] final def hasDependees: Boolean = _dependees.nonEmpty
 
     private[alias] def updateTACAI(
+        m: Method,
         tacai: TACode[TACMethodParameter, V]
     )(implicit context: AliasAnalysisContext): Unit = {
-        this._tacai = Some(tacai)
 
-        (context.element1) match {
-            case (ds: AliasDS) =>
-                _defSite1 = tacai.properStmtIndexForPC(ds.element.pc)
-                _uses1 = ds.element.usedBy(tacai)
-            case (fp: AliasFP) =>
-                val param = tacai.params.parameter(fp.element.origin)
-                _uses1 = param.useSites
-                _defSite1 = param.origin
-            case _ =>
-        }
+        if (context.element1.isMethodBound && m.equals(context.element1.method)) {
+            this._tacai1 = Some(tacai)
 
-        (context.element2) match {
-            case (ds: AliasDS) =>
-                _defSite2 = tacai.properStmtIndexForPC(ds.element.pc)
-                _uses2 = ds.element.usedBy(tacai)
-            case (fp: AliasFP) =>
-                val param = tacai.params.parameter(fp.element.origin)
-                _uses2 = param.useSites
-                _defSite2 = param.origin
-            case _ =>
-        }
+            (context.element1) match {
+                case (ds: AliasDS) =>
+                  _defSite1 = tacai.properStmtIndexForPC(ds.element.pc)
+                  _uses1 = ds.element.usedBy(tacai)
+                case (fp: AliasFP) =>
+                  val param = tacai.params.parameter(fp.element.origin)
+                  _uses1 = param.useSites
+                  _defSite1 = param.origin
+                case _ =>
+            }
+        } else if (context.element2.isMethodBound && m.equals(context.element2.method)) {
+            this._tacai2 = Some(tacai)
+
+            (context.element2) match {
+                case (ds: AliasDS) =>
+                    _defSite2 = tacai.properStmtIndexForPC(ds.element.pc)
+                    _uses2 = ds.element.usedBy(tacai)
+                case (fp: AliasFP) =>
+                    val param = tacai.params.parameter(fp.element.origin)
+                    _uses2 = param.useSites
+                    _defSite2 = param.origin
+                case _ =>
+            }
+        } else throw new IllegalArgumentException("Method not found")
     }
 
-    def tacai: Option[TACode[TACMethodParameter, V]] = _tacai
+    def tacai1: Option[TACode[TACMethodParameter, V]] = _tacai1
+
+    def tacai2: Option[TACode[TACMethodParameter, V]] = _tacai2
 
     def uses1: IntTrieSet = _uses1
 
