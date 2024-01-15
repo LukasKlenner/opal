@@ -8,13 +8,16 @@ import org.opalj.br.analyses.cg.IsOverridableMethodKey
 import org.opalj.br.fpcf.FPCFAnalysisScheduler
 import org.opalj.br.fpcf.properties.Alias
 import org.opalj.br.fpcf.properties.MayAlias
-import org.opalj.br.fpcf.properties.NoAlias
+import org.opalj.br.fpcf.properties.MustAlias
 import org.opalj.br.fpcf.properties.cg.Callees
 import org.opalj.br.fpcf.properties.pointsto.AllocationSitePointsToSet
 import org.opalj.fpcf.EPK
+import org.opalj.fpcf.InterimResult
+import org.opalj.fpcf.LBP
 import org.opalj.fpcf.ProperPropertyComputationResult
 import org.opalj.fpcf.PropertyBounds
 import org.opalj.fpcf.Result
+import org.opalj.fpcf.SomeEPS
 import org.opalj.tac.cg.TypeIteratorKey
 import org.opalj.tac.fpcf.analyses.alias.AliasAnalysisState
 import org.opalj.tac.fpcf.analyses.alias.AliasEntity
@@ -30,24 +33,48 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
 
     override def analyzeTAC()(implicit context: AnalysisContext, state: AnalysisState): ProperPropertyComputationResult = {
 
-      try {
-        val epk = EPK(
-          pointsto.toEntity(context.element1.definitionSite, context.context, state.tacai1.get.stmts),
-          pointsToPropertyKey
+        val epk1 = EPK(
+            pointsto.toEntity(state.defSite1, context.context, state.tacai1.get.stmts),
+            pointsToPropertyKey
+        )
+        val epk2 = EPK(
+            pointsto.toEntity(state.defSite2, context.context, state.tacai2.get.stmts),
+            pointsToPropertyKey
         )
 
-        val pointsTo = propertyStore(epk)
+        val pointsTo1 = propertyStore(epk1)
+        val pointsTo2 = propertyStore(epk2)
 
-        print(pointsTo)
-      } catch {
-        case e: Throwable => {
-          println("Exception: " + e)
-          Result(context.entity, NoAlias)
+        print(pointsTo1)
+
+        pointsTo1 match {
+            case EPK(e, value) =>
+                state.addDependency(pointsTo1)
+            case _ => throw new UnknownError("unhandled entity type")
         }
-      }
 
-        Result(context.entity, MayAlias)
+        pointsTo2 match {
+            case EPK(e, value) =>
+                state.addDependency(pointsTo2)
+            case _ => throw new UnknownError("unhandled entity type")
+        }
 
+        InterimResult(context.entity, MayAlias, MustAlias, state.getDependees, continuation)
+    }
+
+    override protected[this] def continuation(someEPS: SomeEPS)(implicit
+        context: PointsToBasedAliasAnalysisContext,
+                                                                state: AliasAnalysisState
+    ): ProperPropertyComputationResult = {
+
+        someEPS match {
+            case LBP(lb: AllocationSitePointsToSet) => {
+
+                print(lb)
+                Result(context.entity, MayAlias)
+            }
+            case _ => super.continuation(someEPS)
+        }
     }
 
     override protected[this] def createState: AnalysisState = new AliasAnalysisState

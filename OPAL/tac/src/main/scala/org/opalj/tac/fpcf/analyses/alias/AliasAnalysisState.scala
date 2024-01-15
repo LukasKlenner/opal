@@ -12,6 +12,7 @@ import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.Entity
 import org.opalj.fpcf.Property
 import org.opalj.fpcf.SomeEOptionP
+import org.opalj.fpcf.SomeEPS
 import org.opalj.tac.TACMethodParameter
 import org.opalj.tac.TACode
 
@@ -22,6 +23,8 @@ class AliasAnalysisState {
 
     private[this] var _tacai1: Option[TACode[TACMethodParameter, V]] = None
     private[this] var _tacai2: Option[TACode[TACMethodParameter, V]] = None
+
+    private[this] var _tacEPSToMethod: Map[SomeEPS, Method] = Map()
 
     private[this] var _uses1: IntTrieSet = _
 
@@ -79,24 +82,30 @@ class AliasAnalysisState {
     private[alias] final def hasDependees: Boolean = _dependees.nonEmpty
 
     private[alias] def updateTACAI(
-        m: Method,
+        m:     Method,
         tacai: TACode[TACMethodParameter, V]
     )(implicit context: AliasAnalysisContext): Unit = {
+
+        var anyMatch: Boolean = false
 
         if (context.element1.isMethodBound && m.equals(context.element1.method)) {
             this._tacai1 = Some(tacai)
 
             (context.element1) match {
                 case (ds: AliasDS) =>
-                  _defSite1 = tacai.properStmtIndexForPC(ds.element.pc)
-                  _uses1 = ds.element.usedBy(tacai)
+                    _defSite1 = tacai.properStmtIndexForPC(ds.element.pc)
+                    _uses1 = ds.element.usedBy(tacai)
                 case (fp: AliasFP) =>
-                  val param = tacai.params.parameter(fp.element.origin)
-                  _uses1 = param.useSites
-                  _defSite1 = param.origin
+                    val param = tacai.params.parameter(fp.element.origin)
+                    _uses1 = param.useSites
+                    _defSite1 = param.origin
                 case _ =>
             }
-        } else if (context.element2.isMethodBound && m.equals(context.element2.method)) {
+
+            anyMatch = true
+        }
+
+        if (context.element2.isMethodBound && m.equals(context.element2.method)) {
             this._tacai2 = Some(tacai)
 
             (context.element2) match {
@@ -109,7 +118,11 @@ class AliasAnalysisState {
                     _defSite2 = param.origin
                 case _ =>
             }
-        } else throw new IllegalArgumentException("Method not found")
+
+            anyMatch = true
+        }
+
+        if (!anyMatch) throw new IllegalArgumentException("Method not found")
     }
 
     def tacai1: Option[TACode[TACMethodParameter, V]] = _tacai1
@@ -123,4 +136,12 @@ class AliasAnalysisState {
     def uses2: IntTrieSet = _uses2
 
     def defSite2: Int = _defSite2
+
+    def addTacEPSToMethod(eps: SomeEPS, m: Method): Unit = {
+        _tacEPSToMethod += (eps -> m)
+    }
+
+    def getMethodForTacEPS(eps: SomeEPS): Method = {
+        _tacEPSToMethod(eps)
+    }
 }

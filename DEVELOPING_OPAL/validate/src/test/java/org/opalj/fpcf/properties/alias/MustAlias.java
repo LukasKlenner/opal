@@ -2,6 +2,8 @@ package org.opalj.fpcf.properties.alias;
 
 import org.opalj.br.fpcf.FPCFAnalysis;
 import org.opalj.fpcf.properties.PropertyValidator;
+import org.opalj.tac.fpcf.analyses.alias.IntraProceduralNoAliasAnalysis;
+import org.opalj.tac.fpcf.analyses.alias.pointsto.AllocationSitePointsToBasedAliasAnalysis;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -36,7 +38,8 @@ public @interface MustAlias {
      * @return All analyses that should be able to correctly detect this relation.
      */
     Class<? extends FPCFAnalysis>[] analyses() default {
-            //TODO add default analyses
+            AllocationSitePointsToBasedAliasAnalysis.class,
+            IntraProceduralNoAliasAnalysis.class
     };
 
     /**

@@ -8,6 +8,7 @@ package alias
 
 import org.opalj.br.Method
 import org.opalj.br.fpcf.properties.MayAlias
+import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.InterimResult
 import org.opalj.fpcf.ProperPropertyComputationResult
 import org.opalj.fpcf.SomeEPS
@@ -49,7 +50,9 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
         context: AnalysisContext,
         state:   AnalysisState
     ): Unit = {
-        val tacai = propertyStore(m, TACAI.key)
+        val tacai: EOptionP[Method, TACAI] = propertyStore(m, TACAI.key)
+
+        state.addTacEPSToMethod(tacai.asEPS, m)
 
         if (tacai.isRefinable) {
             state.addDependency(tacai)
@@ -74,7 +77,7 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
                     state.addDependency(someEPS)
                 }
                 if (ub.tac.isDefined) {
-                    //state.updateTACAI(ub.tac.get)
+                    state.updateTACAI(state.getMethodForTacEPS(someEPS), ub.tac.get)
                     analyzeTAC()
                 } else {
                     InterimResult(

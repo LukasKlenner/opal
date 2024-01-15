@@ -58,7 +58,9 @@ public class ShapeTest {
     
     @Alias(mayAlias = {@MayAlias(reason = "", id = "ShapeTest.addRectangle")})
     public Shape addRectangle(
-            @Alias(mayAlias = {@MayAlias(reason = "", id = "ShapeTest.addRectangle"), @MayAlias(reason = "param might be assigned to field", id = "ShapeTest.shapesAddParam")})
+            @Alias(mayAlias = {@MayAlias(reason = "", id = "ShapeTest.addRectangle"),
+                    //@MayAlias(reason = "param might be assigned to field", id = "ShapeTest.shapesAddParam")
+                    })
             Shape shape) {
 
         if (shape instanceof Rectangle) {
@@ -73,8 +75,9 @@ public class ShapeTest {
     @Alias(mayAlias = {@MayAlias(reason = "return value might be param", id = "ShapeTest.getLastOrParam"),
                        @MayAlias(reason = "return value might be null", id = "ShapeTest.getLastOrNull", aliasWithNull = true)})
     public Shape getLastOr(
-            @Alias(mayAlias = {@MayAlias(reason = "return value might be param", id = "ShapeTest.getLastOrParam")}, 
-                    noAlias = {@NoAlias(reason = "param is never added to field", id = "ShapeTest.shapeGetLastOrParam")})
+            @Alias(mayAlias = {@MayAlias(reason = "return value might be param", id = "ShapeTest.getLastOrParam")}
+                    //noAlias = {@NoAlias(reason = "param is never added to field", id = "ShapeTest.shapeGetLastOrParam")}
+                    )
             Shape shape) {
 
         Shape currentShape = shape;

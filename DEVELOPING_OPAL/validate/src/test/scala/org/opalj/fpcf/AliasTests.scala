@@ -17,7 +17,8 @@ import org.opalj.tac.fpcf.analyses.alias.AliasFP
 import org.opalj.tac.fpcf.analyses.alias.AliasNull
 import org.opalj.tac.fpcf.analyses.alias.AliasReturnValue
 import org.opalj.tac.fpcf.analyses.alias.AliasSourceElement
-import org.scalatest.Ignore
+import org.opalj.tac.fpcf.analyses.alias.pointsto.EagerPointsToBasedAliasAnalysisScheduler
+import org.opalj.tac.fpcf.analyses.pointsto.AllocationSiteBasedPointsToAnalysisScheduler
 
 import java.net.URL
 import scala.collection.mutable.ArrayBuffer
@@ -26,7 +27,6 @@ import scala.collection.mutable.ArrayBuffer
  * Tests if the alias properties defined in the classes of the package org.opalj.fpcf.fixtures.alias (and it's subpackage)
  * are computed correctly.
  */
-@Ignore
 class AliasTests extends PropertiesTest {
 
     override def fixtureProjectPackage: List[String] = {
@@ -48,6 +48,8 @@ class AliasTests extends PropertiesTest {
 
         val as = executeAnalyses(
             Set( //TODO add analyses to execute
+                AllocationSiteBasedPointsToAnalysisScheduler,
+                EagerPointsToBasedAliasAnalysisScheduler,
             )
         )
 
@@ -105,7 +107,7 @@ class AliasTests extends PropertiesTest {
      * @return The id of the alias relation.
      */
     private[this] def getID(a: AnnotationLike): String = {
-        getStringValue(a, "testClass") + "." + getStringValue(a, "id")
+        getStringValue(a, "id")
     }
 
     /**
