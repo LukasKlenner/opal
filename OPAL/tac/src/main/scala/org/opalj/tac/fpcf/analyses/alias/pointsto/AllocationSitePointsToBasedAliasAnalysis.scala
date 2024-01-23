@@ -63,7 +63,7 @@ object EagerPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalys
 
         for (e1 <- aliasEntities) {
             for (e2 <- aliasEntities) {
-                if (e1 != e2 && e1.method == e2.method) {
+                if (e1 != e2 && e1.method == e2.method) { //TODO auch für verschiedene Methoden
                     val context = simpleContexts(declaredMethods(e1.method))
                     val entity = AliasEntity(context, e1, e2)
 

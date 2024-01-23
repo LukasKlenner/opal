@@ -10,7 +10,7 @@ import org.opalj.br.ClassValue
 import org.opalj.br.StringValue
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.fpcf.properties.SimpleContextsKey
-import org.opalj.tac.cg.TypeBasedPointsToCallGraphKey
+import org.opalj.tac.cg.AllocationSiteBasedPointsToCallGraphKey
 import org.opalj.tac.fpcf.analyses.alias.AliasDS
 import org.opalj.tac.fpcf.analyses.alias.AliasEntity
 import org.opalj.tac.fpcf.analyses.alias.AliasFP
@@ -18,7 +18,6 @@ import org.opalj.tac.fpcf.analyses.alias.AliasNull
 import org.opalj.tac.fpcf.analyses.alias.AliasReturnValue
 import org.opalj.tac.fpcf.analyses.alias.AliasSourceElement
 import org.opalj.tac.fpcf.analyses.alias.pointsto.EagerPointsToBasedAliasAnalysisScheduler
-import org.opalj.tac.fpcf.analyses.pointsto.AllocationSiteBasedPointsToAnalysisScheduler
 
 import java.net.URL
 import scala.collection.mutable.ArrayBuffer
@@ -40,7 +39,7 @@ class AliasTests extends PropertiesTest {
             Set[Class[_ <: AnyRef]](classOf[l1.DefaultDomainWithCFGAndDefUse[URL]])
         }
 
-        p.get(TypeBasedPointsToCallGraphKey)
+        p.get(AllocationSiteBasedPointsToCallGraphKey)
 
     }
 
@@ -48,7 +47,7 @@ class AliasTests extends PropertiesTest {
 
         val as = executeAnalyses(
             Set( //TODO add analyses to execute
-                AllocationSiteBasedPointsToAnalysisScheduler,
+                //AllocationSiteBasedPointsToAnalysisScheduler,
                 EagerPointsToBasedAliasAnalysisScheduler,
             )
         )
@@ -98,7 +97,7 @@ class AliasTests extends PropertiesTest {
 
         validateProperties(as, properties, Set("AliasProperty"))
 
-        println("reachable methods: " + as.project.get(TypeBasedPointsToCallGraphKey).reachableMethods().toList.size)
+        //println("reachable methods: " + as.project.get(TypeBasedPointsToCallGraphKey).reachableMethods().toList.size)
     }
 
     /**

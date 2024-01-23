@@ -9,9 +9,8 @@ import org.opalj.br.fpcf.FPCFAnalysesManagerKey
 import org.opalj.br.fpcf.properties.MayAlias
 import org.opalj.br.fpcf.properties.MustAlias
 import org.opalj.br.fpcf.properties.NoAlias
-import org.opalj.tac.cg.RTACallGraphKey
+import org.opalj.tac.cg.AllocationSiteBasedPointsToCallGraphKey
 import org.opalj.tac.fpcf.analyses.alias.pointsto.EagerPointsToBasedAliasAnalysisScheduler
-import org.opalj.tac.fpcf.analyses.pointsto.AllocationSiteBasedPointsToAnalysisScheduler
 
 import java.net.URL
 
@@ -22,10 +21,10 @@ object Alias extends ProjectAnalysisApplication {
         isInterrupted: () => Boolean
     ): ReportableAnalysisResult = {
 
-        project.get(RTACallGraphKey)
+        project.get(AllocationSiteBasedPointsToCallGraphKey)
 
         val (ps, _ /*executed analyses*/ ) = project.get(FPCFAnalysesManagerKey).runAll(
-            AllocationSiteBasedPointsToAnalysisScheduler,
+            //AllocationSiteBasedPointsToAnalysisScheduler,
             EagerPointsToBasedAliasAnalysisScheduler
         )
 
