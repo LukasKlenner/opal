@@ -11,7 +11,7 @@ import org.opalj.br.Method
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.SomeProject
 import org.opalj.br.analyses.VirtualFormalParameter
-import org.opalj.tac.common.DefinitionSite
+import org.opalj.value.ValueInformation
 
 /**
  * Represents a source code element which can be part of an alias relation.
@@ -58,7 +58,7 @@ sealed trait AliasSourceElement {
      * @throws UnsupportedOperationException if the element is not associated with a definition site
      * @return The definition site of this element.
      */
-    def definitionSite: Int = throw new UnsupportedOperationException()
+    def definitionSite: Int = throw new UnsupportedOperationException() //TODO remove?
 
     /**
      * Returns `true` if this element is associated with a method.
@@ -80,10 +80,13 @@ object AliasSourceElement {
      */
     def apply(element: AnyRef)(implicit project: SomeProject): AliasSourceElement = {
         element match {
-            case fp: VirtualFormalParameter => AliasFP(fp)
-            case ds: DefinitionSite         => AliasDS(ds, project)
-            case dm: Method                 => AliasReturnValue(dm, project)
-            case _                          => throw new UnknownError("unhandled entity type")
+            case fp: VirtualFormalParameter   => AliasFP(fp)
+            //case ds: DefinitionSite         => AliasDS(ds, project)
+            case dm: Method                   => AliasReturnValue(dm, project)
+            case f: Field                     => AliasField(f)
+            case null                         => AliasNull()
+            case (uVar: UVar[ValueInformation], method: Method) => AliasUVar(uVar, method, project)
+            case _                            => throw new UnknownError("unhandled entity type")
         }
     }
 }
@@ -134,18 +137,26 @@ case class AliasFP(fp: VirtualFormalParameter) extends AliasSourceElement {
     override def isMethodBound: Boolean = true
 }
 
-/**
- * Represents a definition site that is part of an alias relation.
- */
-case class AliasDS(ds: DefinitionSite, project: SomeProject) extends AliasSourceElement {
+case class AliasUVar(uVar: UVar[ValueInformation],
+                     override val method: Method,
+                     project: SomeProject) extends AliasSourceElement {
 
-    override def element: DefinitionSite = ds
+    override def element: UVar[ValueInformation] = uVar
 
-    override def method: Method = ds.method
-
-    override def definitionSite: Int = ds.pc
+    override def isMethodBound: Boolean = true
 
     override def declaredMethod: DeclaredMethod = project.get(DeclaredMethodsKey)(method)
 
-    override def isMethodBound: Boolean = true
+}
+
+case class AliasDVar(dVar: DVar[ValueInformation],
+                     override val method: Method,
+                     project: SomeProject) extends AliasSourceElement {
+
+  override def element: DVar[ValueInformation] = dVar
+
+  override def isMethodBound: Boolean = true
+
+  override def declaredMethod: DeclaredMethod = project.get(DeclaredMethodsKey)(method)
+
 }

@@ -1,32 +1,26 @@
-package org.opalj.fpcf.properties.alias;
+package org.opalj.fpcf.properties.alias.u_var;
 
 import org.opalj.br.fpcf.FPCFAnalysis;
 import org.opalj.fpcf.properties.PropertyValidator;
+import org.opalj.fpcf.properties.alias.MayAliasMatcher;
 import org.opalj.tac.fpcf.analyses.alias.IntraProceduralNoAliasAnalysis;
 import org.opalj.tac.fpcf.analyses.alias.pointsto.AllocationSitePointsToBasedAliasAnalysis;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
+
+import static java.lang.annotation.ElementType.*;
 
 @PropertyValidator(key = "AliasProperty", validator = MayAliasMatcher.class)
+@Repeatable(MayAliasUVars.class)
 @Documented
-@Target({})
+@Target({TYPE_USE, PARAMETER, METHOD})
 @Retention(RetentionPolicy.CLASS)
-public @interface MayAlias {
+public @interface MayAliasUVar {
 
     /**
      * A short reasoning why this relation is a NoAlias relation.
      */
     String reason() default "No reason Provided";
-
-    /**
-     * The id of this NoAlias relation.
-     * It is used to associate this element with the other element that is part of this relation.
-     * @return The id of this NoAlias relation.
-     */
-    String id();
 
     /**
      * All analyses that should be able to correctly detect this relation.
@@ -37,10 +31,5 @@ public @interface MayAlias {
             IntraProceduralNoAliasAnalysis.class
     };
 
-    /**
-     * Indicates whether this element is part of a NoAlias relation with null.
-     * @return Whether this element is part of a NoAlias relation with null.
-     */
-    boolean aliasWithNull() default false;
-
+    int lineNumber();
 }

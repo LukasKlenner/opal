@@ -37,6 +37,7 @@ import org.opalj.tac.fpcf.analyses.alias.TacBasedAliasAnalysis
 import org.opalj.tac.fpcf.analyses.pointsto.toEntity
 import org.opalj.tac.fpcf.analyses.pointsto.AbstractPointsToBasedAnalysis
 import org.opalj.tac.fpcf.properties.TACAI
+import org.opalj.value.ValueInformation
 
 trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with AbstractPointsToBasedAnalysis {
 
@@ -45,35 +46,67 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
 
     override def analyzeTAC()(implicit context: AnalysisContext, state: AnalysisState): ProperPropertyComputationResult = {
 
-        val pointsTo1 = propertyStore(toEntity(state.defSite1, context.context, state.tacai1.get.stmts), pointsToPropertyKey)
-        val pointsTo2 = propertyStore(toEntity(state.defSite2, context.context, state.tacai2.get.stmts), pointsToPropertyKey)
+        //val pointsTo1 = propertyStore(toEntity(state.defSite1, context.context, state.tacai1.get.stmts), pointsToPropertyKey)
+        //val pointsTo2 = propertyStore(toEntity(state.defSite2, context.context, state.tacai2.get.stmts), pointsToPropertyKey)
 
-        handlePointsToEntity(context.element1, pointsTo1)
-        handlePointsToEntity(context.element2, pointsTo2)
+        //handlePointsToEntity(context.element1, pointsTo1)
+        //handlePointsToEntity(context.element2, pointsTo2)
 
-        for (useSite <- state.uses1) {
-            handleUseSite(context.element1, useSite)
+        /*for (useSite <- state.uses1) {
+            handleUseSite(context.element1, useSite, state.tacai1.get.stmts(useSite))
         }
 
         for (useSite <- state.uses2) {
-            handleUseSite(context.element2, useSite)
-        }
+            handleUseSite(context.element2, useSite, state.tacai2.get.stmts(useSite))
+        }*/
+
+        handleEntity(context.element1, state.tacai1.get.stmts)
+        handleEntity(context.element2, state.tacai2.get.stmts)
 
         createResult(context.entity)
     }
 
-    private[this] def handleUseSite(ase: AliasSourceElement, useSite: Int)
+    private[this] def handleEntity(ase: AliasSourceElement, stmts: Array[Stmt[DUVar[ValueInformation]]])
+              (implicit state: AnalysisState, context: AnalysisContext): Unit = {
+
+        ase match {
+          case AliasUVar(uVar, method, project) => {
+              uVar.defSites.foreach(ds => {
+                  handlePointsToEntity(ase, getPointsTo(ds, context.context, stmts))
+              })
+          }
+          case AliasDVar(dVar, method, project) => {
+              handlePointsToEntity(ase, getPointsTo(dVar.origin, context.context, stmts))
+          }
+          case AliasFP(fp) => {
+              handlePointsToEntity(ase, getPointsTo(fp.origin, context.context, stmts))
+          }
+          case _ =>
+        }
+
+    }
+
+    private[this] def getPointsTo(defSite: Int, context: Context, stmts: Array[Stmt[DUVar[ValueInformation]]]): EOptionP[Entity, PointsToSet] = {
+
+        propertyStore(toEntity(defSite, context, stmts), pointsToPropertyKey)
+    }
+
+    /*private[this] def handleUseSite(ase: AliasSourceElement, useSite: Int, stmt: Stmt[DUVar[ValueInformation]])
                                    (implicit state: AnalysisState, context: AnalysisContext): Unit = {
+
+        //stmt match {
+        //  case call: Call[DUVar[ValueInformation]] => handleCall(call, ase)
+        //}
 
         val pointsTo = propertyStore(toEntity(useSite, context.context, state.tacai1.get.stmts), pointsToPropertyKey)
 
         handlePointsToEntity(ase, pointsTo)
-    }
+    }*/
 
-//    private[this] def handleCall(call: Call[DUVar[ValueInformation]], eps: EOptionP[Entity, PointsToSet])
-//                                (implicit state: AnalysisState, context: AnalysisContext): Unit = {
-//
-//    }
+    /*private[this] def handleCall(call: Call[DUVar[ValueInformation]], ase: AliasSourceElement)
+                                (implicit state: AnalysisState, context: AnalysisContext): Unit = {
+
+    }*/
 
     private[this] def handlePointsToEntity(ase: AliasSourceElement, eps: EOptionP[Entity, PointsToSet])
                                           (implicit state: AnalysisState, context: AnalysisContext): Unit = {
@@ -103,16 +136,16 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
      */
 
     private[this] def handlePointsToSet(ase: AliasSourceElement, e: Entity, pointsToSet: AllocationSitePointsToSet)(
-      implicit state: AnalysisState, context: AnalysisContext) = {
+      implicit state: AnalysisState, context: AnalysisContext): Unit = {
 
-       pointsToSet.forNewestNElements(pointsToSet.numElements - state.pointsToElementsHandled(e)) { value =>
+       pointsToSet.forNewestNElements(pointsToSet.numElements - state.pointsToElementsHandled((e, ase))) { value =>
 
            val encodedAllocationSite: AllocationSite = value
 
            val allocationSite: (Context, PC, Int) = longToAllocationSite(encodedAllocationSite)
 
-           state.addPointsTo(ase, allocationSite)
-           state.incPointsToElementsHandled(e)
+           state.addPointsTo(ase, (allocationSite._1, allocationSite._2))
+           state.incPointsToElementsHandled((e, ase))
        }
 
     }
@@ -120,20 +153,18 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
     private[this] def createResult(e: AliasEntity) (implicit state: AnalysisState, context: AnalysisContext): ProperPropertyComputationResult = {
 
         if (!state.somePointsTo) {
-            InterimResult(context.entity, MayAlias, MustAlias, state.getDependees, continuation)
+            return InterimResult(context.entity, MayAlias, MustAlias, state.getDependees, continuation)
         }
 
-        //modified? performance?
-
-        val pointsTo1 = Set(state.pointsTo1)
-        val pointsTo2 = Set(state.pointsTo2)
+        val pointsTo1 = state.pointsTo1
+        val pointsTo2 = state.pointsTo2
 
         val intersection = pointsTo1.intersect(pointsTo2)
 
         if (intersection.isEmpty) {
-            Result(context.entity, NoAlias)
+            return Result(context.entity, NoAlias)
         } else if (intersection.size == 1 && pointsTo1.size == 1 && pointsTo2.size == 1) {
-            Result(context.entity, MustAlias)
+            return Result(context.entity, MustAlias) //TODO nicht immer sicher
         }
 
         Result(context.entity, MayAlias)

@@ -186,10 +186,6 @@ object EagerIntraProceduralAliasAnalysis extends IntraProceduralAliasAnalysisSch
             }
             .toMap
 
-        val allocationSites = p
-            .get(DefinitionSitesKey)
-            .getAllocationSites
-            .filter(as => reachableMethods.contains(declaredMethods(as.method)))
         val formalParameters = p
             .get(VirtualFormalParametersKey)
             .virtualFormalParameters
@@ -199,9 +195,8 @@ object EagerIntraProceduralAliasAnalysis extends IntraProceduralAliasAnalysisSch
             .filter(_.descriptor.returnType.isReferenceType)
 
         val aliasEntities: Seq[AliasSourceElement] =
-            allocationSites.map(AliasDS(_, p)) ++
-                formalParameters.map(AliasFP) ++
-                returnValues.map(m => AliasReturnValue(m.definedMethod, p))
+          (formalParameters.map(AliasFP) ++
+                returnValues.map(m => AliasReturnValue(m.definedMethod, p))).toSeq
 
         val entities: ArrayBuffer[AliasEntity] = ArrayBuffer.empty
 

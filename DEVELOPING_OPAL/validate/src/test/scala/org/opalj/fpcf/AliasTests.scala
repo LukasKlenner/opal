@@ -5,13 +5,12 @@ package fpcf
 import org.opalj.ai.domain.l1
 import org.opalj.ai.fpcf.properties.AIDomainFactoryKey
 import org.opalj.br.AnnotationLike
-import org.opalj.br.analyses.Project
 import org.opalj.br.ClassValue
 import org.opalj.br.StringValue
 import org.opalj.br.analyses.DeclaredMethodsKey
+import org.opalj.br.analyses.Project
 import org.opalj.br.fpcf.properties.SimpleContextsKey
 import org.opalj.tac.cg.AllocationSiteBasedPointsToCallGraphKey
-import org.opalj.tac.fpcf.analyses.alias.AliasDS
 import org.opalj.tac.fpcf.analyses.alias.AliasEntity
 import org.opalj.tac.fpcf.analyses.alias.AliasFP
 import org.opalj.tac.fpcf.analyses.alias.AliasNull
@@ -61,15 +60,17 @@ class AliasTests extends PropertiesTest {
         val simpleContexts = as.project.get(SimpleContextsKey)
         val declaredMethods = as.project.get(DeclaredMethodsKey)
 
+
+
         // The annotations only contain one of the two sourceElements of an alias property.
         // Therefore, we first have to combine elements with the same id and store them in this ArrayBuffer.
         val properties: ArrayBuffer[(AliasEntity, String => String, Iterable[AnnotationLike])] = ArrayBuffer.empty
 
-        val IDToDs: Iterable[(String, (AliasDS, String => String))] = allocations.map { case (ds, str, a) => getID(a) -> (AliasDS(ds, as.project), str) }
+        //val IDToDs: Iterable[(String, (AliasDS, String => String))] = allocations.map { case (ds, str, a) => getID(a) -> (AliasDS(ds, as.project), str) }
         val IDToFP: Iterable[(String, (AliasFP, String => String))] = formalParameters.map { case (fp, str, a) => getID(a) -> (AliasFP(fp), str) }
         val IDToM: Iterable[(String, (AliasReturnValue, String => String))] = methods.map { case (m, str, a) => getID(a) -> (AliasReturnValue(m, as.project), str) }
 
-        val IDToEntity: Map[String, Iterable[(AliasSourceElement, String => String)]] = (IDToDs ++ IDToFP ++ IDToM).groupMap(_._1)(_._2)
+        val IDToEntity: Map[String, Iterable[(AliasSourceElement, String => String)]] = (IDToFP ++ IDToM).groupMap(_._1)(_._2)
 
         for ((e: Entity, str: (String => String), an: AnnotationLike) <- allocations ++ formalParameters ++ methods) {
             val element1: AliasSourceElement = AliasSourceElement(e)(as.project)

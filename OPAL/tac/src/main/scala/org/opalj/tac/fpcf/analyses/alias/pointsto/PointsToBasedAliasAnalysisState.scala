@@ -10,8 +10,8 @@ import org.opalj.tac.fpcf.analyses.alias.AliasSourceElement
 
 class PointsToBasedAliasAnalysisState extends AliasAnalysisState {
 
-    var _pointsTo1: Set[(Context, PC, Int)] = Set[(Context, PC, Int)]()
-    var _pointsTo2: Set[(Context, PC, Int)] = Set[(Context, PC, Int)]()
+    var _pointsTo1: Set[(Context, PC)] = Set[(Context, PC)]()
+    var _pointsTo2: Set[(Context, PC)] = Set[(Context, PC)]()
 
     var _pointsToElementsHandled: Map[Entity, Int] = Map[Entity, Int]()
 
@@ -19,19 +19,19 @@ class PointsToBasedAliasAnalysisState extends AliasAnalysisState {
 
     var _somePointsTo: Boolean = false
 
-    def pointsTo1: Set[(Context, PC, Int)] = _pointsTo1
+    def pointsTo1: Set[(Context, PC)] = _pointsTo1
 
-    def pointsTo2: Set[(Context, PC, Int)] = _pointsTo2
+    def pointsTo2: Set[(Context, PC)] = _pointsTo2
 
-    def addPointsTo1(pointsTo: (Context, PC, Int)): Unit = {
+    def addPointsTo1(pointsTo: (Context, PC)): Unit = {
         _pointsTo1 += pointsTo
     }
 
-    def addPointsTo2(pointsTo: (Context, PC, Int)): Unit = {
+    def addPointsTo2(pointsTo: (Context, PC)): Unit = {
         _pointsTo2 += pointsTo
     }
 
-    def addPointsTo(e: AliasSourceElement, pointsTo: (Context, PC, Int))(implicit context: AliasAnalysisContext) = {
+    def addPointsTo(e: AliasSourceElement, pointsTo: (Context, PC))(implicit context: AliasAnalysisContext) = {
         if (context.isElement1(e)) {
             addPointsTo1(pointsTo)
         } else {
@@ -39,11 +39,11 @@ class PointsToBasedAliasAnalysisState extends AliasAnalysisState {
         }
     }
 
-    def pointsToElementsHandled(e: Entity): Int = {
+    def pointsToElementsHandled(e: (Entity, AliasSourceElement)): Int = {
         _pointsToElementsHandled.getOrElse(e, 0)
     }
 
-    def incPointsToElementsHandled(e: Entity): Unit = {
+    def incPointsToElementsHandled(e: (Entity, AliasSourceElement)): Unit = {
         _pointsToElementsHandled += e -> (pointsToElementsHandled(e) + 1)
     }
 

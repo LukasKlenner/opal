@@ -92,9 +92,9 @@ class AliasAnalysisState {
             this._tacai1 = Some(tacai)
 
             (context.element1) match {
-                case (ds: AliasDS) =>
-                    _defSite1 = tacai.properStmtIndexForPC(ds.element.pc)
-                    _uses1 = ds.element.usedBy(tacai)
+                //case (ds: AliasDS) =>
+                //    _defSite1 = tacai.properStmtIndexForPC(ds.element.pc)
+                //    _uses1 = ds.element.usedBy(tacai)
                 case (fp: AliasFP) =>
                     val param = tacai.params.parameter(fp.element.origin)
                     _uses1 = param.useSites
@@ -109,9 +109,9 @@ class AliasAnalysisState {
             this._tacai2 = Some(tacai)
 
             (context.element2) match {
-                case (ds: AliasDS) =>
-                    _defSite2 = tacai.properStmtIndexForPC(ds.element.pc)
-                    _uses2 = ds.element.usedBy(tacai)
+                //case (ds: AliasDS) =>
+                //    _defSite2 = tacai.properStmtIndexForPC(ds.element.pc)
+                //    _uses2 = ds.element.usedBy(tacai)
                 case (fp: AliasFP) =>
                     val param = tacai.params.parameter(fp.element.origin)
                     _uses2 = param.useSites

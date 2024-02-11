@@ -1,22 +1,24 @@
 package org.opalj.fpcf.properties.alias;
 
+import org.opalj.fpcf.properties.alias.u_var.MayAliasUVars;
+
 import java.lang.annotation.*;
 
 import static java.lang.annotation.ElementType.*;
 
 /**
  * Annotation to specify that the annotated element is part of one or multiple alias relations.
- * The concrete alias information are specified by the {@link MayAlias}, {@link NoAlias} and {@link MustAlias} arrays
+ * The concrete alias information are specified by the {@link MayAliasUVars}, {@link NoAlias} and {@link MustAlias} arrays
  * <p>
- * An alias relation is identified by the id of the {@link MayAlias}, {@link NoAlias} or {@link MustAlias} annotation.
+ * An alias relation is identified by the id of the {@link MayAliasUVars}, {@link NoAlias} or {@link MustAlias} annotation.
  * IDs have to be unique within the project to allow for a correct association of the alias relations.
- * For any ID, there have to be exactly two {@link MayAlias}, {@link NoAlias} or {@link MustAlias} annotations
+ * For any ID, there have to be exactly two {@link MayAliasUVars}, {@link NoAlias} or {@link MustAlias} annotations
  * with that ID.
  * <p>
- * The {@link MayAlias}, {@link NoAlias} and {@link MustAlias} annotations can be used multiple times within the arrays
+ * The {@link MayAliasUVars}, {@link NoAlias} and {@link MustAlias} annotations can be used multiple times within the arrays
  * to specify that the element is part of multiple alias relations.
  *
- * @see MayAlias
+ * @see MayAliasUVars
  * @see NoAlias
  * @see MustAlias
  */
@@ -26,8 +28,8 @@ import static java.lang.annotation.ElementType.*;
 public @interface Alias {
 
     /**
-     * The {@link MayAlias} relations that the annotated element is part of.
-     * @return The {@link MayAlias} relations that the annotated element is part of.
+     * The {@link MayAliasUVars} relations that the annotated element is part of.
+     * @return The {@link MayAliasUVars} relations that the annotated element is part of.
      */
     MayAlias[] mayAlias() default {};
 
