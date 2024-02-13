@@ -7,7 +7,8 @@ package analyses
 package alias
 
 import org.opalj.br.Method
-import org.opalj.br.fpcf.properties.MayAlias
+import org.opalj.br.fpcf.properties.alias.AliasSourceElement
+import org.opalj.br.fpcf.properties.alias.MayAlias
 import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.InterimResult
 import org.opalj.fpcf.ProperPropertyComputationResult

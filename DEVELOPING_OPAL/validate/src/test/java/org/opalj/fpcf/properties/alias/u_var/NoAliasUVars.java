@@ -1,7 +1,7 @@
 package org.opalj.fpcf.properties.alias.u_var;
 
 import org.opalj.fpcf.properties.PropertyValidator;
-import org.opalj.fpcf.properties.alias.MayAliasMatcher;
+import org.opalj.fpcf.properties.alias.NoAliasMatcher;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -15,12 +15,12 @@ import static java.lang.annotation.ElementType.*;
  *
  * @see Alias
  */
-@PropertyValidator(key = "AliasProperty", validator = MayAliasMatcher.class)
+@PropertyValidator(key = "AliasProperty", validator = NoAliasMatcher.class)
 @Documented
 @Target({TYPE_USE, PARAMETER, METHOD})
 @Retention(RetentionPolicy.CLASS)
-public @interface MayAliasUVars {
+public @interface NoAliasUVars {
 
-    MayAliasUVar[] value();
+    NoAliasUVar[] value();
 
 }

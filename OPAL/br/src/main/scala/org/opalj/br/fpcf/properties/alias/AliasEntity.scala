@@ -1,9 +1,5 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj
-package tac
-package fpcf
-package analyses
-package alias
+package org.opalj.br.fpcf.properties.alias
 
 import org.opalj.br.fpcf.properties.Context
 
@@ -66,7 +62,7 @@ class AliasEntity(val context: Context, private val e1: AliasSourceElement, priv
      */
     def elementsInSameMethod: Boolean = element1.method.eq(element2.method)
 
-    //we can't use a case class because the order of the order of the two elements
+    //we can't use a case class because the order of the two attributes is irrelevant
     override def equals(other: Any): Boolean = other match {
         case that: AliasEntity =>
             that.isInstanceOf[AliasEntity] &&

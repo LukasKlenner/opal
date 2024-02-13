@@ -6,9 +6,9 @@ import org.opalj.br.analyses.Project
 import org.opalj.br.analyses.ProjectAnalysisApplication
 import org.opalj.br.analyses.ReportableAnalysisResult
 import org.opalj.br.fpcf.FPCFAnalysesManagerKey
-import org.opalj.br.fpcf.properties.MayAlias
-import org.opalj.br.fpcf.properties.MustAlias
-import org.opalj.br.fpcf.properties.NoAlias
+import org.opalj.br.fpcf.properties.alias.MayAlias
+import org.opalj.br.fpcf.properties.alias.MustAlias
+import org.opalj.br.fpcf.properties.alias.NoAlias
 import org.opalj.tac.cg.AllocationSiteBasedPointsToCallGraphKey
 import org.opalj.tac.fpcf.analyses.alias.pointsto.EagerPointsToBasedAliasAnalysisScheduler
 

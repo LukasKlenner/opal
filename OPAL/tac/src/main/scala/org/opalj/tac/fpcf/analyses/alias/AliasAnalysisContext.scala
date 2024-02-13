@@ -8,6 +8,8 @@ package alias
 
 import org.opalj.br.analyses.SomeProject
 import org.opalj.br.fpcf.properties.Context
+import org.opalj.br.fpcf.properties.alias.AliasEntity
+import org.opalj.br.fpcf.properties.alias.AliasSourceElement
 import org.opalj.fpcf.PropertyStore
 
 class AliasAnalysisContext(

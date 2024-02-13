@@ -16,11 +16,17 @@ import org.opalj.br.analyses.cg.IsOverridableMethodKey
 import org.opalj.br.fpcf.BasicFPCFEagerAnalysisScheduler
 import org.opalj.br.fpcf.FPCFAnalysis
 import org.opalj.br.fpcf.FPCFAnalysisScheduler
-import org.opalj.br.fpcf.properties.Alias
-import org.opalj.br.fpcf.properties.MayAlias
-import org.opalj.br.fpcf.properties.MustAlias
-import org.opalj.br.fpcf.properties.NoAlias
+import org.opalj.br.fpcf.properties
 import org.opalj.br.fpcf.properties.SimpleContextsKey
+import org.opalj.br.fpcf.properties.alias.Alias
+import org.opalj.br.fpcf.properties.alias.AliasEntity
+import org.opalj.br.fpcf.properties.alias.AliasFP
+import org.opalj.br.fpcf.properties.alias.AliasNull
+import org.opalj.br.fpcf.properties.alias.AliasReturnValue
+import org.opalj.br.fpcf.properties.alias.AliasSourceElement
+import org.opalj.br.fpcf.properties.alias.MayAlias
+import org.opalj.br.fpcf.properties.alias.MustAlias
+import org.opalj.br.fpcf.properties.alias.NoAlias
 import org.opalj.br.fpcf.properties.cg.Callees
 import org.opalj.br.fpcf.properties.cg.Callers
 import org.opalj.br.fpcf.properties.cg.NoCallers
@@ -195,7 +201,7 @@ object EagerIntraProceduralAliasAnalysis extends IntraProceduralAliasAnalysisSch
             .filter(_.descriptor.returnType.isReferenceType)
 
         val aliasEntities: Seq[AliasSourceElement] =
-          (formalParameters.map(AliasFP) ++
+            (formalParameters.map(AliasFP) ++
                 returnValues.map(m => AliasReturnValue(m.definedMethod, p))).toSeq
 
         val entities: ArrayBuffer[AliasEntity] = ArrayBuffer.empty
@@ -204,7 +210,7 @@ object EagerIntraProceduralAliasAnalysis extends IntraProceduralAliasAnalysisSch
             for (e2 <- aliasEntities) {
                 if (e1 != e2 && e1.method == e2.method) {
                     val context = simpleContexts(declaredMethods(e1.method))
-                    val entity = AliasEntity(context, e1, e2)
+                    val entity = properties.alias.AliasEntity(context, e1, e2)
 
                     if (!entities.contains(entity)) {
                         entities.addOne(entity)
@@ -215,7 +221,7 @@ object EagerIntraProceduralAliasAnalysis extends IntraProceduralAliasAnalysisSch
 
         for (e1 <- aliasEntities) {
             val context = simpleContexts(declaredMethods(e1.method))
-            val entity = AliasEntity(context, e1, new AliasNull)
+            val entity = properties.alias.AliasEntity(context, e1, new AliasNull)
             entities.addOne(entity)
         }
 

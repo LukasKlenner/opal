@@ -1,8 +1,5 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj
-package br
-package fpcf
-package properties
+package org.opalj.br.fpcf.properties.alias
 
 import org.opalj.fpcf.Entity
 import org.opalj.fpcf.OrderedProperty
@@ -131,11 +128,11 @@ object Alias extends AliasPropertyMetaInformation {
  */
 case object MustAlias extends Alias {
 
-  override def checkIsEqualOrBetterThan(e: Entity, other: Alias): Unit = {
-      if (other == MayAlias) {
-          throw new IllegalArgumentException(s"$e: impossible refinement: $other => $this")
-      }
-  }
+    override def checkIsEqualOrBetterThan(e: Entity, other: Alias): Unit = {
+        if (other == MayAlias) {
+            throw new IllegalArgumentException(s"$e: impossible refinement: $other => $this")
+        }
+    }
 }
 
 /**
@@ -152,11 +149,11 @@ case object MustAlias extends Alias {
  */
 case object NoAlias extends Alias {
 
-  override def checkIsEqualOrBetterThan(e: Entity, other: Alias): Unit = {
-      if (other != NoAlias) {
-          throw new IllegalArgumentException(s"$e: impossible refinement: $other => $this")
-      }
-  }
+    override def checkIsEqualOrBetterThan(e: Entity, other: Alias): Unit = {
+        if (other != NoAlias) {
+            throw new IllegalArgumentException(s"$e: impossible refinement: $other => $this")
+        }
+    }
 }
 
 /**
@@ -169,5 +166,5 @@ case object NoAlias extends Alias {
  */
 case object MayAlias extends Alias {
 
-  override def checkIsEqualOrBetterThan(e: Entity, other: Alias): Unit = {}
+    override def checkIsEqualOrBetterThan(e: Entity, other: Alias): Unit = {}
 }

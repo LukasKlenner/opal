@@ -5,14 +5,14 @@ import org.opalj.fpcf.properties.PropertyValidator;
 import org.opalj.tac.fpcf.analyses.alias.IntraProceduralNoAliasAnalysis;
 import org.opalj.tac.fpcf.analyses.alias.pointsto.AllocationSitePointsToBasedAliasAnalysis;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
+
+import static java.lang.annotation.ElementType.*;
 
 @PropertyValidator(key = "AliasProperty", validator = MayAliasMatcher.class)
+@Repeatable(MayAliases.class)
 @Documented
-@Target({})
+@Target({TYPE_USE, PARAMETER, METHOD})
 @Retention(RetentionPolicy.CLASS)
 public @interface MayAlias {
 
@@ -26,7 +26,9 @@ public @interface MayAlias {
      * It is used to associate this element with the other element that is part of this relation.
      * @return The id of this NoAlias relation.
      */
-    String id();
+    int id();
+
+    Class<?> clazz();
 
     /**
      * All analyses that should be able to correctly detect this relation.

@@ -7,6 +7,7 @@ package analyses
 package alias
 
 import org.opalj.br.Method
+import org.opalj.br.fpcf.properties.alias.AliasFP
 import org.opalj.collection.immutable.IntTrieSet
 import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.Entity

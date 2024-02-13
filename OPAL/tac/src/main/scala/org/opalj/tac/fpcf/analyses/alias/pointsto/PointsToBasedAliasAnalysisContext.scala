@@ -3,11 +3,11 @@ package org.opalj.tac.fpcf.analyses.alias.pointsto
 
 import org.opalj.br.analyses.SomeProject
 import org.opalj.br.analyses.VirtualFormalParametersKey
+import org.opalj.br.fpcf.properties.alias.AliasEntity
 import org.opalj.fpcf.PropertyStore
 import org.opalj.tac.cg.TypeIteratorKey
 import org.opalj.tac.common.DefinitionSitesKey
 import org.opalj.tac.fpcf.analyses.alias.AliasAnalysisContext
-import org.opalj.tac.fpcf.analyses.alias.AliasEntity
 
 class PointsToBasedAliasAnalysisContext(
         override val entity:        AliasEntity,

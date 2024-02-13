@@ -7,6 +7,7 @@ package analyses
 package alias
 
 import org.opalj.br.fpcf.FPCFAnalysis
+import org.opalj.br.fpcf.properties.alias.AliasEntity
 import org.opalj.fpcf.Entity
 import org.opalj.fpcf.ProperPropertyComputationResult
 

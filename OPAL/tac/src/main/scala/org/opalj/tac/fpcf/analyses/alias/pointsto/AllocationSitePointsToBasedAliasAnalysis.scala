@@ -9,6 +9,11 @@ import org.opalj.br.analyses.VirtualFormalParametersKey
 import org.opalj.br.fpcf.BasicFPCFEagerAnalysisScheduler
 import org.opalj.br.fpcf.FPCFAnalysis
 import org.opalj.br.fpcf.properties.SimpleContextsKey
+import org.opalj.br.fpcf.properties.alias.AliasDS
+import org.opalj.br.fpcf.properties.alias.AliasEntity
+import org.opalj.br.fpcf.properties.alias.AliasFP
+import org.opalj.br.fpcf.properties.alias.AliasSourceElement
+import org.opalj.br.fpcf.properties.alias.AliasUVar
 import org.opalj.br.fpcf.properties.cg.Callers
 import org.opalj.br.fpcf.properties.cg.NoCallers
 import org.opalj.br.fpcf.properties.pointsto.AllocationSitePointsToSet
@@ -16,14 +21,15 @@ import org.opalj.fpcf.PropertyBounds
 import org.opalj.fpcf.PropertyStore
 import org.opalj.tac.Assignment
 import org.opalj.tac.Call
+import org.opalj.tac.DUVar
 import org.opalj.tac.DVar
+import org.opalj.tac.ExprStmt
+import org.opalj.tac.TACMethodParameter
+import org.opalj.tac.TACode
 import org.opalj.tac.UVar
 import org.opalj.tac.common.DefinitionSitesKey
-import org.opalj.tac.fpcf.analyses.alias.AliasDVar
-import org.opalj.tac.fpcf.analyses.alias.AliasEntity
-import org.opalj.tac.fpcf.analyses.alias.AliasFP
-import org.opalj.tac.fpcf.analyses.alias.AliasSourceElement
-import org.opalj.tac.fpcf.analyses.alias.AliasUVar
+import org.opalj.tac.fpcf.analyses.alias.pcOfDefSite
+import org.opalj.tac.fpcf.analyses.alias.persistentUVar
 import org.opalj.tac.fpcf.analyses.pointsto.AbstractPointsToAnalysis
 import org.opalj.tac.fpcf.analyses.pointsto.AllocationSiteBasedAnalysis
 import org.opalj.tac.fpcf.properties.TACAI
@@ -44,6 +50,7 @@ object EagerPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalys
         val analysis = new AllocationSitePointsToBasedAliasAnalysis(p)
         val simpleContexts = p.get(SimpleContextsKey)
         val declaredMethods = p.get(DeclaredMethodsKey)
+        //val declaredFields = p.get(DeclaredFieldsKey)
 
         val methods = declaredMethods.declaredMethods
         val callersProperties = ps(methods.to(Iterable), Callers)
@@ -56,38 +63,55 @@ object EagerPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalys
             }
             .toMap
 
-        val uVars: mutable.Set[(UVar[ValueInformation], Method)] = mutable.Set.empty[(UVar[ValueInformation], Method)]
-        val dVars: mutable.Set[(DVar[ValueInformation], Method)] = mutable.Set.empty[(DVar[ValueInformation], Method)]
+        type Tac = TACode[TACMethodParameter, DUVar[ValueInformation]]
 
+        val uVars: mutable.Set[(UVar[ValueInformation], Method, Tac)] = mutable.Set.empty[(UVar[ValueInformation], Method, Tac)]
+        val dVars: mutable.Set[(DVar[ValueInformation], Method, Tac)] = mutable.Set.empty[(DVar[ValueInformation], Method, Tac)]
+
+        def handleCall(call: Call[_], m: Method, tac: Tac) = {
+            call.allParams.foreach {
+                case uVar: UVar[ValueInformation] => uVars.add((uVar, m, tac))
+                case _                            =>
+            }
+
+            if (call.receiverOption.isDefined) {
+                call.receiverOption.get match {
+                    case uVar: UVar[ValueInformation] => uVars.add((uVar, m, tac))
+                    case _                            =>
+                }
+            }
+        }
 
         reachableMethods.keys
-              .filter(m => m.hasSingleDefinedMethod || m.hasMultipleDefinedMethods)
-              .foreach(m => m.foreachDefinedMethod(m => {
+            .filter(m => m.hasSingleDefinedMethod || m.hasMultipleDefinedMethods)
+            .foreach(m => m.foreachDefinedMethod(m => {
 
                 if (m.body.isDefined) {
-                  val tac = ps(m, TACAI.key)
-                  //forAllSubexpressions
-                  tac.asFinal.p.tac.get.stmts.foreach {
-                    case Assignment(_, dVar: DVar[ValueInformation], _) => dVars.add((dVar, m))
-                    case call: Call[_] => {
-                      call.allParams.foreach {
-                        case uVar: UVar[ValueInformation] => uVars.add((uVar, m))
+                    val tac = ps(m, TACAI.key).asFinal.p.tac.get
+
+                    tac.stmts.foreach {
+                        case Assignment(_, dVar: DVar[ValueInformation], _) => dVars.add((dVar, m, tac))
+                        case call: Call[_]                                  => handleCall(call, m, tac)
+                        case ExprStmt(_, expr) => {
+                            expr match {
+                                case uVar: UVar[ValueInformation] => uVars.add((uVar, m, tac))
+                                case call: Call[_]                => handleCall(call, m, tac)
+                                case _                            =>
+                            }
+                        }
                         case _ =>
-                      }
                     }
-                    case _ =>
-                  }
                 }
 
-              }))
+            }))
         val formalParameters = p
             .get(VirtualFormalParametersKey)
             .virtualFormalParameters
             .filter(fp => reachableMethods.contains(fp.method))
 
         val aliasEntities: Seq[AliasSourceElement] = formalParameters.map(AliasFP).toSeq ++
-          uVars.map(uVar => AliasUVar(uVar._1, uVar._2, p)) ++
-          dVars.map(dVar => AliasDVar(dVar._1, dVar._2, p))
+            uVars.map(uVar => AliasUVar(persistentUVar(uVar._1)(uVar._3.stmts), uVar._2, p)) ++
+            dVars.map(dVar => AliasDS(pcOfDefSite(dVar._1.origin)(dVar._3.stmts), dVar._2, p))
 
         val entities: ArrayBuffer[AliasEntity] = ArrayBuffer.empty
 

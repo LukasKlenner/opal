@@ -1,7 +1,9 @@
-package org.opalj.fpcf.properties.alias;
+package org.opalj.fpcf.properties.alias.u_var;
 
 import org.opalj.br.fpcf.FPCFAnalysis;
 import org.opalj.fpcf.properties.PropertyValidator;
+import org.opalj.fpcf.properties.alias.MayAliasMatcher;
+import org.opalj.fpcf.properties.alias.NoAliasMatcher;
 import org.opalj.tac.fpcf.analyses.alias.IntraProceduralNoAliasAnalysis;
 import org.opalj.tac.fpcf.analyses.alias.pointsto.AllocationSitePointsToBasedAliasAnalysis;
 
@@ -9,29 +11,23 @@ import java.lang.annotation.*;
 
 import static java.lang.annotation.ElementType.*;
 
-/**
- * Annotation to specify that this element is part of the MustAlias relation with the given ID.
- *
- * @see Alias
- */
-@PropertyValidator(key = "AliasProperty", validator = MustAliasMatcher.class)
-@Repeatable(MustAliases.class)
+@PropertyValidator(key = "AliasProperty", validator = NoAliasMatcher.class)
+@Repeatable(NoAliasUVars.class)
 @Documented
 @Target({TYPE_USE, PARAMETER, METHOD})
 @Retention(RetentionPolicy.CLASS)
-public @interface MustAlias {
+public @interface NoAliasUVar {
 
     /**
      * A short reasoning why this relation is a NoAlias relation.
      */
     String reason() default "No reason Provided";
 
-    /**
-     * The id of this NoAlias relation.
-     * It is used to associate this element with the other element that is part of this relation.
-     * @return The id of this NoAlias relation.
-     */
-    int id();
+    int lineNumber();
+
+    int parameterIndex() default -1;
+
+    int methodID();
 
     Class<?> clazz();
 
@@ -43,10 +39,4 @@ public @interface MustAlias {
             AllocationSitePointsToBasedAliasAnalysis.class,
             IntraProceduralNoAliasAnalysis.class
     };
-
-    /**
-     * Indicates whether this element is part of a NoAlias relation with null.
-     * @return Whether this element is part of a NoAlias relation with null.
-     */
-    boolean aliasWithNull() default false;
 }

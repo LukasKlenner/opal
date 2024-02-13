@@ -1,16 +1,14 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj
-package tac
-package fpcf
-package analyses
-package alias
+package org.opalj.br.fpcf.properties.alias
 
 import org.opalj.br.DeclaredMethod
 import org.opalj.br.Field
 import org.opalj.br.Method
+import org.opalj.br.PC
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.SomeProject
 import org.opalj.br.analyses.VirtualFormalParameter
+import org.opalj.collection.immutable.IntTrieSet
 import org.opalj.value.ValueInformation
 
 /**
@@ -80,13 +78,13 @@ object AliasSourceElement {
      */
     def apply(element: AnyRef)(implicit project: SomeProject): AliasSourceElement = {
         element match {
-            case fp: VirtualFormalParameter   => AliasFP(fp)
-            //case ds: DefinitionSite         => AliasDS(ds, project)
-            case dm: Method                   => AliasReturnValue(dm, project)
-            case f: Field                     => AliasField(f)
-            case null                         => AliasNull()
-            case (uVar: UVar[ValueInformation], method: Method) => AliasUVar(uVar, method, project)
-            case _                            => throw new UnknownError("unhandled entity type")
+            case fp: VirtualFormalParameter        => AliasFP(fp)
+            case (pc: PC, m: Method)               => AliasDS(pc, m, project)
+            case dm: Method                        => AliasReturnValue(dm, project)
+            case f: Field                          => AliasField(f)
+            case null                              => AliasNull()
+            case (uVar: PersistentUVar, m: Method) => AliasUVar(uVar, m, project)
+            case _                                 => throw new UnknownError("unhandled entity type")
         }
     }
 }
@@ -137,11 +135,20 @@ case class AliasFP(fp: VirtualFormalParameter) extends AliasSourceElement {
     override def isMethodBound: Boolean = true
 }
 
-case class AliasUVar(uVar: UVar[ValueInformation],
-                     override val method: Method,
-                     project: SomeProject) extends AliasSourceElement {
+/**
+ * A persistent representation (using pcs instead of TAC value origins) for a UVar.
+ *
+ * @see [[org.opalj.tac.fpcf.analyses.cg.persistentUVar]]
+ */
+case class PersistentUVar(valueInformation: ValueInformation, defSites: IntTrieSet)
 
-    override def element: UVar[ValueInformation] = uVar
+case class AliasUVar(
+        uVar:                PersistentUVar,
+        override val method: Method,
+        project:             SomeProject
+) extends AliasSourceElement {
+
+    override def element: (PersistentUVar, Method) = (uVar, method)
 
     override def isMethodBound: Boolean = true
 
@@ -149,14 +156,17 @@ case class AliasUVar(uVar: UVar[ValueInformation],
 
 }
 
-case class AliasDVar(dVar: DVar[ValueInformation],
-                     override val method: Method,
-                     project: SomeProject) extends AliasSourceElement {
+case class AliasDS(
+        pc:                  PC,
+        override val method: Method,
+        project:             SomeProject
+) extends AliasSourceElement {
 
-  override def element: DVar[ValueInformation] = dVar
+    override def element: (PC, Method) = (pc, method)
 
-  override def isMethodBound: Boolean = true
+    override def definitionSite: Int = pc
 
-  override def declaredMethod: DeclaredMethod = project.get(DeclaredMethodsKey)(method)
+    override def isMethodBound: Boolean = true
 
+    override def declaredMethod: DeclaredMethod = project.get(DeclaredMethodsKey)(method)
 }

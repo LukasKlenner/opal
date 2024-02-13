@@ -7,10 +7,14 @@ package alias
 import org.opalj.br.AnnotationLike
 import org.opalj.br.ObjectType
 import org.opalj.br.analyses.Project
-import org.opalj.br.fpcf.properties.Alias
+import org.opalj.br.fpcf.properties.alias.Alias
+import org.opalj.br.fpcf.properties.alias.MayAlias
+import org.opalj.br.fpcf.properties.alias.MustAlias
+import org.opalj.br.fpcf.properties.alias.NoAlias
 
 /**
  * Base class for matching the assigned alias property of an entity with the expected alias property.
+ *
  * @param property The expected alias property
  */
 abstract class AliasPropertyMatcher(val property: Alias) extends AbstractPropertyMatcher {
@@ -53,16 +57,16 @@ abstract class AliasPropertyMatcher(val property: Alias) extends AbstractPropert
 }
 
 /**
- * Matches if the entity has the [[org.opalj.br.fpcf.properties.NoAlias]] property.
+ * Matches if the entity has the [[NoAlias]] property.
  */
-class NoAliasMatcher extends AliasPropertyMatcher(org.opalj.br.fpcf.properties.NoAlias)
+class NoAliasMatcher extends AliasPropertyMatcher(NoAlias)
 
 /**
- * Matches if the entity has the [[org.opalj.br.fpcf.properties.MayAlias]] property.
+ * Matches if the entity has the [[MayAlias]] property.
  */
-class MayAliasMatcher extends AliasPropertyMatcher(org.opalj.br.fpcf.properties.MayAlias)
+class MayAliasMatcher extends AliasPropertyMatcher(MayAlias)
 
 /**
- * Matches if the entity has the [[org.opalj.br.fpcf.properties.MustAlias]] property.
+ * Matches if the entity has the [[MustAlias]] property.
  */
-class MustAliasMatcher extends AliasPropertyMatcher(org.opalj.br.fpcf.properties.MustAlias)
+class MustAliasMatcher extends AliasPropertyMatcher(MustAlias)

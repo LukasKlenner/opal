@@ -3,15 +3,17 @@ package org.opalj.tac.fpcf.analyses.alias.pointsto
 
 import org.opalj.br.PC
 import org.opalj.br.fpcf.properties.Context
+import org.opalj.br.fpcf.properties.alias.AliasSourceElement
 import org.opalj.fpcf.Entity
 import org.opalj.tac.fpcf.analyses.alias.AliasAnalysisContext
 import org.opalj.tac.fpcf.analyses.alias.AliasAnalysisState
-import org.opalj.tac.fpcf.analyses.alias.AliasSourceElement
 
 class PointsToBasedAliasAnalysisState extends AliasAnalysisState {
 
     var _pointsTo1: Set[(Context, PC)] = Set[(Context, PC)]()
     var _pointsTo2: Set[(Context, PC)] = Set[(Context, PC)]()
+
+    var _pointsToFinal: Map[Entity, Boolean] = Map[Entity, Boolean]()
 
     var _pointsToElementsHandled: Map[Entity, Int] = Map[Entity, Int]()
 
@@ -59,6 +61,14 @@ class PointsToBasedAliasAnalysisState extends AliasAnalysisState {
 
     def setSomePointsTo(): Unit = {
         _somePointsTo = true
+    }
+
+    def allPointsToFinal(): Boolean = {
+        _pointsToFinal.values.forall(identity)
+    }
+
+    def setPointsToFinal(entity: Entity, boolean: Boolean): Unit = {
+        _pointsToFinal += entity -> boolean
     }
 
 }

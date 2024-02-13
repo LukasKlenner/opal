@@ -7,14 +7,17 @@ import org.opalj.tac.fpcf.analyses.alias.pointsto.AllocationSitePointsToBasedAli
 
 import java.lang.annotation.*;
 
+import static java.lang.annotation.ElementType.*;
+
 /**
  * Annotation to specify that this element is part of the NoAlias relation with the given ID.
  *
  * @see Alias
  */
 @PropertyValidator(key = "AliasProperty", validator = NoAliasMatcher.class)
+@Repeatable(NoAliases.class)
 @Documented
-@Target({})
+@Target({TYPE_USE, PARAMETER, METHOD})
 @Retention(RetentionPolicy.CLASS)
 public @interface NoAlias {
 
@@ -28,7 +31,9 @@ public @interface NoAlias {
      * It is used to associate this element with the other element that is part of this relation.
      * @return The id of this NoAlias relation.
      */
-    String id();
+    int id();
+
+    Class<?> clazz();
 
     /**
      * All analyses that should be able to correctly detect this relation.

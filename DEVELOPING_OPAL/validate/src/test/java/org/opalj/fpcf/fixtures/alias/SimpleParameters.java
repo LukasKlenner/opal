@@ -1,64 +1,67 @@
 package org.opalj.fpcf.fixtures.alias;
 
-import org.opalj.fpcf.properties.alias.Alias;
+import org.opalj.fpcf.properties.alias.AliasMethodID;
 import org.opalj.fpcf.properties.alias.MayAlias;
 import org.opalj.fpcf.properties.alias.NoAlias;
+import org.opalj.fpcf.properties.alias.u_var.MayAliasUVar;
+import org.opalj.fpcf.properties.alias.u_var.NoAliasUVar;
 
 public class SimpleParameters {
 
-    static int a = 0;
-
     public static void main(String[] args) {
-        noAlias1(new Object());
-        noAlias2(new Object(), new Object());
-        mayAlias1(new Object());
-        mayAlias2(new Object(), new Object());
+        noAliasWithLocal(new Object());
+        noAliasWithParam(new Object(), new Object());
+        mayAliasWithLocal(new Object());
+        mayAliasWithParam(new Object(), new Object());
 
         Object o1 = new Object();
-        mustAlias(o1, o1);
+        mayAliasWithParam(o1, o1);
     }
 
-    public static void noAlias1(@Alias(noAlias = @NoAlias(reason = "noAlias", id = "SP.na1")) Object o1) {
+    @AliasMethodID(id = 0, clazz = SimpleParameters.class)
+    public static void noAliasWithLocal(@NoAliasUVar(lineNumber = 27, methodID = 0, clazz = SimpleParameters.class) Object o1) {
 
-        Object o2 = new @Alias(noAlias = @NoAlias(reason = "noAlias", id = "SP.na1")) Object();
-        o1.hashCode();
-        o2.hashCode();
-    }
-
-    public static void noAlias2(@Alias(noAlias = @NoAlias(reason = "noAlias", id = "SP.na2")) Object o1,
-                                @Alias(noAlias = @NoAlias(reason = "noAlias", id = "SP.na2")) Object o2) {
+        Object o2 = new Object();
 
         o1.hashCode();
         o2.hashCode();
     }
 
-    public static void mayAlias1(@Alias(mayAlias = @MayAlias(reason = "mayAlias", id = "SP.ma1")) Object o1) {
+    public static void noAliasWithParam(@NoAlias(reason = "noAlias", id = 0, clazz = SimpleParameters.class) Object o1,
+                                        @NoAlias(reason = "noAlias", id = 0, clazz = SimpleParameters.class) Object o2) { //TODO doppelt in properties in AliasTests
 
-        Object o2 = new @Alias(mayAlias = @MayAlias(reason = "mayAlias", id = "SP.ma1")) Object();
+        o1.hashCode();
+        o2.hashCode();
+    }
+
+    @AliasMethodID(id = 1, clazz = SimpleParameters.class)
+    public static void mayAliasWithLocal(@MayAliasUVar(lineNumber = 47, methodID = 1, clazz = SimpleParameters.class) Object o1) {
+
+        Object o2 = new Object();
         o2.hashCode();
 
-        if (a == 1) {
+        if (Math.random() > 0.5) {
             o2 = o1;
         }
 
         o2.hashCode();
     }
 
-    public static void mayAlias2(@Alias(mayAlias = @MayAlias(reason = "mayAlias", id = "SP.ma2")) Object o1,
-                                 @Alias(mayAlias = @MayAlias(reason = "mayAlias", id = "SP.ma2")) Object o2) {
+    public static void mayAliasWithParam(@MayAlias(reason = "mayAlias", id = 1, clazz = SimpleParameters.class) Object o1,
+                                         @MayAlias(reason = "mayAlias", id = 1, clazz = SimpleParameters.class) Object o2) {
 
         o1.hashCode();
         o2.hashCode();
 
-        if (a == 1) {
+        if (Math.random() > 0.5) {
             o2 = o1;
         }
 
         o2.hashCode();
     }
 
-    public static void mustAlias(@Alias(mayAlias = @MayAlias(reason = "mayAlias", id = "SP.mua")) Object o1,
-                                 @Alias(mayAlias = @MayAlias(reason = "mayAlias", id = "SP.mua")) Object o2) {
+    public static void mustAliasWithParam(@MayAlias(reason = "mayAlias", id = 2, clazz = SimpleParameters.class) Object o1,
+                                 @MayAlias(reason = "mayAlias", id = 2, clazz = SimpleParameters.class) Object o2) {
 
         o1.hashCode();
         o2.hashCode();

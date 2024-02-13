@@ -1,38 +1,21 @@
 package org.opalj.fpcf.fixtures.alias;
 
-import org.opalj.fpcf.properties.alias.Alias;
-import org.opalj.fpcf.properties.alias.MayAlias;
-import org.opalj.fpcf.properties.alias.MustAlias;
-import org.opalj.fpcf.properties.alias.NoAlias;
+import org.opalj.fpcf.properties.alias.AliasMethodID;
+import org.opalj.fpcf.properties.alias.u_var.MayAliasUVar;
 
 public class SimpleFieldTest {
 
-//    @Alias(mustAlias = {@MustAlias(reason = "field is never reassigned", id = "SF.finalField")})
-//    private static Object finalObject =
-//            new @Alias(mustAlias = {@MustAlias(reason = "field is never reassigned", id = "SF.finalField")},
-//                       noAlias = {@NoAlias(reason = "field is never assigned to object", id = "SF.na1")}) Object();
-//
-//
-//    private static Object nonFinalObject =
-//            new @Alias(mayAlias = {@MayAlias(reason = "field is assigned to parameter", id = "SF.nonFinalFieldParam"),
-//                                    @MayAlias(reason = "field is assigned to object", id = "SF.nonFinalFieldObject")},
-//            noAlias = {@NoAlias(reason = "field is never assigned to object", id = "SF.na2")}) Object();
-//
-//    public static void main(String[] args) {
-//
-//        Object o1 = new @Alias(mayAlias = {@MayAlias(reason = "field is assigned to object", id = "SF.nonFinalFieldObject")},
-//                                noAlias = {@NoAlias(reason = "field is never assigned to object", id = "SF.na1"),
-//                                        @NoAlias(reason = "field is never assigned to object", id = "SF.na2")}) Object();
-//
-//        o1.hashCode();
-//
-//        nonFinalObject = o1;
-//
-//        reassignField(new Object());
-//
-//    }
-//
-//    public static void reassignField(@Alias(mayAlias = {@MayAlias(reason = "field is assigned to parameter", id = "SF.nonFinalFieldParam")}) Object o) {
-//        nonFinalObject = o;
-//    }
+    @MayAliasUVar(lineNumber = 16, methodID = 0, clazz = SimpleFieldTest.class)
+    private static Object mayAliasField;
+
+    public static void main(String[] args) {
+        reassignField();
+    }
+
+    @AliasMethodID(id = 0, clazz = SimpleFieldTest.class)
+    public static void reassignField() {
+        Object o = new Object();
+        mayAliasField = o;
+    }
+
 }

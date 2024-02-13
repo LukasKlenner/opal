@@ -22,6 +22,14 @@ public @interface MayAliasUVar {
      */
     String reason() default "No reason Provided";
 
+    int lineNumber();
+
+    int parameterIndex() default -1;
+
+    int methodID();
+
+    Class<?> clazz();
+
     /**
      * All analyses that should be able to correctly detect this relation.
      * @return All analyses that should be able to correctly detect this relation.
@@ -30,6 +38,4 @@ public @interface MayAliasUVar {
             AllocationSitePointsToBasedAliasAnalysis.class,
             IntraProceduralNoAliasAnalysis.class
     };
-
-    int lineNumber();
 }
