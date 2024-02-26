@@ -280,7 +280,8 @@ trait AbstractEscapeAnalysis extends FPCFAnalysis {
      * will be called.
      */
     protected[this] def handleExpression(
-        expr: Expr[V], hasAssignment: Boolean
+        expr:          Expr[V],
+        hasAssignment: Boolean
     )(implicit context: AnalysisContext, state: AnalysisState): Unit = {
         (expr.astID: @switch) match {
             case NonVirtualFunctionCall.ASTID =>
@@ -303,7 +304,8 @@ trait AbstractEscapeAnalysis extends FPCFAnalysis {
      * $JustIntraProcedural
      */
     protected[this] def handleVirtualFunctionCall(
-        call: VirtualFunctionCall[V], hasAssignment: Boolean
+        call:          VirtualFunctionCall[V],
+        hasAssignment: Boolean
     )(implicit context: AnalysisContext, state: AnalysisState): Unit
 
     /**
@@ -313,7 +315,8 @@ trait AbstractEscapeAnalysis extends FPCFAnalysis {
      * $JustIntraProcedural
      */
     protected[this] def handleStaticFunctionCall(
-        call: StaticFunctionCall[V], hasAssignment: Boolean
+        call:          StaticFunctionCall[V],
+        hasAssignment: Boolean
     )(implicit context: AnalysisContext, state: AnalysisState): Unit
 
     /**
@@ -323,7 +326,8 @@ trait AbstractEscapeAnalysis extends FPCFAnalysis {
      * $JustIntraProcedural
      */
     protected[this] def handleNonVirtualFunctionCall(
-        call: NonVirtualFunctionCall[V], hasAssignment: Boolean
+        call:          NonVirtualFunctionCall[V],
+        hasAssignment: Boolean
     )(implicit context: AnalysisContext, state: AnalysisState): Unit
 
     /**
@@ -369,8 +373,10 @@ trait AbstractEscapeAnalysis extends FPCFAnalysis {
         } else {
             InterimResult(
                 context.entity,
-                GlobalEscape, state.mostRestrictiveProperty,
-                state.dependees, c
+                GlobalEscape,
+                state.mostRestrictiveProperty,
+                state.dependees,
+                c
             )
         }
     }
@@ -395,13 +401,7 @@ trait AbstractEscapeAnalysis extends FPCFAnalysis {
                     state.updateTACAI(ub.tac.get)
                     analyzeTAC()
                 } else {
-                    InterimResult(
-                        context.entity,
-                        GlobalEscape,
-                        state.mostRestrictiveProperty,
-                        state.dependees,
-                        c
-                    )
+                    InterimResult(context.entity, GlobalEscape, state.mostRestrictiveProperty, state.dependees, c)
                 }
             case _ =>
                 throw new UnknownError(s"unhandled escape property (${someEPS.ub} for ${someEPS.e}")
