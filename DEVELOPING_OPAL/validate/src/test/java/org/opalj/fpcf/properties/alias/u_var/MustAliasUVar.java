@@ -1,3 +1,4 @@
+/* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.fpcf.properties.alias.u_var;
 
 import org.opalj.br.fpcf.FPCFAnalysis;
@@ -21,7 +22,7 @@ public @interface MustAliasUVar {
     /**
      * A short reasoning why this relation is a NoAlias relation.
      */
-    String reason() default "No reason Provided";
+    String reason();
 
     int lineNumber();
 

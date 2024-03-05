@@ -25,7 +25,8 @@ abstract class AliasPropertyMatcher(val property: Alias) extends AbstractPropert
         entity: Any,
         a:      AnnotationLike
     ): Boolean = {
-        val analysesElementValues = getValue(p, a.annotationType.asObjectType, a.elementValuePairs, "analyses").asArrayValue.values
+        val analysesElementValues =
+            getValue(p, a.annotationType.asObjectType, a.elementValuePairs, "analyses").asArrayValue.values
         val analyses = analysesElementValues map {
             _.asClassValue.value.asObjectType
         }

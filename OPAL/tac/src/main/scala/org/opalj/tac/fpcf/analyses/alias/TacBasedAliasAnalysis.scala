@@ -30,7 +30,8 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
         if (context.element2.isMethodBound) retrieveTAC(context.element2.method)
 
         if ((!context.element1.isMethodBound || state.tacai1.isDefined) &&
-            (!context.element2.isMethodBound || state.tacai2.isDefined)) {
+            (!context.element2.isMethodBound || state.tacai2.isDefined)
+        ) {
             analyzeTAC()
         } else {
             InterimResult(context.entity, MayAlias, MayAlias, state.getDependees, continuation)

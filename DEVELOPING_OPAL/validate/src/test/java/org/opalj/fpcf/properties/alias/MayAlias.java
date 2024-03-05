@@ -1,3 +1,4 @@
+/* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.fpcf.properties.alias;
 
 import org.opalj.br.fpcf.FPCFAnalysis;
@@ -19,7 +20,7 @@ public @interface MayAlias {
     /**
      * A short reasoning why this relation is a NoAlias relation.
      */
-    String reason() default "No reason Provided";
+    String reason();
 
     /**
      * The id of this NoAlias relation.

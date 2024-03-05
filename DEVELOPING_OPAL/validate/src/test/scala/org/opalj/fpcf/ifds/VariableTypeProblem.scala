@@ -96,7 +96,6 @@ case class CalleeType(line: Int, t: ReferenceType, upperBound: Boolean) extends 
  * @author Marc Clement
  */
 class VariableTypeProblem(project: SomeProject, override val subsumeFacts: Boolean = false)
-
     extends JavaForwardIFDSProblem[VTAFact](project) {
     val propertyStore: PropertyStore = project.get(PropertyStoreKey)
     val declaredMethods: DeclaredMethods = project.get(DeclaredMethodsKey)

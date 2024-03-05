@@ -2,17 +2,21 @@
 package org.opalj
 package fpcf
 
+import java.net.URL
+
 import org.opalj.ai.domain.l1
 import org.opalj.ai.fpcf.properties.AIDomainFactoryKey
 import org.opalj.br.AnnotationLike
 import org.opalj.br.ClassValue
 import org.opalj.br.Code
 import org.opalj.br.ElementValuePair
+import org.opalj.br.Field
 import org.opalj.br.Method
 import org.opalj.br.StringValue
 import org.opalj.br.analyses.DeclaredMethods
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.Project
+import org.opalj.br.analyses.SomeProject
 import org.opalj.br.fpcf.properties.SimpleContextsKey
 import org.opalj.br.fpcf.properties.alias.AliasEntity
 import org.opalj.br.fpcf.properties.alias.AliasFP
@@ -23,6 +27,7 @@ import org.opalj.tac.Call
 import org.opalj.tac.DUVar
 import org.opalj.tac.Expr
 import org.opalj.tac.ExprStmt
+import org.opalj.tac.PutStatic
 import org.opalj.tac.Stmt
 import org.opalj.tac.UVar
 import org.opalj.tac.cg.AllocationSiteBasedPointsToCallGraphKey
@@ -30,8 +35,6 @@ import org.opalj.tac.fpcf.analyses.alias.persistentUVar
 import org.opalj.tac.fpcf.analyses.alias.pointsto.EagerPointsToBasedAliasAnalysisScheduler
 import org.opalj.tac.fpcf.properties.TACAI
 import org.opalj.value.ValueInformation
-
-import java.net.URL
 
 /**
  * Tests if the alias properties defined in the classes of the package org.opalj.fpcf.fixtures.alias (and it's subpackage)
@@ -46,7 +49,6 @@ class AliasTests extends PropertiesTest {
     override def init(p: Project[URL]): Unit = {
 
         p.updateProjectInformationKeyInitializationData(AIDomainFactoryKey) { _ =>
-
             Set[Class[_ <: AnyRef]](classOf[l1.DefaultDomainWithCFGAndDefUse[URL]])
         }
 
@@ -57,11 +59,13 @@ class AliasTests extends PropertiesTest {
     describe("run all alias analyses") {
 
         implicit val as: TestContext = executeAnalyses(
-            Set( //TODO add analyses to execute
-                //AllocationSiteBasedPointsToAnalysisScheduler,
-                EagerPointsToBasedAliasAnalysisScheduler,
-            )
+            Set( // TODO add analyses to execute
+                // AllocationSiteBasedPointsToAnalysisScheduler,
+                EagerPointsToBasedAliasAnalysisScheduler)
         )
+
+        val fields = fieldsWithTypeAnnotations(as.project)
+            .flatMap { case (f, fun, a) => getAliasAnnotations(a).map((f, fun, _)) }
 
         val allocations = allocationSitesWithAnnotations(as.project)
             .flatMap { case (ds, fun, a) => getAliasAnnotations(a).map((ds, fun, _)) }
@@ -81,12 +85,13 @@ class AliasTests extends PropertiesTest {
 
         val IDToMethod: Map[String, Method] = getMethodIDs()
 
-        val IDToEntity: Map[String, Iterable[AliasSourceElement]] = (allocations ++ formalParameters ++ methods)
-            .filterNot(_._3.annotationType.asObjectType.simpleName.endsWith("AliasUVar"))
-            .map { case (e, _, a) => getID(a) -> AliasSourceElement(e)(as.project) }
-            .groupMap(_._1)(_._2)
+        val IDToEntity: Map[String, Iterable[AliasSourceElement]] =
+            (fields ++ allocations ++ formalParameters ++ methods)
+                .filterNot(_._3.annotationType.asObjectType.simpleName.endsWith("AliasUVar"))
+                .map { case (e, _, a) => getID(a) -> AliasSourceElement(e)(as.project) }
+                .groupMap(_._1)(_._2)
 
-        val properties = (allocations ++ formalParameters ++ methods)
+        val properties = (fields ++ allocations ++ formalParameters ++ methods)
             .map {
                 case (e, str, a) => {
 
@@ -107,7 +112,7 @@ class AliasTests extends PropertiesTest {
 
         validateProperties(as, properties, Set("AliasProperty"))
 
-        //println("reachable methods: " + as.project.get(TypeBasedPointsToCallGraphKey).reachableMethods().toList.size)
+        // println("reachable methods: " + as.project.get(TypeBasedPointsToCallGraphKey).reachableMethods().toList.size)
     }
 
     private[this] def resolveSecondElement(
@@ -128,7 +133,9 @@ class AliasTests extends PropertiesTest {
                 val pc = body.instructions.zipWithIndex
                     .filter(_._1 != null)
                     .filter(inst => body.lineNumber(inst._2).isDefined && body.lineNumber(inst._2).get == lineNumber)
-                    .filterNot(inst => inst._1.isLoadConstantInstruction || inst._1.isLoadLocalVariableInstruction || inst._1.isStackManagementInstruction)
+                    .filterNot(inst =>
+                        inst._1.isLoadConstantInstruction || inst._1.isLoadLocalVariableInstruction || inst._1.isStackManagementInstruction
+                    )
                     .map(_._2)
                     .head
 
@@ -136,31 +143,26 @@ class AliasTests extends PropertiesTest {
                 val stmt: Stmt[DUVar[ValueInformation]] = tac.ub.tac.get.stmts(tac.ub.tac.get.pcToIndex(pc))
 
                 stmt match {
-                    case c: Call[_] => handleCall(an, c, method, stmts)
-                    case expr: ExprStmt[DUVar[ValueInformation]] => {
-                        expr.expr match {
-                            case c: Call[_]                   => handleCall(an, c, method, stmts)
-                            case uVar: UVar[ValueInformation] => AliasUVar(persistentUVar(uVar)(stmts), method, as.project)
-                            case _                            => throw new IllegalArgumentException("No UVar found")
-                        }
-                    }
-                    case _ => throw new IllegalArgumentException("No UVar found")
+                    case c: Call[_]                                    => handleCall(an, c, method, stmts)
+                    case expr: ExprStmt[DUVar[ValueInformation]]       => handleExpr(an, expr.expr, method, stmts)
+                    case putStatic: PutStatic[DUVar[ValueInformation]] => handleExpr(an, putStatic.value, method, stmts)
+                    case _                                             => throw new IllegalArgumentException("No UVar found")
                 }
 
             }
 
             case _ => if (isNullAlias(an)) {
-                new AliasNull
-            } else {
-                val matchingEntities = IDToEntity(getID(an)).toSeq.filter(!_.equals(firstElement))
-                if (matchingEntities.isEmpty) {
-                    throw new IllegalArgumentException("No other entity with id " + getID(an) + " found")
+                    new AliasNull
+                } else {
+                    val matchingEntities = IDToEntity(getID(an)).toSeq.filter(!_.equals(firstElement))
+                    if (matchingEntities.isEmpty) {
+                        throw new IllegalArgumentException("No other entity with id " + getID(an) + " found")
+                    }
+                    if (matchingEntities.size > 1) {
+                        throw new IllegalArgumentException("Multiple other entities with id " + getID(an) + " found")
+                    }
+                    matchingEntities.head
                 }
-                if (matchingEntities.size > 1) {
-                    throw new IllegalArgumentException("Multiple other entities with id " + getID(an) + " found")
-                }
-                matchingEntities.head
-            }
 
         }
     }
@@ -176,6 +178,20 @@ class AliasTests extends PropertiesTest {
         val param: Expr[_] = if (parameterIndex == -1) c.receiverOption.get else c.params(parameterIndex)
 
         param match {
+            case uVar: UVar[ValueInformation] => AliasUVar(persistentUVar(uVar)(stmts), method, as.project)
+            case _                            => throw new IllegalArgumentException("No UVar found")
+        }
+    }
+
+    private[this] def handleExpr(
+        an:     AnnotationLike,
+        expr:   Expr[DUVar[ValueInformation]],
+        method: Method,
+        stmts:  Array[Stmt[DUVar[ValueInformation]]]
+    )(implicit as: TestContext): AliasSourceElement = {
+
+        expr match {
+            case c: Call[_]                   => handleCall(an, c, method, stmts)
             case uVar: UVar[ValueInformation] => AliasUVar(persistentUVar(uVar)(stmts), method, as.project)
             case _                            => throw new IllegalArgumentException("No UVar found")
         }
@@ -204,7 +220,9 @@ class AliasTests extends PropertiesTest {
     private[this] def getIntValue(a: AnnotationLike, element: String)(implicit as: TestContext): Int = {
         a.elementValuePairs.filter(_.name == element).collectFirst {
             case ElementValuePair(`element`, value) => value.asIntValue.value
-        }.getOrElse(as.project.classFile(a.annotationType.asObjectType).get.findMethod(element).head.annotationDefault.get.asIntValue.value)
+        }.getOrElse(as.project.classFile(a.annotationType.asObjectType).get.findMethod(
+            element
+        ).head.annotationDefault.get.asIntValue.value)
     }
 
     private[this] def getStringValue(a: AnnotationLike, element: String): String = {
@@ -252,7 +270,7 @@ class AliasTests extends PropertiesTest {
      * @return All alias annotations that are contained in the given annotation.
      */
     private[this] def getAliasAnnotations(a: Iterable[AnnotationLike]): Iterable[AnnotationLike] = {
-        //getAliasAnnotations(a, "noAlias") ++ getAliasAnnotations(a, "mayAlias") ++ getAliasAnnotations(a, "mustAlias")
+        // getAliasAnnotations(a, "noAlias") ++ getAliasAnnotations(a, "mayAlias") ++ getAliasAnnotations(a, "mustAlias")
         a.filter(_.annotationType.asObjectType.simpleName.contains("Alias"))
             .filter(_.annotationType.asObjectType.simpleName != "AliasMethodID")
     }
@@ -271,7 +289,23 @@ class AliasTests extends PropertiesTest {
     private[this] def getMethodIDs()(implicit as: TestContext): Map[String, Method] = {
         methodsWithAnnotations(as.project)
             .filter { case (_, _, a) => a.exists(_.annotationType.asObjectType.simpleName.equals("AliasMethodID")) }
-            .map { case (m, _, a) => getID(a.find(_.annotationType.asObjectType.simpleName.equals("AliasMethodID")).get) -> m }.toMap
+            .map { case (m, _, a) =>
+                getID(a.find(_.annotationType.asObjectType.simpleName.equals("AliasMethodID")).get) -> m
+            }.toMap
+    }
+
+    // equivalent to PropertiesTest.fieldsWithAnnotations but with type annotations because the annotations are
+    // recognized as type annotations for some reason
+    private[this] def fieldsWithTypeAnnotations(
+        recreatedFixtureProject: SomeProject
+    ): Iterable[(Field, String => String, Iterable[AnnotationLike])] = {
+        for {
+            f <- recreatedFixtureProject.allFields // cannot be parallelized; "it" is not thread safe
+            annotations = f.runtimeInvisibleTypeAnnotations
+            if annotations.nonEmpty
+        } yield {
+            (f, (a: String) => f.toJava(s"@$a").substring(24), annotations)
+        }
     }
 
 }

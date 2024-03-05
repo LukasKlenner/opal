@@ -10,9 +10,9 @@ import org.opalj.tac.common.DefinitionSitesKey
 import org.opalj.tac.fpcf.analyses.alias.AliasAnalysisContext
 
 class PointsToBasedAliasAnalysisContext(
-        override val entity:        AliasEntity,
-        override val project:       SomeProject,
-        override val propertyStore: PropertyStore
+    override val entity:        AliasEntity,
+    override val project:       SomeProject,
+    override val propertyStore: PropertyStore
 ) extends AliasAnalysisContext(entity, project, propertyStore) {
 
     private[this] val _virtualFormalParameters = project.get(VirtualFormalParametersKey)

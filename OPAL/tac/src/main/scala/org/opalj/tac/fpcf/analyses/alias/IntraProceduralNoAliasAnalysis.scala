@@ -6,6 +6,8 @@ package fpcf
 package analyses
 package alias
 
+import scala.collection.mutable.ArrayBuffer
+
 import org.opalj.br.VirtualDeclaredMethod
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.ProjectInformationKeys
@@ -39,9 +41,7 @@ import org.opalj.tac.common.DefinitionSiteLike
 import org.opalj.tac.common.DefinitionSitesKey
 import org.opalj.tac.fpcf.properties.TACAI
 
-import scala.collection.mutable.ArrayBuffer
-
-class IntraProceduralNoAliasAnalysis( final val project: SomeProject) extends TacBasedAliasAnalysis {
+class IntraProceduralNoAliasAnalysis(final val project: SomeProject) extends TacBasedAliasAnalysis {
 
     override type AnalysisContext = AliasAnalysisContext
     override type AnalysisState = AliasAnalysisState
@@ -54,12 +54,12 @@ class IntraProceduralNoAliasAnalysis( final val project: SomeProject) extends Ta
         assert(state.tacai1.isDefined)
 
         if (context.entity.bothElementsMethodBound && !context.entity.elementsInSameMethod) {
-            return result(MayAlias) //two elements in different methods are not yet supported
+            return result(MayAlias) // two elements in different methods are not yet supported
         }
 
         if (context.element1 == context.element2) {
             context.element1.element match {
-                case _: DefinitionSiteLike     => return Result(context.entity, MayAlias) //DS might be inside loop
+                case _: DefinitionSiteLike     => return Result(context.entity, MayAlias) // DS might be inside loop
                 case _: VirtualFormalParameter => return Result(context.entity, MustAlias)
                 case _                         => throw new UnknownError("unhandled entity type")
             }
@@ -76,25 +76,25 @@ class IntraProceduralNoAliasAnalysis( final val project: SomeProject) extends Ta
                     case _: AliasNull =>
                         if (allReturnExpr.forall(isNullReturn)) return result(MustAlias)
 
-                        //all returns return a local variable that is only assigned to a new allocation
+                        // all returns return a local variable that is only assigned to a new allocation
                         if (allReturnExpr.forall(expr => {
-                            if (expr.isVar) {
-                                val defSites = expr.asVar.definedBy.filter(_ >= 0)
-                                var nonNewDefSite = false
-                                for (defSite <- defSites) {
-                                    val defStmt = state.tacai1.get.stmts(defSite)
-                                    if (!defStmt.isAssignment || !defStmt.asAssignment.expr.isNew) {
-                                        nonNewDefSite = true
+                                if (expr.isVar) {
+                                    val defSites = expr.asVar.definedBy.filter(_ >= 0)
+                                    var nonNewDefSite = false
+                                    for (defSite <- defSites) {
+                                        val defStmt = state.tacai1.get.stmts(defSite)
+                                        if (!defStmt.isAssignment || !defStmt.asAssignment.expr.isNew) {
+                                            nonNewDefSite = true
+                                        }
                                     }
-                                }
-                                !nonNewDefSite
-                            } else
-                                false
-                        })) return result(NoAlias)
+                                    !nonNewDefSite
+                                } else
+                                    false
+                            })
+                        ) return result(NoAlias)
 
                         result(MayAlias)
                     case _ =>
-
                         var anyMatch: Boolean = false
                         for (returnExpr <- allReturnExpr) {
 
@@ -171,7 +171,8 @@ sealed trait IntraProceduralAliasAnalysisScheduler extends FPCFAnalysisScheduler
     )
 }
 
-object EagerIntraProceduralAliasAnalysis extends IntraProceduralAliasAnalysisScheduler with BasicFPCFEagerAnalysisScheduler {
+object EagerIntraProceduralAliasAnalysis extends IntraProceduralAliasAnalysisScheduler
+    with BasicFPCFEagerAnalysisScheduler {
 
     override def requiredProjectInformation: ProjectInformationKeys =
         super.requiredProjectInformation ++ Seq(DefinitionSitesKey, SimpleContextsKey)
@@ -187,9 +188,7 @@ object EagerIntraProceduralAliasAnalysis extends IntraProceduralAliasAnalysisSch
 
         val reachableMethods = callersProperties
             .filterNot(_.asFinal.p == NoCallers)
-            .map { v =>
-                v.e -> v.ub
-            }
+            .map { v => v.e -> v.ub }
             .toMap
 
         val formalParameters = p

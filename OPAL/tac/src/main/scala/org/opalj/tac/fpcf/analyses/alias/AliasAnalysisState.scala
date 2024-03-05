@@ -9,8 +9,8 @@ package alias
 import org.opalj.br.Method
 import org.opalj.br.fpcf.properties.alias.AliasFP
 import org.opalj.collection.immutable.IntTrieSet
-import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.Entity
+import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.Property
 import org.opalj.fpcf.SomeEOptionP
 import org.opalj.fpcf.SomeEPS
@@ -93,7 +93,7 @@ class AliasAnalysisState {
             this._tacai1 = Some(tacai)
 
             (context.element1) match {
-                //case (ds: AliasDS) =>
+                // case (ds: AliasDS) =>
                 //    _defSite1 = tacai.properStmtIndexForPC(ds.element.pc)
                 //    _uses1 = ds.element.usedBy(tacai)
                 case (fp: AliasFP) =>
@@ -110,7 +110,7 @@ class AliasAnalysisState {
             this._tacai2 = Some(tacai)
 
             (context.element2) match {
-                //case (ds: AliasDS) =>
+                // case (ds: AliasDS) =>
                 //    _defSite2 = tacai.properStmtIndexForPC(ds.element.pc)
                 //    _uses2 = ds.element.usedBy(tacai)
                 case (fp: AliasFP) =>

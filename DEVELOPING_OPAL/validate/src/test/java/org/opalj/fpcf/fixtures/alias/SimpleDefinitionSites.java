@@ -1,3 +1,4 @@
+/* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.fpcf.fixtures.alias;
 
 import org.opalj.fpcf.properties.alias.AliasMethodID;
@@ -15,7 +16,7 @@ public class SimpleDefinitionSites {
     public static void noAlias() {
 
         Object o1 = new Object();
-        Object o2 = new @NoAliasUVar(lineNumber = 26, methodID = 0, clazz = SimpleDefinitionSites.class) Object();
+        Object o2 = new @NoAliasUVar(reason = "noAlias", lineNumber = 27, methodID = 0, clazz = SimpleDefinitionSites.class) Object();
         Object o3 = new Object();
 
         if (Math.random() > 0.5) {
@@ -30,7 +31,7 @@ public class SimpleDefinitionSites {
     @AliasMethodID(id = 1, clazz = SimpleDefinitionSites.class)
     public static void mayAlias() {
 
-        Object o1 = new @MayAliasUVar(lineNumber = 41, methodID = 1, clazz = SimpleDefinitionSites.class) Object();
+        Object o1 = new @MayAliasUVar(reason = "noAlias", lineNumber = 42, methodID = 1, clazz = SimpleDefinitionSites.class) Object();
         Object o2 = new Object();
 
         o2.hashCode();

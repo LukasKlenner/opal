@@ -1,3 +1,4 @@
+/* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.fpcf.properties.alias.u_var;
 
 import org.opalj.br.fpcf.FPCFAnalysis;
@@ -13,14 +14,14 @@ import static java.lang.annotation.ElementType.*;
 @PropertyValidator(key = "AliasProperty", validator = MayAliasMatcher.class)
 @Repeatable(MayAliasUVars.class)
 @Documented
-@Target({TYPE_USE, PARAMETER, METHOD})
+@Target({FIELD, TYPE_USE, PARAMETER, METHOD})
 @Retention(RetentionPolicy.CLASS)
 public @interface MayAliasUVar {
 
     /**
      * A short reasoning why this relation is a NoAlias relation.
      */
-    String reason() default "No reason Provided";
+    String reason();
 
     int lineNumber();
 

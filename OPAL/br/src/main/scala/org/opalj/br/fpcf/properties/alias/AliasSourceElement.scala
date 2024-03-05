@@ -56,7 +56,7 @@ sealed trait AliasSourceElement {
      * @throws UnsupportedOperationException if the element is not associated with a definition site
      * @return The definition site of this element.
      */
-    def definitionSite: Int = throw new UnsupportedOperationException() //TODO remove?
+    def definitionSite: Int = throw new UnsupportedOperationException() // TODO remove?
 
     /**
      * Returns `true` if this element is associated with a method.
@@ -65,6 +65,33 @@ sealed trait AliasSourceElement {
      * @return `true` if this element is associated with a method.
      */
     def isMethodBound: Boolean
+
+    // conversion methods
+
+    def isAliasField: Boolean = false
+
+    def asAliasField: AliasField = throw new UnsupportedOperationException()
+
+    def isAliasNull: Boolean = false
+
+    def asAliasNull: AliasNull = throw new UnsupportedOperationException()
+
+    def isAliasReturnValue: Boolean = false
+
+    def asAliasReturnValue: AliasReturnValue = throw new UnsupportedOperationException()
+
+    def isAliasFP: Boolean = false
+
+    def asAliasFP: AliasFP = throw new UnsupportedOperationException()
+
+    def isAliasUVar: Boolean = false
+
+    def asAliasUVar: AliasUVar = throw new UnsupportedOperationException()
+
+    def isAliasDS: Boolean = false
+
+    def asAliasDS: AliasDS = throw new UnsupportedOperationException()
+
 }
 
 object AliasSourceElement {
@@ -97,6 +124,10 @@ case class AliasField(field: Field) extends AliasSourceElement {
     override def element: Field = field
 
     override def isMethodBound: Boolean = false
+
+    override def isAliasField: Boolean = true
+
+    override def asAliasField: AliasField = this
 }
 
 /**
@@ -106,6 +137,10 @@ case class AliasNull() extends AliasSourceElement {
     override def element: AnyRef = throw new UnsupportedOperationException()
 
     override def isMethodBound: Boolean = false
+
+    override def isAliasNull: Boolean = true
+
+    override def asAliasNull: AliasNull = this
 }
 
 /**
@@ -117,6 +152,10 @@ case class AliasReturnValue(override val method: Method, project: SomeProject) e
     override def declaredMethod: DeclaredMethod = project.get(DeclaredMethodsKey)(method)
 
     override def isMethodBound: Boolean = true
+
+    override def isAliasReturnValue: Boolean = true
+
+    override def asAliasReturnValue: AliasReturnValue = this
 }
 
 /**
@@ -133,6 +172,10 @@ case class AliasFP(fp: VirtualFormalParameter) extends AliasSourceElement {
     override def declaredMethod: DeclaredMethod = fp.method
 
     override def isMethodBound: Boolean = true
+
+    override def isAliasFP: Boolean = true
+
+    override def asAliasFP: AliasFP = this
 }
 
 /**
@@ -143,9 +186,9 @@ case class AliasFP(fp: VirtualFormalParameter) extends AliasSourceElement {
 case class PersistentUVar(valueInformation: ValueInformation, defSites: IntTrieSet)
 
 case class AliasUVar(
-        uVar:                PersistentUVar,
-        override val method: Method,
-        project:             SomeProject
+    uVar:                PersistentUVar,
+    override val method: Method,
+    project:             SomeProject
 ) extends AliasSourceElement {
 
     override def element: (PersistentUVar, Method) = (uVar, method)
@@ -154,12 +197,16 @@ case class AliasUVar(
 
     override def declaredMethod: DeclaredMethod = project.get(DeclaredMethodsKey)(method)
 
+    override def isAliasUVar: Boolean = true
+
+    override def asAliasUVar: AliasUVar = this
+
 }
 
 case class AliasDS(
-        pc:                  PC,
-        override val method: Method,
-        project:             SomeProject
+    pc:                  PC,
+    override val method: Method,
+    project:             SomeProject
 ) extends AliasSourceElement {
 
     override def element: (PC, Method) = (pc, method)
@@ -169,4 +216,8 @@ case class AliasDS(
     override def isMethodBound: Boolean = true
 
     override def declaredMethod: DeclaredMethod = project.get(DeclaredMethodsKey)(method)
+
+    override def isAliasDS: Boolean = true
+
+    override def asAliasDS: AliasDS = this
 }

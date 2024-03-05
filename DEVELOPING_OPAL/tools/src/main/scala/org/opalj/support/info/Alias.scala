@@ -1,6 +1,8 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.support.info
 
+import java.net.URL
+
 import org.opalj.br.analyses.BasicReport
 import org.opalj.br.analyses.Project
 import org.opalj.br.analyses.ProjectAnalysisApplication
@@ -12,8 +14,6 @@ import org.opalj.br.fpcf.properties.alias.NoAlias
 import org.opalj.tac.cg.AllocationSiteBasedPointsToCallGraphKey
 import org.opalj.tac.fpcf.analyses.alias.pointsto.EagerPointsToBasedAliasAnalysisScheduler
 
-import java.net.URL
-
 object Alias extends ProjectAnalysisApplication {
     override def doAnalyze(
         project:       Project[URL],
@@ -24,7 +24,7 @@ object Alias extends ProjectAnalysisApplication {
         project.get(AllocationSiteBasedPointsToCallGraphKey)
 
         val (ps, _ /*executed analyses*/ ) = project.get(FPCFAnalysesManagerKey).runAll(
-            //AllocationSiteBasedPointsToAnalysisScheduler,
+            // AllocationSiteBasedPointsToAnalysisScheduler,
             EagerPointsToBasedAliasAnalysisScheduler
         )
 

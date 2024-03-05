@@ -1,9 +1,9 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.br.fpcf.properties.alias
 
-import org.opalj.br.fpcf.properties.Context
-
 import scala.runtime.ScalaRunTime
+
+import org.opalj.br.fpcf.properties.Context
 
 /**
  * Represents a pair of [[AliasSourceElement]]s and a [[Context]] to which an alias relationship can be assigned.
@@ -24,10 +24,10 @@ class AliasEntity(val context: Context, private val e1: AliasSourceElement, priv
     private val (_element1, _element2) = (e1, e2) match {
         case (e1: AliasReturnValue, e2) if !e2.isInstanceOf[AliasReturnValue] => (e1, e2)
         case (e1, e2: AliasReturnValue) if !e1.isInstanceOf[AliasReturnValue] => (e2, e1)
-        case (e1: AliasNull, e2) => (e1, e2)
-        case (e1, e2: AliasNull) => (e2, e1)
-        case (e1, e2) if e1.hashCode() < e2.hashCode() => (e1, e2)
-        case (e1, e2) => (e2, e1)
+        case (e1: AliasNull, e2)                                              => (e1, e2)
+        case (e1, e2: AliasNull)                                              => (e2, e1)
+        case (e1, e2) if e1.hashCode() < e2.hashCode()                        => (e1, e2)
+        case (e1, e2)                                                         => (e2, e1)
     }
 
     /**
@@ -62,7 +62,7 @@ class AliasEntity(val context: Context, private val e1: AliasSourceElement, priv
      */
     def elementsInSameMethod: Boolean = element1.method.eq(element2.method)
 
-    //we can't use a case class because the order of the two attributes is irrelevant
+    // we can't use a case class because the order of the two attributes is irrelevant
     override def equals(other: Any): Boolean = other match {
         case that: AliasEntity =>
             that.isInstanceOf[AliasEntity] &&
@@ -87,6 +87,7 @@ object AliasEntity {
      * @param e2 The second [[AliasSourceElement]] to which the alias relationship is assigned.
      * @return An [[AliasEntity]] that represents the given pair of [[AliasSourceElement]]s and the given [[Context]].
      */
-    def apply(context: Context, e1: AliasSourceElement, e2: AliasSourceElement): AliasEntity = new AliasEntity(context, e1, e2)
+    def apply(context: Context, e1: AliasSourceElement, e2: AliasSourceElement): AliasEntity =
+        new AliasEntity(context, e1, e2)
 
 }

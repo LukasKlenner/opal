@@ -1,3 +1,4 @@
+/* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.fpcf.properties.alias.u_var;
 
 import org.opalj.fpcf.properties.PropertyValidator;
