@@ -45,6 +45,8 @@ public @interface NoAlias {
             IntraProceduralNoAliasAnalysis.class
     };
 
+    int methodID() default -1;
+
     /**
      * Indicates whether this element is part of a NoAlias relation with null.
      * @return Whether this element is part of a NoAlias relation with null.
