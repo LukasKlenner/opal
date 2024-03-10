@@ -27,6 +27,7 @@ import org.opalj.tac.Call
 import org.opalj.tac.DUVar
 import org.opalj.tac.Expr
 import org.opalj.tac.ExprStmt
+import org.opalj.tac.PutField
 import org.opalj.tac.PutStatic
 import org.opalj.tac.Stmt
 import org.opalj.tac.UVar
@@ -106,7 +107,9 @@ class AliasTests extends PropertiesTest {
 
                     (entity, str, Seq(a))
                 }
-            }.toSet
+            }
+            .groupBy(_._1)
+            .map(_._2.head) // remove duplicate entities
 
         as.propertyStore.shutdown()
 
@@ -146,6 +149,7 @@ class AliasTests extends PropertiesTest {
                     case c: Call[_]                                    => handleCall(an, c, method, stmts)
                     case expr: ExprStmt[DUVar[ValueInformation]]       => handleExpr(an, expr.expr, method, stmts)
                     case putStatic: PutStatic[DUVar[ValueInformation]] => handleExpr(an, putStatic.value, method, stmts)
+                    case putField: PutField[DUVar[ValueInformation]]   => handleExpr(an, putField.value, method, stmts)
                     case _                                             => throw new IllegalArgumentException("No UVar found")
                 }
 
@@ -218,6 +222,7 @@ class AliasTests extends PropertiesTest {
      * @return The value of the element.
      */
     private[this] def getIntValue(a: AnnotationLike, element: String)(implicit as: TestContext): Int = {
+
         a.elementValuePairs.filter(_.name == element).collectFirst {
             case ElementValuePair(`element`, value) => value.asIntValue.value
         }.getOrElse(as.project.classFile(a.annotationType.asObjectType).get.findMethod(
@@ -226,7 +231,14 @@ class AliasTests extends PropertiesTest {
     }
 
     private[this] def getStringValue(a: AnnotationLike, element: String): String = {
-        a.elementValuePairs.filter(_.name == element).head.value match {
+
+        val evp = a.elementValuePairs.filter(_.name == element)
+
+        if (evp.isEmpty) {
+            throw new RuntimeException("No element value pair found for " + element)
+        }
+
+        evp.head.value match {
             case str: StringValue => str.value
             case ClassValue(t)    => t.asObjectType.fqn
             case _                => throw new RuntimeException("Unexpected value type")
@@ -270,9 +282,20 @@ class AliasTests extends PropertiesTest {
      * @return All alias annotations that are contained in the given annotation.
      */
     private[this] def getAliasAnnotations(a: Iterable[AnnotationLike]): Iterable[AnnotationLike] = {
-        // getAliasAnnotations(a, "noAlias") ++ getAliasAnnotations(a, "mayAlias") ++ getAliasAnnotations(a, "mustAlias")
-        a.filter(_.annotationType.asObjectType.simpleName.contains("Alias"))
-            .filter(_.annotationType.asObjectType.simpleName != "AliasMethodID")
+        a.filter(annotationName(_).contains("Alias"))
+            .filter(annotationName(_) != "AliasMethodID")
+            .flatMap {
+                case a: AnnotationLike
+                    if annotationName(a).endsWith("UVars") || annotationName(a).endsWith("Aliases") => {
+                    val x = a.elementValuePairs.filter(_.name == "value")
+                    x.head.value.asArrayValue.values.map(_.asAnnotationValue.annotation)
+                }
+                case a => Seq(a)
+            }
+    }
+
+    private[this] def annotationName(a: AnnotationLike): String = {
+        a.annotationType.asObjectType.simpleName
     }
 
     //    /**

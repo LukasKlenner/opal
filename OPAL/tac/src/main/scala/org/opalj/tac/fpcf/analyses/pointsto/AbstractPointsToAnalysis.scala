@@ -136,7 +136,12 @@ trait AbstractPointsToAnalysis extends PointsToAnalysisBase with ReachableMethod
                 state.setAllocationSitePointsToSet(
                     defSite,
                     if (const.isNullExpr)
-                        emptyPointsToSet
+                        this.handleNull(
+                            pc,
+                            state.callContext,
+                            ObjectType.Object
+                        )
+
                     // note, this is wrong for alias analyses
                     else
                         createPointsToSet(
@@ -565,6 +570,12 @@ trait AbstractPointsToAnalysis extends PointsToAnalysisBase with ReachableMethod
             }
         }
     }
+
+    protected[this] def handleNull(
+        pc:            Int,
+        callContext:   ContextType,
+        allocatedType: ReferenceType
+    ): PointsToSet
 
     override protected[this] def createResults(
         implicit state: State

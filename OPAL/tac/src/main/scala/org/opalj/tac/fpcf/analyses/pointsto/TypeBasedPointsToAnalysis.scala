@@ -5,6 +5,7 @@ package fpcf
 package analyses
 package pointsto
 
+import org.opalj.br.ReferenceType
 import org.opalj.br.analyses.SomeProject
 import org.opalj.br.fpcf.properties.pointsto.TypeBasedPointsToSet
 import org.opalj.fpcf.PropertyMetaInformation
@@ -28,7 +29,17 @@ import org.opalj.fpcf.PropertyMetaInformation
  */
 class TypeBasedPointsToAnalysis private[analyses] (
     final val project: SomeProject
-) extends AbstractPointsToAnalysis with TypeBasedAnalysis
+) extends AbstractPointsToAnalysis with TypeBasedAnalysis {
+
+    override protected[this] def handleNull(
+        pc:            Int,
+        callContext:   ContextType,
+        allocatedType: ReferenceType
+    ): PointsToSet = {
+        print("FALSCHE METHODE")
+        emptyPointsToSet
+    }
+}
 
 object TypeBasedPointsToAnalysisScheduler extends AbstractPointsToAnalysisScheduler {
 

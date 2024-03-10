@@ -4,6 +4,7 @@ package org.opalj.tac.fpcf.analyses.alias.pointsto
 import scala.collection.mutable
 
 import org.opalj.br.Method
+import org.opalj.br.ReferenceType
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.ProjectInformationKeys
 import org.opalj.br.analyses.SomeProject
@@ -42,7 +43,18 @@ import org.opalj.tac.fpcf.properties.TACAI
 import org.opalj.value.ValueInformation
 
 class AllocationSitePointsToBasedAliasAnalysis(final val project: SomeProject)
-    extends AbstractPointsToBasedAliasAnalysis with AbstractPointsToAnalysis with AllocationSiteBasedAnalysis
+    extends AbstractPointsToBasedAliasAnalysis with AbstractPointsToAnalysis with AllocationSiteBasedAnalysis {
+
+    override protected[this] def handleNull(
+        pc:            Int,
+        callContext:   ContextType,
+        allocatedType: ReferenceType
+    ): PointsToSet = {
+        print("FALSCHE METHODE")
+        emptyPointsToSet
+    }
+
+}
 
 object EagerPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalysisScheduler
     with BasicFPCFEagerAnalysisScheduler {

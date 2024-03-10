@@ -42,6 +42,14 @@ sealed trait AllocationSitePointsToSet
         }
     }
 
+    protected var _pointsToNull: Boolean = false
+
+    def pointsToNull: Boolean = _pointsToNull
+
+    def includeNull(): Unit = {
+        _pointsToNull = true
+    }
+
     protected[this] def orderedTypes: List[ReferenceType]
     override def types: UIDSet[ReferenceType]
 
@@ -69,10 +77,7 @@ sealed trait AllocationSitePointsToSet
             }
         }
 
-        if (newAllocationSites eq elements)
-            return this;
-
-        AllocationSitePointsToSet(newAllocationSites, newTypes, newOrderedTypes)
+        createPointsToSet(newAllocationSites, other, newTypes, newOrderedTypes)
     }
 
     override def included(
@@ -101,10 +106,7 @@ sealed trait AllocationSitePointsToSet
             }
         }
 
-        if (newAllocationSites eq elements)
-            return this;
-
-        AllocationSitePointsToSet(newAllocationSites, newTypes, newOrderedTypes)
+        createPointsToSet(newAllocationSites, other, newTypes, newOrderedTypes)
     }
 
     override def included(
@@ -133,10 +135,7 @@ sealed trait AllocationSitePointsToSet
             }
         }
 
-        if (newAllocationSites eq elements)
-            return this;
-
-        AllocationSitePointsToSet(newAllocationSites, newTypes, newOrderedTypes)
+        createPointsToSet(newAllocationSites, other, newTypes, newOrderedTypes)
     }
 
     override def filter(typeFilter: ReferenceType => Boolean): AllocationSitePointsToSet = {
@@ -166,7 +165,28 @@ sealed trait AllocationSitePointsToSet
         if (newAllocationSites.size == elements.size)
             return this;
 
-        AllocationSitePointsToSet(newAllocationSites, newTypes, newOrderedTypes)
+        val newSet = AllocationSitePointsToSet(newAllocationSites, newTypes, newOrderedTypes)
+        if (pointsToNull)
+            newSet.includeNull()
+        newSet
+    }
+
+    protected def createPointsToSet(
+        newAllocationSites: LongLinkedSet,
+        other:              AllocationSitePointsToSet,
+        newTypes:           UIDSet[ReferenceType],
+        newOrderedTypes:    List[ReferenceType]
+    ): AllocationSitePointsToSet = {
+        if (newAllocationSites eq elements) {
+            if (other.pointsToNull)
+                includeNull()
+            return this
+        }
+
+        val pointsToSet = AllocationSitePointsToSet(newAllocationSites, newTypes, newOrderedTypes)
+        if (pointsToNull || other.pointsToNull)
+            pointsToSet.includeNull()
+        pointsToSet
     }
 
     assert {
@@ -260,7 +280,8 @@ case class AllocationSitePointsToSetN private[pointsto] (
                     that.numTypes == this.numTypes &&
                     // TODO: we should assert that:
                     //  that.elements == this.elements => that.orderedTypes == this.orderedTypes
-                    that.elements == this.elements
+                    that.elements == this.elements &&
+                    that.pointsToNull == this.pointsToNull
                 }
             case _ => false
         }
@@ -281,6 +302,8 @@ object NoAllocationSites extends AllocationSitePointsToSet {
         other:        AllocationSitePointsToSet,
         seenElements: Int
     ): AllocationSitePointsToSet = {
+        if (pointsToNull)
+            other.includeNull()
         other
     }
 
@@ -288,6 +311,8 @@ object NoAllocationSites extends AllocationSitePointsToSet {
         other:      AllocationSitePointsToSet,
         typeFilter: ReferenceType => Boolean
     ): AllocationSitePointsToSet = {
+        if (pointsToNull)
+            other.includeNull()
         other.filter(typeFilter)
     }
 
@@ -332,7 +357,7 @@ case class AllocationSitePointsToSet1(
     override def elements: LongLinkedSet = LongTrieSetWithList(allocationSite)
 
     override def included(other: AllocationSitePointsToSet): AllocationSitePointsToSet = {
-        other match {
+        val newPointsToSet = other match {
             case AllocationSitePointsToSet1(`allocationSite`, `allocatedType`) =>
                 this
 
@@ -368,6 +393,11 @@ case class AllocationSitePointsToSet1(
             case _ =>
                 throw new IllegalArgumentException(s"unexpected list $other")
         }
+
+        if (pointsToNull || other.pointsToNull)
+            newPointsToSet.includeNull()
+
+        newPointsToSet
     }
 
     override def included(
@@ -406,10 +436,7 @@ case class AllocationSitePointsToSet1(
             }
         }
 
-        if (newAllocationSites.size == 1)
-            return this;
-
-        AllocationSitePointsToSet(newAllocationSites, newTypes, newOrderedTypes)
+        createPointsToSet(newAllocationSites, other, newTypes, newOrderedTypes)
     }
 
     override def included(
@@ -438,10 +465,26 @@ case class AllocationSitePointsToSet1(
             }
         }
 
-        if (newAllocationSites.size == 1)
-            return this;
+        createPointsToSet(newAllocationSites, other, newTypes, newOrderedTypes)
+    }
 
-        AllocationSitePointsToSet(newAllocationSites, newTypes, newOrderedTypes)
+    override def createPointsToSet(
+        newAllocationSites: LongLinkedSet,
+        other:              AllocationSitePointsToSet,
+        newTypes:           UIDSet[ReferenceType],
+        newOrderedTypes:    List[ReferenceType]
+    ): AllocationSitePointsToSet = {
+        if (newAllocationSites.size == 1) {
+            if (other.pointsToNull)
+                includeNull()
+            return this
+        };
+
+        val pointsToSet = AllocationSitePointsToSet(newAllocationSites, newTypes, newOrderedTypes)
+        if (pointsToNull || other.pointsToNull)
+            pointsToSet.includeNull()
+
+        pointsToSet
     }
 
     override def filter(typeFilter: ReferenceType => Boolean): AllocationSitePointsToSet = {

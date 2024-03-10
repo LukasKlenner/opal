@@ -14,6 +14,7 @@ import org.opalj.br.analyses.VirtualFormalParametersKey
 import org.opalj.br.analyses.cg.IsOverridableMethodKey
 import org.opalj.br.fpcf.FPCFAnalysisScheduler
 import org.opalj.br.fpcf.properties.Context
+import org.opalj.br.fpcf.properties.SimpleContext
 import org.opalj.br.fpcf.properties.alias.Alias
 import org.opalj.br.fpcf.properties.alias.AliasDS
 import org.opalj.br.fpcf.properties.alias.AliasEntity
@@ -47,7 +48,9 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
 
     override type AnalysisContext = PointsToBasedAliasAnalysisContext
     override type AnalysisState = PointsToBasedAliasAnalysisState
+
     type Tac = TACode[TACMethodParameter, DUVar[ValueInformation]]
+    type AliasPointsToSet = Set[(Context, PC)]
 
     override def analyzeTAC()(implicit
         context: AnalysisContext,
@@ -146,24 +149,45 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
             return InterimResult(context.entity, NoAlias, MayAlias, state.getDependees, continuation)
         }
 
-        val pointsTo1 = state.pointsTo1
-        val pointsTo2 = state.pointsTo2
+        val pointsTo1: AliasPointsToSet = state.pointsTo1
+        val pointsTo2: AliasPointsToSet = state.pointsTo2
 
         val intersection = pointsTo1.intersect(pointsTo2)
 
         if (intersection.isEmpty) {
             return if (state.allPointsToFinal()) Result(context.entity, NoAlias)
-            else {
-                InterimResult(context.entity, NoAlias, MayAlias, state.getDependees, continuation)
-            }
-        } else if (intersection.size == 1 && pointsTo1.size == 1 && pointsTo2.size == 1) {
+            else InterimResult(context.entity, NoAlias, MayAlias, state.getDependees, continuation)
+
+        } else if (checkMustAlias(pointsTo1, pointsTo2, intersection)) {
             return if (state.allPointsToFinal()) Result(context.entity, MustAlias)
-            else {
-                InterimResult(context.entity, MustAlias, MayAlias, state.getDependees, continuation)
-            } // TODO nicht immer sicher
+            else InterimResult(context.entity, MustAlias, MayAlias, state.getDependees, continuation)
         }
 
         Result(context.entity, MayAlias)
+    }
+
+    private[this] def checkMustAlias(
+        pointsTo1:    AliasPointsToSet,
+        pointsTo2:    AliasPointsToSet,
+        intersection: AliasPointsToSet
+    ): Boolean = {
+
+        if (intersection.size != 1 || pointsTo1.size != 1 || pointsTo2.size != 1) return false
+
+        // they refer to the same allocation site but aren't necessarily the same object (e.g. if the allocation site
+        // is inside a loop and is executed multiple times)
+
+        val (context, pc1) = pointsTo1.head
+        val method = context.asInstanceOf[SimpleContext].method
+
+        if (method.name == "<clinit>") {
+            // static initializer are executed only once
+            return true
+        }
+
+        // TODO more checks
+
+        false
     }
 
     override protected[this] def continuation(someEPS: SomeEPS)(implicit
