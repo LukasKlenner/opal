@@ -30,6 +30,7 @@ import org.opalj.br.fpcf.properties.fieldaccess.MethodFieldReadAccessInformation
 import org.opalj.br.fpcf.properties.fieldaccess.MethodFieldWriteAccessInformation
 import org.opalj.br.fpcf.properties.fieldaccess.NoMethodFieldReadAccessInformation
 import org.opalj.br.fpcf.properties.fieldaccess.NoMethodFieldWriteAccessInformation
+import org.opalj.br.fpcf.properties.pointsto.AllocationSitePointsToSet
 import org.opalj.br.fpcf.properties.pointsto.PointsToSetLike
 import org.opalj.collection.immutable.IntTrieSet
 import org.opalj.fpcf.Entity
@@ -135,15 +136,17 @@ trait AbstractPointsToAnalysis extends PointsToAnalysisBase with ReachableMethod
                 val defSite = getDefSite(pc)
                 state.setAllocationSitePointsToSet(
                     defSite,
-                    if (const.isNullExpr)
-                        this.handleNull(
-                            pc,
-                            state.callContext,
-                            ObjectType.Object
-                        )
+                    if (const.isNullExpr) {
+                        val pointsToSet = emptyPointsToSet
 
-                    // note, this is wrong for alias analyses
-                    else
+                        // this could be extracted into an abstract method which is override in the
+                        // AllocationSiteBasedPointsToAnalysis but that causes an AbstractMethodError despite the
+                        // method being override (and working in the debugger) for some reason
+                        if (pointsToSet.isInstanceOf[AllocationSitePointsToSet]) {
+                            pointsToSet.asInstanceOf[AllocationSitePointsToSet].includeNull()
+                        }
+                        pointsToSet
+                    } else
                         createPointsToSet(
                             pc,
                             state.callContext,
@@ -570,12 +573,6 @@ trait AbstractPointsToAnalysis extends PointsToAnalysisBase with ReachableMethod
             }
         }
     }
-
-    protected[this] def handleNull(
-        pc:            Int,
-        callContext:   ContextType,
-        allocatedType: ReferenceType
-    ): PointsToSet
 
     override protected[this] def createResults(
         implicit state: State

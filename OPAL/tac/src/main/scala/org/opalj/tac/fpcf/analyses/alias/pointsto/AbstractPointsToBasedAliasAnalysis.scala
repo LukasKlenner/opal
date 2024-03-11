@@ -20,6 +20,7 @@ import org.opalj.br.fpcf.properties.alias.AliasDS
 import org.opalj.br.fpcf.properties.alias.AliasEntity
 import org.opalj.br.fpcf.properties.alias.AliasField
 import org.opalj.br.fpcf.properties.alias.AliasFP
+import org.opalj.br.fpcf.properties.alias.AliasReturnValue
 import org.opalj.br.fpcf.properties.alias.AliasSourceElement
 import org.opalj.br.fpcf.properties.alias.AliasUVar
 import org.opalj.br.fpcf.properties.alias.MayAlias
@@ -69,20 +70,19 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
     ): Unit = {
 
         ase match {
-            case AliasUVar(uVar, _, _) => {
+            case AliasUVar(uVar, _, _) =>
                 uVar.defSites.foreach(ds => {
                     handlePointsToEntity(ase, getPointsTo(ds, context.context, tac.get))
                 })
-            }
-            case AliasDS(pc, _, _) => {
-                handlePointsToEntity(ase, getPointsTo(pc, context.context, tac.get))
-            }
-            case AliasFP(fp) => {
-                handlePointsToEntity(ase, getPointsTo(fp.origin, context.context, tac.get))
-            }
-            case AliasField(field) => {
-                handlePointsToEntity(ase, getPointsToOfField(field))
-            }
+
+            case AliasDS(pc, _, _) => handlePointsToEntity(ase, getPointsTo(pc, context.context, tac.get))
+
+            case AliasFP(fp) => handlePointsToEntity(ase, getPointsTo(fp.origin, context.context, tac.get))
+
+            case AliasField(field) => handlePointsToEntity(ase, getPointsToOfField(field))
+
+            case arv: AliasReturnValue => handlePointsToEntity(ase, getPointsToOfReturnValue(arv.callContext))
+
             case _ =>
         }
     }
@@ -99,6 +99,14 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
 
         propertyStore(
             declaredFields.apply(field),
+            pointsToPropertyKey
+        )
+    }
+
+    private[this] def getPointsToOfReturnValue(callContext: Context): EOptionP[Entity, PointsToSet] = {
+
+        propertyStore(
+            callContext,
             pointsToPropertyKey
         )
     }
@@ -138,6 +146,9 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
             state.incPointsToElementsHandled((e, ase))
         }
 
+        if (pointsToSet.pointsToNull)
+            state.setPointsToNull(ase)
+
     }
 
     private[this] def createResult()(implicit
@@ -149,8 +160,8 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
             return InterimResult(context.entity, NoAlias, MayAlias, state.getDependees, continuation)
         }
 
-        val pointsTo1: AliasPointsToSet = state.pointsTo1
-        val pointsTo2: AliasPointsToSet = state.pointsTo2
+        val pointsTo1 = state.pointsTo1
+        val pointsTo2 = state.pointsTo2
 
         val intersection = pointsTo1.intersect(pointsTo2)
 
@@ -158,7 +169,7 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
             return if (state.allPointsToFinal()) Result(context.entity, NoAlias)
             else InterimResult(context.entity, NoAlias, MayAlias, state.getDependees, continuation)
 
-        } else if (checkMustAlias(pointsTo1, pointsTo2, intersection)) {
+        } else if (checkMustAlias(intersection)) {
             return if (state.allPointsToFinal()) Result(context.entity, MustAlias)
             else InterimResult(context.entity, MustAlias, MayAlias, state.getDependees, continuation)
         }
@@ -166,18 +177,22 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
         Result(context.entity, MayAlias)
     }
 
-    private[this] def checkMustAlias(
-        pointsTo1:    AliasPointsToSet,
-        pointsTo2:    AliasPointsToSet,
-        intersection: AliasPointsToSet
-    ): Boolean = {
+    private[this] def checkMustAlias(intersection: AliasPointsToSet)(implicit state: AnalysisState): Boolean = {
 
-        if (intersection.size != 1 || pointsTo1.size != 1 || pointsTo2.size != 1) return false
+        val pointsTo1 = state.pointsTo1
+        val pointsTo2 = state.pointsTo2
+
+        if (intersection.size != 1 ||
+            pointsTo1.size != 1 ||
+            pointsTo2.size != 1 ||
+            state.pointsToNull1 ||
+            state.pointsToNull2
+        ) return false
 
         // they refer to the same allocation site but aren't necessarily the same object (e.g. if the allocation site
         // is inside a loop and is executed multiple times)
 
-        val (context, pc1) = pointsTo1.head
+        val (context, pc) = pointsTo1.head
         val method = context.asInstanceOf[SimpleContext].method
 
         if (method.name == "<clinit>") {

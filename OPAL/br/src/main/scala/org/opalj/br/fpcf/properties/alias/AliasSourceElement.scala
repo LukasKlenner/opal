@@ -8,6 +8,8 @@ import org.opalj.br.PC
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.SomeProject
 import org.opalj.br.analyses.VirtualFormalParameter
+import org.opalj.br.fpcf.properties.Context
+import org.opalj.br.fpcf.properties.SimpleContextsKey
 import org.opalj.collection.immutable.IntTrieSet
 import org.opalj.value.ValueInformation
 
@@ -147,15 +149,22 @@ case class AliasNull() extends AliasSourceElement {
  * Represents a method return value of a method that is part of an alias relation.
  */
 case class AliasReturnValue(override val method: Method, project: SomeProject) extends AliasSourceElement {
+
+    private[this] val dm = project.get(DeclaredMethodsKey)(method)
+
+    private[this] val context = project.get(SimpleContextsKey)(dm)
+
     override def element: AnyRef = method
 
-    override def declaredMethod: DeclaredMethod = project.get(DeclaredMethodsKey)(method)
+    override def declaredMethod: DeclaredMethod = dm
 
     override def isMethodBound: Boolean = true
 
     override def isAliasReturnValue: Boolean = true
 
     override def asAliasReturnValue: AliasReturnValue = this
+
+    def callContext: Context = context
 }
 
 /**
@@ -191,11 +200,13 @@ case class AliasUVar(
     project:             SomeProject
 ) extends AliasSourceElement {
 
+    private[this] val dm = project.get(DeclaredMethodsKey)(method)
+
     override def element: (PersistentUVar, Method) = (uVar, method)
 
     override def isMethodBound: Boolean = true
 
-    override def declaredMethod: DeclaredMethod = project.get(DeclaredMethodsKey)(method)
+    override def declaredMethod: DeclaredMethod = dm
 
     override def isAliasUVar: Boolean = true
 
@@ -209,13 +220,15 @@ case class AliasDS(
     project:             SomeProject
 ) extends AliasSourceElement {
 
+    private[this] val dm = project.get(DeclaredMethodsKey)(method)
+
     override def element: (PC, Method) = (pc, method)
 
     override def definitionSite: Int = pc
 
     override def isMethodBound: Boolean = true
 
-    override def declaredMethod: DeclaredMethod = project.get(DeclaredMethodsKey)(method)
+    override def declaredMethod: DeclaredMethod = dm
 
     override def isAliasDS: Boolean = true
 

@@ -5,27 +5,13 @@ package fpcf
 package analyses
 package pointsto
 
-import org.opalj.br.ReferenceType
 import org.opalj.br.analyses.SomeProject
 import org.opalj.br.fpcf.properties.pointsto.AllocationSitePointsToSet
 import org.opalj.fpcf.PropertyMetaInformation
 
 class AllocationSiteBasedPointsToAnalysis private[analyses] (
     final val project: SomeProject
-) extends AbstractPointsToAnalysis with AllocationSiteBasedAnalysis {
-
-    override protected[this] def handleNull(
-        pc:            Int,
-        callContext:   ContextType,
-        allocatedType: ReferenceType
-    ): PointsToSet = {
-        print("RICHTIGE METHODE")
-        val pointsToSet = emptyPointsToSet
-        pointsToSet.includeNull()
-        pointsToSet
-    }
-
-}
+) extends AbstractPointsToAnalysis with AllocationSiteBasedAnalysis
 
 object AllocationSiteBasedPointsToAnalysisScheduler extends AbstractPointsToAnalysisScheduler {
 

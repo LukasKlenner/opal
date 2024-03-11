@@ -10,34 +10,30 @@ import org.opalj.tac.fpcf.analyses.alias.AliasAnalysisState
 
 class PointsToBasedAliasAnalysisState extends AliasAnalysisState {
 
-    var _pointsTo1: Set[(Context, PC)] = Set[(Context, PC)]()
-    var _pointsTo2: Set[(Context, PC)] = Set[(Context, PC)]()
+    private[this] var _pointsTo1: Set[(Context, PC)] = Set[(Context, PC)]()
+    private[this] var _pointsTo2: Set[(Context, PC)] = Set[(Context, PC)]()
 
-    var _pointsToFinal: Map[Entity, Boolean] = Map[Entity, Boolean]()
+    private[this] var _pointsToFinal: Map[Entity, Boolean] = Map[Entity, Boolean]()
 
-    var _pointsToElementsHandled: Map[Entity, Int] = Map[Entity, Int]()
+    private[this] var _pointsToElementsHandled: Map[Entity, Int] = Map[Entity, Int]()
 
-    var _entityToAliasEntity: Map[Entity, AliasSourceElement] = Map[Entity, AliasSourceElement]()
+    private[this] var _entityToAliasEntity: Map[Entity, AliasSourceElement] = Map[Entity, AliasSourceElement]()
 
-    var _somePointsTo: Boolean = false
+    private[this] var _somePointsTo: Boolean = false
+
+    private[this] var _pointsToNull1: Boolean = false
+
+    private[this] var _pointsToNull2: Boolean = false
 
     def pointsTo1: Set[(Context, PC)] = _pointsTo1
 
     def pointsTo2: Set[(Context, PC)] = _pointsTo2
 
-    def addPointsTo1(pointsTo: (Context, PC)): Unit = {
-        _pointsTo1 += pointsTo
-    }
-
-    def addPointsTo2(pointsTo: (Context, PC)): Unit = {
-        _pointsTo2 += pointsTo
-    }
-
-    def addPointsTo(e: AliasSourceElement, pointsTo: (Context, PC))(implicit context: AliasAnalysisContext) = {
+    def addPointsTo(e: AliasSourceElement, pointsTo: (Context, PC))(implicit context: AliasAnalysisContext): Unit = {
         if (context.isElement1(e)) {
-            addPointsTo1(pointsTo)
+            _pointsTo1 += pointsTo
         } else {
-            addPointsTo2(pointsTo)
+            _pointsTo2 += pointsTo
         }
     }
 
@@ -69,6 +65,18 @@ class PointsToBasedAliasAnalysisState extends AliasAnalysisState {
 
     def setPointsToFinal(entity: Entity, boolean: Boolean): Unit = {
         _pointsToFinal += entity -> boolean
+    }
+
+    def pointsToNull1: Boolean = _pointsToNull1
+
+    def pointsToNull2: Boolean = _pointsToNull2
+
+    def setPointsToNull(ase: AliasSourceElement)(implicit context: AliasAnalysisContext): Unit = {
+        if (context.isElement1(ase)) {
+            _pointsToNull1 = true
+        } else {
+            _pointsToNull2 = true
+        }
     }
 
 }
