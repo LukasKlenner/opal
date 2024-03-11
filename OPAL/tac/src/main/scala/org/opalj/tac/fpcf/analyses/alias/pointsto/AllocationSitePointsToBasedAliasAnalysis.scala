@@ -5,14 +5,15 @@ import scala.collection.mutable
 
 import org.opalj.br.Method
 import org.opalj.br.analyses.DeclaredMethodsKey
-import org.opalj.br.analyses.ProjectInformationKeys
 import org.opalj.br.analyses.SomeProject
 import org.opalj.br.analyses.VirtualFormalParametersKey
 import org.opalj.br.fpcf.BasicFPCFEagerAnalysisScheduler
+import org.opalj.br.fpcf.BasicFPCFLazyAnalysisScheduler
 import org.opalj.br.fpcf.FPCFAnalysis
 import org.opalj.br.fpcf.properties.Context
 import org.opalj.br.fpcf.properties.NoContext
 import org.opalj.br.fpcf.properties.SimpleContextsKey
+import org.opalj.br.fpcf.properties.alias.Alias
 import org.opalj.br.fpcf.properties.alias.AliasDS
 import org.opalj.br.fpcf.properties.alias.AliasEntity
 import org.opalj.br.fpcf.properties.alias.AliasField
@@ -22,7 +23,6 @@ import org.opalj.br.fpcf.properties.alias.AliasSourceElement
 import org.opalj.br.fpcf.properties.alias.AliasUVar
 import org.opalj.br.fpcf.properties.cg.Callers
 import org.opalj.br.fpcf.properties.cg.NoCallers
-import org.opalj.br.fpcf.properties.pointsto.AllocationSitePointsToSet
 import org.opalj.fpcf.PropertyBounds
 import org.opalj.fpcf.PropertyStore
 import org.opalj.tac.Assignment
@@ -33,7 +33,6 @@ import org.opalj.tac.ExprStmt
 import org.opalj.tac.TACMethodParameter
 import org.opalj.tac.TACode
 import org.opalj.tac.UVar
-import org.opalj.tac.common.DefinitionSitesKey
 import org.opalj.tac.fpcf.analyses.alias.pcOfDefSite
 import org.opalj.tac.fpcf.analyses.alias.persistentUVar
 import org.opalj.tac.fpcf.analyses.pointsto.AbstractPointsToAnalysis
@@ -44,11 +43,29 @@ import org.opalj.value.ValueInformation
 class AllocationSitePointsToBasedAliasAnalysis(final val project: SomeProject)
     extends AbstractPointsToBasedAliasAnalysis with AbstractPointsToAnalysis with AllocationSiteBasedAnalysis
 
+object LazyPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalysisScheduler
+    with BasicFPCFLazyAnalysisScheduler {
+    override def derivesLazily: Some[PropertyBounds] = Some(derivedProperty)
+
+    override def register(
+        project:       SomeProject,
+        propertyStore: PropertyStore,
+        i:             LazyPointsToBasedAliasAnalysisScheduler.InitializationData
+    ): FPCFAnalysis = {
+
+        val analysis = new AllocationSitePointsToBasedAliasAnalysis(project)
+
+        propertyStore.registerLazyPropertyComputation(
+            Alias.key,
+            analysis.determineAlias
+        )
+
+        analysis
+    }
+}
+
 object EagerPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalysisScheduler
     with BasicFPCFEagerAnalysisScheduler {
-
-    override def requiredProjectInformation: ProjectInformationKeys =
-        super.requiredProjectInformation ++ Seq(DefinitionSitesKey, SimpleContextsKey)
 
     override def start(p: SomeProject, ps: PropertyStore, unused: Null): FPCFAnalysis = {
         val analysis = new AllocationSitePointsToBasedAliasAnalysis(p)
@@ -120,11 +137,9 @@ object EagerPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalys
             dVars.map(dVar => AliasDS(pcOfDefSite(dVar._1.origin)(dVar._3.stmts), dVar._2, p)) ++
             fields.map(AliasField)
 
-        def getContext(e1: AliasSourceElement, e2: AliasSourceElement): Context = {
-            if (e1.isMethodBound) {
-                simpleContexts(declaredMethods(e1.method))
-            } else if (e2.isMethodBound) {
-                simpleContexts(declaredMethods(e2.method))
+        def getContext(ase: AliasSourceElement): Context = {
+            if (ase.isMethodBound) {
+                simpleContexts(declaredMethods(ase.method))
             } else {
                 NoContext
             }
@@ -146,7 +161,7 @@ object EagerPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalys
             .filterNot(e => e._1.isMethodBound && e._2.isMethodBound && e._1.method != e._2.method)
             .filterNot(e => e._1.isAliasField && !e._2.isAliasField && getClass(e._1) != getClass(e._2))
             .filterNot(e => !e._1.isAliasField && e._2.isAliasField && getClass(e._1) != getClass(e._2))
-            .map(e => AliasEntity(getContext(e._1, e._2), e._1, e._2))
+            .map(e => AliasEntity(getContext(e._1), getContext(e._2), e._1, e._2))
             .distinct
 
         ps.scheduleEagerComputationsForEntities(entities)(analysis.determineAlias)
@@ -154,10 +169,5 @@ object EagerPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalys
     }
 
     override def derivesEagerly: Set[PropertyBounds] = Set(derivedProperty)
-
-    override def uses: Set[PropertyBounds] =
-        super.uses + PropertyBounds.finalP(Callers) + PropertyBounds.finalP(AllocationSitePointsToSet)
-
-    override def derivesCollaboratively: Set[PropertyBounds] = Set.empty
 
 }

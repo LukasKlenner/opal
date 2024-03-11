@@ -15,19 +15,29 @@ import org.opalj.br.fpcf.properties.Context
  * @param e1 The first [[AliasSourceElement]] to which the alias relationship is assigned.
  * @param e2 The second [[AliasSourceElement]] to which the alias relationship is assigned.
  */
-class AliasEntity(val context: Context, private val e1: AliasSourceElement, private val e2: AliasSourceElement) {
+class AliasEntity(
+    private val c1: Context,
+    private val c2: Context,
+    private val e1: AliasSourceElement,
+    private val e2: AliasSourceElement
+) {
 
     /**
      * A copy of two elements of this [[AliasEntity]].
      * It is used to ensure that the order of the elements is irrelevant.
      */
-    private val (_element1, _element2) = (e1, e2) match {
+    private[this] val (_element1, _element2) = (e1, e2) match {
         case (e1: AliasReturnValue, e2) if !e2.isInstanceOf[AliasReturnValue] => (e1, e2)
         case (e1, e2: AliasReturnValue) if !e1.isInstanceOf[AliasReturnValue] => (e2, e1)
         case (e1: AliasNull, e2)                                              => (e1, e2)
         case (e1, e2: AliasNull)                                              => (e2, e1)
         case (e1, e2) if e1.hashCode() < e2.hashCode()                        => (e1, e2)
         case (e1, e2)                                                         => (e2, e1)
+    }
+
+    private[this] val (_context1, _context2) = (c1, c2) match {
+        case (c1, c2) if e1 == _element1 => (c1, c2) // use the same order as the elements
+        case (c1, c2)                    => (c2, c1)
     }
 
     /**
@@ -41,6 +51,10 @@ class AliasEntity(val context: Context, private val e1: AliasSourceElement, priv
      * @return The second [[AliasSourceElement]] of this [[AliasEntity]].
      */
     def element2: AliasSourceElement = _element2
+
+    def context1: Context = _context1
+
+    def context2: Context = _context2
 
     /**
      * Checks if the two elements of this [[AliasEntity]] are bound to a method.
@@ -66,14 +80,15 @@ class AliasEntity(val context: Context, private val e1: AliasSourceElement, priv
     override def equals(other: Any): Boolean = other match {
         case that: AliasEntity =>
             that.isInstanceOf[AliasEntity] &&
-                context == that.context &&
-                _element1 == that._element1 &&
-                _element2 == that._element2
+                context1 == that.context1 &&
+                context2 == that.context2 &&
+                element1 == that.element1 &&
+                element2 == that.element2
         case _ => false
     }
 
     override def hashCode(): Int = {
-        ScalaRunTime._hashCode((context, _element1, _element2))
+        ScalaRunTime._hashCode((context1, context2, element1, element2))
     }
 }
 
@@ -87,7 +102,7 @@ object AliasEntity {
      * @param e2 The second [[AliasSourceElement]] to which the alias relationship is assigned.
      * @return An [[AliasEntity]] that represents the given pair of [[AliasSourceElement]]s and the given [[Context]].
      */
-    def apply(context: Context, e1: AliasSourceElement, e2: AliasSourceElement): AliasEntity =
-        new AliasEntity(context, e1, e2)
+    def apply(c1: Context, c2: Context, e1: AliasSourceElement, e2: AliasSourceElement): AliasEntity =
+        new AliasEntity(c1, c2, e1, e2)
 
 }

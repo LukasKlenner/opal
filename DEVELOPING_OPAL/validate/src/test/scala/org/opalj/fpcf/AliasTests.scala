@@ -17,9 +17,12 @@ import org.opalj.br.analyses.DeclaredMethods
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.Project
 import org.opalj.br.analyses.SomeProject
+import org.opalj.br.fpcf.properties.Context
+import org.opalj.br.fpcf.properties.NoContext
+import org.opalj.br.fpcf.properties.SimpleContexts
 import org.opalj.br.fpcf.properties.SimpleContextsKey
+import org.opalj.br.fpcf.properties.alias.Alias
 import org.opalj.br.fpcf.properties.alias.AliasEntity
-import org.opalj.br.fpcf.properties.alias.AliasFP
 import org.opalj.br.fpcf.properties.alias.AliasNull
 import org.opalj.br.fpcf.properties.alias.AliasSourceElement
 import org.opalj.br.fpcf.properties.alias.AliasUVar
@@ -29,11 +32,12 @@ import org.opalj.tac.Expr
 import org.opalj.tac.ExprStmt
 import org.opalj.tac.PutField
 import org.opalj.tac.PutStatic
+import org.opalj.tac.ReturnValue
 import org.opalj.tac.Stmt
 import org.opalj.tac.UVar
 import org.opalj.tac.cg.AllocationSiteBasedPointsToCallGraphKey
 import org.opalj.tac.fpcf.analyses.alias.persistentUVar
-import org.opalj.tac.fpcf.analyses.alias.pointsto.EagerPointsToBasedAliasAnalysisScheduler
+import org.opalj.tac.fpcf.analyses.alias.pointsto.LazyPointsToBasedAliasAnalysisScheduler
 import org.opalj.tac.fpcf.properties.TACAI
 import org.opalj.value.ValueInformation
 
@@ -62,7 +66,8 @@ class AliasTests extends PropertiesTest {
         implicit val as: TestContext = executeAnalyses(
             Set( // TODO add analyses to execute
                 // AllocationSiteBasedPointsToAnalysisScheduler,
-                EagerPointsToBasedAliasAnalysisScheduler)
+                // EagerPointsToBasedAliasAnalysisScheduler
+                LazyPointsToBasedAliasAnalysisScheduler)
         )
 
         val fields = fieldsWithTypeAnnotations(as.project)
@@ -78,8 +83,8 @@ class AliasTests extends PropertiesTest {
         val methods = methodsWithAnnotations(as.project)
             .flatMap { case (m, fun, a) => getAliasAnnotations(a).map((m, fun, _)) }
 
-        val simpleContexts = as.project.get(SimpleContextsKey)
-        val declaredMethods: DeclaredMethods = as.project.get(DeclaredMethodsKey)
+        implicit val simpleContexts: SimpleContexts = as.project.get(SimpleContextsKey)
+        implicit val declaredMethods: DeclaredMethods = as.project.get(DeclaredMethodsKey)
 
         // The annotations only contain one of the two sourceElements of an alias property.
         // Therefore, we first have to combine elements with the same id and store them in this ArrayBuffer.
@@ -94,22 +99,27 @@ class AliasTests extends PropertiesTest {
 
         val properties = (fields ++ allocations ++ formalParameters ++ methods)
             .map {
-                case (e, str, a) => {
+                case (e, fun, a) => {
 
-                    val element1 = AliasSourceElement(e)(as.project)
-                    val method = element1 match {
-                        case fp: AliasFP => fp.method
-                        case _           => IDToMethod(getMethodID(a))
-                    }
-                    val element2 = resolveSecondElement(a, method, element1, IDToEntity)
-                    val context = simpleContexts(declaredMethods(method))
-                    val entity = AliasEntity(context, element1, element2)
+                    val ase1 = AliasSourceElement(e)(as.project)
+                    val ase2 = resolveSecondElement(ase1, a, IDToMethod, IDToEntity)
 
-                    (entity, str, Seq(a))
+                    val entity = AliasEntity(
+                        createContext(ase1),
+                        createContext(ase2),
+                        ase1,
+                        ase2
+                    )
+
+                    (entity, makeIdentifierFunctionUnique(a, fun), Seq(a))
                 }
             }
             .groupBy(_._1)
             .map(_._2.head) // remove duplicate entities
+
+        properties.foreach {
+            case (e, _, _) => as.propertyStore.force(e, Alias.key)
+        }
 
         as.propertyStore.shutdown()
 
@@ -118,20 +128,53 @@ class AliasTests extends PropertiesTest {
         // println("reachable methods: " + as.project.get(TypeBasedPointsToCallGraphKey).reachableMethods().toList.size)
     }
 
+    private[this] def makeIdentifierFunctionUnique(an: AnnotationLike, fun: String => String)(implicit
+        as: TestContext
+    ): String => String = {
+        an match {
+            case _: AnnotationLike if an.annotationType.asObjectType.simpleName.endsWith("UVar") =>
+                (s: String) => fun(s) + ";lineNumber=" + getIntValue(an, "lineNumber")
+            case _ => (s: String) => fun(s) + ";id=" + getID(an)
+        }
+    }
+
+    private[this] def createContext(ase: AliasSourceElement
+    // a: AnnotationLike,
+    // IDToMethod: Map[String, Method],
+    )(implicit
+        simpleContexts:  SimpleContexts,
+        declaredMethods: DeclaredMethods
+        // as: TestContext
+    ): Context = {
+//        val method = ase match {
+//            case fp: AliasFP => fp.method
+//            case arv: AliasReturnValue => arv.method
+//            case _ => IDToMethod(getMethodID(a))
+//        }
+//
+//        simpleContexts(declaredMethods(method))
+
+        if (ase.isMethodBound) {
+            simpleContexts(declaredMethods(ase.method))
+        } else {
+            NoContext
+        }
+    }
+
     private[this] def resolveSecondElement(
-        an:           AnnotationLike,
-        method:       Method,
         firstElement: AliasSourceElement,
+        a:            AnnotationLike,
+        IDToMethod:   Map[String, Method],
         IDToEntity:   Map[String, Iterable[AliasSourceElement]]
     )(implicit as: TestContext): AliasSourceElement = {
 
-        val tac: EOptionP[Method, TACAI] = as.propertyStore(method, TACAI.key)
+        a match {
+            case _: AnnotationLike if a.annotationType.asObjectType.simpleName.endsWith("UVar") => {
 
-        an match {
-            case _: AnnotationLike if an.annotationType.asObjectType.simpleName.endsWith("UVar") => {
-
+                val method = IDToMethod(getMethodID(a))
+                val tac: EOptionP[Method, TACAI] = as.propertyStore(method, TACAI.key)
                 val body: Code = method.body.get
-                val lineNumber = getIntValue(an, "lineNumber")
+                val lineNumber = getIntValue(a, "lineNumber")
 
                 val pc = body.instructions.zipWithIndex
                     .filter(_._1 != null)
@@ -146,24 +189,26 @@ class AliasTests extends PropertiesTest {
                 val stmt: Stmt[DUVar[ValueInformation]] = tac.ub.tac.get.stmts(tac.ub.tac.get.pcToIndex(pc))
 
                 stmt match {
-                    case c: Call[_]                                    => handleCall(an, c, method, stmts)
-                    case expr: ExprStmt[DUVar[ValueInformation]]       => handleExpr(an, expr.expr, method, stmts)
-                    case putStatic: PutStatic[DUVar[ValueInformation]] => handleExpr(an, putStatic.value, method, stmts)
-                    case putField: PutField[DUVar[ValueInformation]]   => handleExpr(an, putField.value, method, stmts)
-                    case _                                             => throw new IllegalArgumentException("No UVar found")
+                    case c: Call[_]                                    => handleCall(a, c, method, stmts)
+                    case expr: ExprStmt[DUVar[ValueInformation]]       => handleExpr(a, expr.expr, method, stmts)
+                    case putStatic: PutStatic[DUVar[ValueInformation]] => handleExpr(a, putStatic.value, method, stmts)
+                    case putField: PutField[DUVar[ValueInformation]]   => handleExpr(a, putField.value, method, stmts)
+                    case returnValue: ReturnValue[DUVar[ValueInformation]] =>
+                        handleExpr(a, returnValue.expr, method, stmts)
+                    case _ => throw new IllegalArgumentException("No UVar found")
                 }
 
             }
 
-            case _ => if (isNullAlias(an)) {
+            case _ => if (isNullAlias(a)) {
                     new AliasNull
                 } else {
-                    val matchingEntities = IDToEntity(getID(an)).toSeq.filter(!_.equals(firstElement))
+                    val matchingEntities = IDToEntity(getID(a)).toSeq.filter(!_.equals(firstElement))
                     if (matchingEntities.isEmpty) {
-                        throw new IllegalArgumentException("No other entity with id " + getID(an) + " found")
+                        throw new IllegalArgumentException("No other entity with id " + getID(a) + " found")
                     }
                     if (matchingEntities.size > 1) {
-                        throw new IllegalArgumentException("Multiple other entities with id " + getID(an) + " found")
+                        throw new IllegalArgumentException("Multiple other entities with id " + getID(a) + " found")
                     }
                     matchingEntities.head
                 }

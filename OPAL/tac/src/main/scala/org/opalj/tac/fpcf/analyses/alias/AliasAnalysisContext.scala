@@ -18,7 +18,13 @@ class AliasAnalysisContext(
     val propertyStore: PropertyStore
 ) {
 
-    def context: Context = entity.context
+    def context1: Context = entity.context1
+
+    def context2: Context = entity.context2
+
+    def contextOf(ase: AliasSourceElement): Context = {
+        if (isElement1(ase)) context1 else context2
+    }
 
     def element1: AliasSourceElement = entity.element1
 

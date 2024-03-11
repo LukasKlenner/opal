@@ -8,13 +8,14 @@ package pointsto
 
 import org.opalj.br.Field
 import org.opalj.br.PC
+import org.opalj.br.analyses.DeclaredFieldsKey
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.ProjectInformationKeys
 import org.opalj.br.analyses.VirtualFormalParametersKey
-import org.opalj.br.analyses.cg.IsOverridableMethodKey
 import org.opalj.br.fpcf.FPCFAnalysisScheduler
 import org.opalj.br.fpcf.properties.Context
 import org.opalj.br.fpcf.properties.SimpleContext
+import org.opalj.br.fpcf.properties.SimpleContextsKey
 import org.opalj.br.fpcf.properties.alias.Alias
 import org.opalj.br.fpcf.properties.alias.AliasDS
 import org.opalj.br.fpcf.properties.alias.AliasEntity
@@ -39,6 +40,7 @@ import org.opalj.fpcf.Result
 import org.opalj.fpcf.SomeEPS
 import org.opalj.fpcf.UBP
 import org.opalj.tac.cg.TypeIteratorKey
+import org.opalj.tac.common.DefinitionSitesKey
 import org.opalj.tac.fpcf.analyses.alias.TacBasedAliasAnalysis
 import org.opalj.tac.fpcf.analyses.pointsto.AbstractPointsToBasedAnalysis
 import org.opalj.tac.fpcf.analyses.pointsto.toEntity
@@ -72,12 +74,12 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
         ase match {
             case AliasUVar(uVar, _, _) =>
                 uVar.defSites.foreach(ds => {
-                    handlePointsToEntity(ase, getPointsTo(ds, context.context, tac.get))
+                    handlePointsToEntity(ase, getPointsTo(ds, context.contextOf(ase), tac.get))
                 })
 
-            case AliasDS(pc, _, _) => handlePointsToEntity(ase, getPointsTo(pc, context.context, tac.get))
+            case AliasDS(pc, _, _) => handlePointsToEntity(ase, getPointsTo(pc, context.contextOf(ase), tac.get))
 
-            case AliasFP(fp) => handlePointsToEntity(ase, getPointsTo(fp.origin, context.context, tac.get))
+            case AliasFP(fp) => handlePointsToEntity(ase, getPointsTo(fp.origin, context.contextOf(ase), tac.get))
 
             case AliasField(field) => handlePointsToEntity(ase, getPointsToOfField(field))
 
@@ -236,7 +238,14 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
 trait PointsToBasedAliasAnalysisScheduler extends FPCFAnalysisScheduler {
 
     override def requiredProjectInformation: ProjectInformationKeys =
-        Seq(DeclaredMethodsKey, VirtualFormalParametersKey, IsOverridableMethodKey, TypeIteratorKey)
+        Seq(
+            DeclaredMethodsKey,
+            VirtualFormalParametersKey,
+            TypeIteratorKey,
+            DefinitionSitesKey,
+            SimpleContextsKey,
+            DeclaredFieldsKey
+        )
 
     final def derivedProperty: PropertyBounds = PropertyBounds.lub(Alias)
 
@@ -245,4 +254,6 @@ trait PointsToBasedAliasAnalysisScheduler extends FPCFAnalysisScheduler {
         PropertyBounds.ub(Callees),
         PropertyBounds.ub(AllocationSitePointsToSet)
     )
+
+    override def derivesCollaboratively: Set[PropertyBounds] = Set.empty
 }

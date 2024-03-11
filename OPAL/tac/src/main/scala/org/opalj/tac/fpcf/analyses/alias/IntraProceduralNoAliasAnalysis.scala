@@ -209,7 +209,7 @@ object EagerIntraProceduralAliasAnalysis extends IntraProceduralAliasAnalysisSch
             for (e2 <- aliasEntities) {
                 if (e1 != e2 && e1.method == e2.method) {
                     val context = simpleContexts(declaredMethods(e1.method))
-                    val entity = properties.alias.AliasEntity(context, e1, e2)
+                    val entity = properties.alias.AliasEntity(context, context, e1, e2) // TODO do properly
 
                     if (!entities.contains(entity)) {
                         entities.addOne(entity)
@@ -220,7 +220,7 @@ object EagerIntraProceduralAliasAnalysis extends IntraProceduralAliasAnalysisSch
 
         for (e1 <- aliasEntities) {
             val context = simpleContexts(declaredMethods(e1.method))
-            val entity = properties.alias.AliasEntity(context, e1, new AliasNull)
+            val entity = properties.alias.AliasEntity(context, context, e1, new AliasNull) // TODO do properly
             entities.addOne(entity)
         }
 

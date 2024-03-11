@@ -896,7 +896,7 @@ abstract class AbstractAllocationSitesPointsToTypeIterator(project: SomeProject)
 
     protected[this] def pointsToProperty: PropertyMetaInformation = AllocationSitePointsToSet
 
-    protected[this] val emptyPointsToSet: AllocationSitePointsToSet = NoAllocationSites
+    protected[this] def emptyPointsToSet: AllocationSitePointsToSet = NoAllocationSites()
 
     @inline protected[this] def createPointsToSet(
         pc:            Int,
