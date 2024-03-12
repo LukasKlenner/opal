@@ -27,12 +27,12 @@ class AliasEntity(
      * It is used to ensure that the order of the elements is irrelevant.
      */
     private[this] val (_element1, _element2) = (e1, e2) match {
-        case (e1: AliasReturnValue, e2) if !e2.isInstanceOf[AliasReturnValue] => (e1, e2)
-        case (e1, e2: AliasReturnValue) if !e1.isInstanceOf[AliasReturnValue] => (e2, e1)
-        case (AliasNull, e2)                                                  => (AliasNull, e2)
-        case (e1, AliasNull)                                                  => (AliasNull, e1)
-        case (e1, e2) if e1.hashCode() < e2.hashCode()                        => (e1, e2)
-        case (e1, e2)                                                         => (e2, e1)
+        // case (e1: AliasReturnValue, e2) if !e2.isInstanceOf[AliasReturnValue] => (e1, e2)
+        // case (e1, e2: AliasReturnValue) if !e1.isInstanceOf[AliasReturnValue] => (e2, e1)
+        case (AliasNull, e2)                           => (AliasNull, e2)
+        case (e1, AliasNull)                           => (AliasNull, e1)
+        case (e1, e2) if e1.hashCode() < e2.hashCode() => (e1, e2)
+        case (e1, e2)                                  => (e2, e1)
     }
 
     private[this] val (_context1, _context2) = (c1, c2) match {

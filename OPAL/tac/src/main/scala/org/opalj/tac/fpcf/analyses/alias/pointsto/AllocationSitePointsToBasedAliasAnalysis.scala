@@ -14,7 +14,6 @@ import org.opalj.br.fpcf.properties.Context
 import org.opalj.br.fpcf.properties.NoContext
 import org.opalj.br.fpcf.properties.SimpleContextsKey
 import org.opalj.br.fpcf.properties.alias.Alias
-import org.opalj.br.fpcf.properties.alias.AliasDS
 import org.opalj.br.fpcf.properties.alias.AliasEntity
 import org.opalj.br.fpcf.properties.alias.AliasField
 import org.opalj.br.fpcf.properties.alias.AliasFP
@@ -33,7 +32,6 @@ import org.opalj.tac.ExprStmt
 import org.opalj.tac.TACMethodParameter
 import org.opalj.tac.TACode
 import org.opalj.tac.UVar
-import org.opalj.tac.fpcf.analyses.alias.pcOfDefSite
 import org.opalj.tac.fpcf.analyses.alias.persistentUVar
 import org.opalj.tac.fpcf.analyses.pointsto.AbstractPointsToAnalysis
 import org.opalj.tac.fpcf.analyses.pointsto.AllocationSiteBasedAnalysis
@@ -134,7 +132,6 @@ object EagerPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalys
 
         val aliasEntities: Seq[AliasSourceElement] = formalParameters.map(AliasFP).toSeq ++
             uVars.map(uVar => AliasUVar(persistentUVar(uVar._1)(uVar._3.stmts), uVar._2, p)) ++
-            dVars.map(dVar => AliasDS(pcOfDefSite(dVar._1.origin)(dVar._3.stmts), dVar._2, p)) ++
             fields.map(AliasField)
 
         def getContext(ase: AliasSourceElement): Context = {
@@ -149,7 +146,6 @@ object EagerPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalys
             e match {
                 case AliasFP(fp)                 => fp.method.definedMethod.classFile.fqn
                 case AliasUVar(_, m, _)          => m.classFile.fqn
-                case AliasDS(_, method, _)       => method.classFile.fqn
                 case AliasField(field)           => field.classFile.fqn
                 case AliasReturnValue(method, _) => method.classFile.fqn
                 case _                           => ""

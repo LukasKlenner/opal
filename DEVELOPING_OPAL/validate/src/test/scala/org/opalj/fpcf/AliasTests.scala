@@ -100,8 +100,8 @@ class AliasTests extends PropertiesTest {
         val properties = (fields ++ allocations ++ formalParameters ++ methods)
             .map {
                 case (e, fun, a) =>
-                    val ase1 = if (hasTwoUVars(a))
-                        resolveUVar(a, IDToMethod, useSecond = true)
+                    val ase1 = if (isUVarAlias(a) && (hasTwoUVars(a) || isNullAlias(a)))
+                        resolveUVar(a, IDToMethod, useSecond = hasTwoUVars(a))
                     else
                         AliasSourceElement(e)(as.project)
 
@@ -157,8 +157,8 @@ class AliasTests extends PropertiesTest {
     )(implicit as: TestContext): AliasSourceElement = {
 
         a match {
-            case _: AnnotationLike if isUVarAlias(a) => resolveUVar(a, IDToMethod, useSecond)
             case _: AnnotationLike if isNullAlias(a) => AliasNull
+            case _: AnnotationLike if isUVarAlias(a) => resolveUVar(a, IDToMethod, useSecond)
             case _ =>
                 val matchingEntities = IDToEntity(getID(a)).toSeq.filter(!_.equals(firstElement))
                 if (matchingEntities.isEmpty)
@@ -186,7 +186,11 @@ class AliasTests extends PropertiesTest {
                 inst._1.isLoadConstantInstruction || inst._1.isLoadLocalVariableInstruction || inst._1.isStackManagementInstruction
             )
             .map(_._2)
-            .head
+            .headOption
+            .orElse(throw new IllegalArgumentException(
+                "No instruction found for line number " + lineNumber + " in method " + method.toJava
+            ))
+            .get
 
         val stmts = tac.ub.tac.get.stmts
         val stmt: Stmt[DUVar[ValueInformation]] = tac.ub.tac.get.stmts(tac.ub.tac.get.pcToIndex(pc))
@@ -199,7 +203,9 @@ class AliasTests extends PropertiesTest {
             case putField: PutField[DUVar[ValueInformation]] => handleExpr(a, putField.value, method, stmts, useSecond)
             case returnValue: ReturnValue[DUVar[ValueInformation]] =>
                 handleExpr(a, returnValue.expr, method, stmts, useSecond)
-            case _ => throw new IllegalArgumentException("No UVar found")
+            case _ => throw new IllegalArgumentException(
+                    "No UVar found at line number " + lineNumber + " in method " + method.toJava
+                )
         }
     }
 

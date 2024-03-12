@@ -7,12 +7,13 @@ package analyses
 package alias
 
 import org.opalj.br.Method
-import org.opalj.br.fpcf.properties.alias.AliasSourceElement
 import org.opalj.br.fpcf.properties.alias.MayAlias
+import org.opalj.br.fpcf.properties.alias.MustAlias
 import org.opalj.br.fpcf.properties.alias.NoAlias
 import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.InterimResult
 import org.opalj.fpcf.ProperPropertyComputationResult
+import org.opalj.fpcf.Result
 import org.opalj.fpcf.SomeEPS
 import org.opalj.fpcf.UBP
 import org.opalj.tac.fpcf.properties.TACAI
@@ -24,8 +25,9 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
         context: AnalysisContext,
         state:   AnalysisState
     ): ProperPropertyComputationResult = {
-        assert(context.element1.isInstanceOf[AliasSourceElement])
-        assert(context.element2.isInstanceOf[AliasSourceElement])
+
+        if (context.element1.isAliasNull && context.element2.isAliasNull)
+            Result(context.entity, MustAlias)
 
         if (context.element1.isMethodBound) retrieveTAC(context.element1.method)
         if (context.element2.isMethodBound) retrieveTAC(context.element2.method)
@@ -35,7 +37,7 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
         ) {
             analyzeTAC()
         } else {
-            InterimResult(context.entity, MayAlias, MayAlias, state.getDependees, continuation)
+            InterimResult(context.entity, NoAlias, MayAlias, state.getDependees, continuation)
         }
 
     }

@@ -4,7 +4,6 @@ package org.opalj.br.fpcf.properties.alias
 import org.opalj.br.DeclaredMethod
 import org.opalj.br.Field
 import org.opalj.br.Method
-import org.opalj.br.PC
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.SomeProject
 import org.opalj.br.analyses.VirtualFormalParameter
@@ -88,10 +87,6 @@ sealed trait AliasSourceElement {
 
     def asAliasUVar: AliasUVar = throw new UnsupportedOperationException()
 
-    def isAliasDS: Boolean = false
-
-    def asAliasDS: AliasDS = throw new UnsupportedOperationException()
-
 }
 
 object AliasSourceElement {
@@ -106,7 +101,6 @@ object AliasSourceElement {
     def apply(element: AnyRef)(implicit project: SomeProject): AliasSourceElement = {
         element match {
             case fp: VirtualFormalParameter        => AliasFP(fp)
-            case (pc: PC, m: Method)               => AliasDS(pc, m, project)
             case dm: Method                        => AliasReturnValue(dm, project)
             case f: Field                          => AliasField(f)
             case null                              => AliasNull
@@ -209,25 +203,4 @@ case class AliasUVar(
 
     override def asAliasUVar: AliasUVar = this
 
-}
-
-case class AliasDS(
-    pc:                  PC,
-    override val method: Method,
-    project:             SomeProject
-) extends AliasSourceElement {
-
-    private[this] val dm = project.get(DeclaredMethodsKey)(method)
-
-    override def element: (PC, Method) = (pc, method)
-
-    override def definitionSite: Int = pc
-
-    override def isMethodBound: Boolean = true
-
-    override def declaredMethod: DeclaredMethod = dm
-
-    override def isAliasDS: Boolean = true
-
-    override def asAliasDS: AliasDS = this
 }

@@ -4,8 +4,8 @@ package org.opalj.tac.fpcf.analyses.alias.pointsto
 import org.opalj.br.PC
 import org.opalj.br.fpcf.properties.Context
 import org.opalj.br.fpcf.properties.alias.AliasSourceElement
-import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.Entity
+import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.Property
 import org.opalj.tac.fpcf.analyses.alias.AliasAnalysisContext
 import org.opalj.tac.fpcf.analyses.alias.AliasAnalysisState
@@ -35,9 +35,9 @@ class PointsToBasedAliasAnalysisState extends AliasAnalysisState {
 
     def element2Dependees: Set[Entity] = _element2Dependees
 
-    def addElementDependency(ase: AliasSourceElement,
-                             dependency: EOptionP[Entity, Property]
-                            )(implicit context: AliasAnalysisContext): Unit = {
+    def addElementDependency(ase: AliasSourceElement, dependency: EOptionP[Entity, Property])(implicit
+        context: AliasAnalysisContext
+    ): Unit = {
 
         addDependency(dependency)
 

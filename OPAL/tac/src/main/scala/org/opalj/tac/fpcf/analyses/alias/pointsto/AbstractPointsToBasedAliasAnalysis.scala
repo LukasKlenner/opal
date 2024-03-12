@@ -17,7 +17,6 @@ import org.opalj.br.fpcf.properties.Context
 import org.opalj.br.fpcf.properties.SimpleContext
 import org.opalj.br.fpcf.properties.SimpleContextsKey
 import org.opalj.br.fpcf.properties.alias.Alias
-import org.opalj.br.fpcf.properties.alias.AliasDS
 import org.opalj.br.fpcf.properties.alias.AliasEntity
 import org.opalj.br.fpcf.properties.alias.AliasField
 import org.opalj.br.fpcf.properties.alias.AliasFP
@@ -77,8 +76,6 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
                 uVar.defSites.foreach(ds => {
                     handlePointsToEntity(ase, getPointsTo(ds, context.contextOf(ase), tac.get))
                 })
-
-            case AliasDS(pc, _, _) => handlePointsToEntity(ase, getPointsTo(pc, context.contextOf(ase), tac.get))
 
             case AliasFP(fp) => handlePointsToEntity(ase, getPointsTo(fp.origin, context.contextOf(ase), tac.get))
 
@@ -154,28 +151,43 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
         context: AnalysisContext
     ): ProperPropertyComputationResult = {
 
+        val pointsTo1 = state.pointsTo1
+        val pointsTo2 = state.pointsTo2
+
+        if (context.element1.isAliasNull) {
+            val relation = if (state.pointsToNull2)
+                if (pointsTo2.isEmpty) MustAlias else MayAlias
+            else NoAlias
+
+            return if (state.hasDependees)
+                InterimResult(context.entity, relation, MayAlias, state.getDependees, continuation)
+            else Result(context.entity, relation)
+        }
+
         if (!state.somePointsTo) {
             return InterimResult(context.entity, NoAlias, MayAlias, state.getDependees, continuation)
         }
 
-        val pointsTo1 = state.pointsTo1
-        val pointsTo2 = state.pointsTo2
-
         val intersection = pointsTo1.intersect(pointsTo2)
 
         if (intersection.isEmpty) {
-            return if (state.hasDependees) InterimResult(context.entity, NoAlias, MayAlias, state.getDependees, continuation)
+            return if (state.hasDependees)
+                InterimResult(context.entity, NoAlias, MayAlias, state.getDependees, continuation)
             else Result(context.entity, NoAlias)
 
         } else if (checkMustAlias(intersection)) {
-            return if (state.hasDependees) InterimResult(context.entity, MustAlias, MayAlias, state.getDependees, continuation)
+            return if (state.hasDependees)
+                InterimResult(context.entity, MustAlias, MayAlias, state.getDependees, continuation)
             else Result(context.entity, MustAlias)
         }
 
         Result(context.entity, MayAlias)
     }
 
-    private[this] def checkMustAlias(intersection: AliasPointsToSet)(implicit state: AnalysisState): Boolean = {
+    private[this] def checkMustAlias(intersection: AliasPointsToSet)(implicit
+        state:   AnalysisState,
+        context: AnalysisContext
+    ): Boolean = {
 
         val pointsTo1 = state.pointsTo1
         val pointsTo2 = state.pointsTo2
@@ -190,15 +202,43 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
         // they refer to the same allocation site but aren't necessarily the same object (e.g. if the allocation site
         // is inside a loop and is executed multiple times)
 
-        val (context, pc) = pointsTo1.head
-        val method = context.asInstanceOf[SimpleContext].method
+        val (pointsToContext, pc) = pointsTo1.head
+        val method = pointsToContext.asInstanceOf[SimpleContext].method
 
         if (method.name == "<clinit>") {
             // static initializer are executed only once
             return true
         }
 
-        // TODO more checks
+        if (context.element1.isAliasUVar &&
+            context.element2.isAliasUVar &&
+            context.element1.declaredMethod == method &&
+            context.element2.declaredMethod == method
+        ) {
+
+            // Both elements are uVars that point to the same allocation site and both are inside the method of the allocation site
+            // -> they must alias if the allocation site is executed only once (i.e. no loop or recursion)
+
+            val defSite1 = context.element1.asAliasUVar.uVar.defSites
+            val defSite2 = context.element2.asAliasUVar.uVar.defSites
+
+            if (defSite1.size != 1 || defSite1.size != 1) return false // shouldn't happen
+
+            if (defSite1.head != defSite2.head) return false // different def sites but same allocation site -> might be different objects (e.q. due to recursion)
+
+            val tac = state.tacai1.get
+
+            for (stmt <- state.tacai1.get.stmts) {
+                stmt match {
+                    case goto: Goto =>
+                        val targetPC = tac.stmts(goto.targetStmt).pc
+                        if (targetPC <= pc && goto.pc >= pc) return false // jumping from behind the allocation site in front of it -> might break aliasing
+                    case _ =>
+                }
+            }
+
+            return true
+        }
 
         false
     }
@@ -211,7 +251,6 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
 
         someEPS match {
             case UBP(pointsToSet: AllocationSitePointsToSet) =>
-
                 val element1Dependence = state.element1HasDependency(someEPS)
                 val element2Dependence = state.element2HasDependency(someEPS)
 

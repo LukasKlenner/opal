@@ -36,6 +36,8 @@ public @interface NoAliasUVar {
 
     int secondMethodID() default -1;
 
+    boolean aliasWithNull() default false;
+
     Class<?> clazz();
 
     /**
