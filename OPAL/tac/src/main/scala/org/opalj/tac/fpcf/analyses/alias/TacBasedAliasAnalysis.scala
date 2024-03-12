@@ -9,6 +9,7 @@ package alias
 import org.opalj.br.Method
 import org.opalj.br.fpcf.properties.alias.AliasSourceElement
 import org.opalj.br.fpcf.properties.alias.MayAlias
+import org.opalj.br.fpcf.properties.alias.NoAlias
 import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.InterimResult
 import org.opalj.fpcf.ProperPropertyComputationResult
@@ -84,14 +85,14 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
                 } else {
                     InterimResult(
                         context.entity,
-                        MayAlias,
+                        NoAlias,
                         MayAlias,
                         state.getDependees,
                         continuation
                     )
                 }
             case _ =>
-                throw new UnknownError(s"unhandled alias property (${someEPS.ub} for ${someEPS.e}")
+                throw new UnknownError(s"unhandled property (${someEPS.ub} for ${someEPS.e}")
         }
     }
 

@@ -13,14 +13,8 @@ import org.opalj.fpcf.ProperPropertyComputationResult
 
 trait AbstractAliasAnalysis extends FPCFAnalysis {
 
-    type AnalysisContext <: AliasAnalysisContext
-    type AnalysisState <: AliasAnalysisState
-
-    def doDetermineAlias(
-        implicit
-        context: AnalysisContext,
-        state:   AnalysisState
-    ): ProperPropertyComputationResult
+    protected[this] type AnalysisContext <: AliasAnalysisContext
+    protected[this] type AnalysisState <: AliasAnalysisState
 
     def determineAlias(e: Entity): ProperPropertyComputationResult = {
         e match {
@@ -29,6 +23,12 @@ trait AbstractAliasAnalysis extends FPCFAnalysis {
             case _ => throw new UnknownError("unhandled entity type")
         }
     }
+
+    protected[this] def doDetermineAlias(
+        implicit
+        context: AnalysisContext,
+        state:   AnalysisState
+    ): ProperPropertyComputationResult
 
     protected[this] def createState: AnalysisState
 

@@ -26,9 +26,15 @@ public @interface NoAliasUVar {
 
     int lineNumber();
 
+    int secondLineNumber() default -1;
+
     int parameterIndex() default -1;
 
+    int secondParameterIndex() default -1;
+
     int methodID();
+
+    int secondMethodID() default -1;
 
     Class<?> clazz();
 

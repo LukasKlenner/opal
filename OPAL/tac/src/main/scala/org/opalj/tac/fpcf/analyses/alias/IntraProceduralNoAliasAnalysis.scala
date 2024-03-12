@@ -73,7 +73,7 @@ class IntraProceduralNoAliasAnalysis(final val project: SomeProject) extends Tac
             case (rv: AliasReturnValue, e2) => {
 
                 e2 match {
-                    case _: AliasNull =>
+                    case AliasNull =>
                         if (allReturnExpr.forall(isNullReturn)) return result(MustAlias)
 
                         // all returns return a local variable that is only assigned to a new allocation
@@ -111,10 +111,10 @@ class IntraProceduralNoAliasAnalysis(final val project: SomeProject) extends Tac
                 }
 
             }
-            case (_: AliasNull, e2) => {
+            case (AliasNull, e2) => {
 
                 e2 match {
-                    case _: AliasNull =>
+                    case AliasNull =>
                         result(MustAlias)
                     case _ =>
                         result(NoAlias)
@@ -220,7 +220,7 @@ object EagerIntraProceduralAliasAnalysis extends IntraProceduralAliasAnalysisSch
 
         for (e1 <- aliasEntities) {
             val context = simpleContexts(declaredMethods(e1.method))
-            val entity = properties.alias.AliasEntity(context, context, e1, new AliasNull) // TODO do properly
+            val entity = properties.alias.AliasEntity(context, context, e1, AliasNull) // TODO do properly
             entities.addOne(entity)
         }
 

@@ -39,7 +39,6 @@ class AliasAnalysisState {
      * Adds an entity property pair (or epk) into the set of dependees.
      */
     @inline private[alias] final def addDependency(eOptionP: EOptionP[Entity, Property]): Unit = {
-        assert(!_dependees.contains(eOptionP.e))
         _dependees += eOptionP.e -> eOptionP
         _dependeesSet += eOptionP
     }
@@ -48,10 +47,7 @@ class AliasAnalysisState {
      * Removes the entity property pair (or epk) that correspond to the given ep from the set of
      * dependees.
      */
-    @inline private[alias] final def removeDependency(
-        ep: EOptionP[Entity, Property]
-    ): Unit = {
-        assert(_dependees.contains(ep.e))
+    @inline private[alias] final def removeDependency(ep: EOptionP[Entity, Property]): Unit = {
         val oldEOptionP = _dependees(ep.e)
         _dependees -= ep.e
         _dependeesSet -= oldEOptionP
@@ -60,14 +56,8 @@ class AliasAnalysisState {
     /**
      * Do we already registered a dependency to that entity?
      */
-    @inline private[alias] final def containsDependency(
-        ep: EOptionP[Entity, Property]
-    ): Boolean = {
+    @inline private[alias] final def containsDependency(ep: EOptionP[Entity, Property]): Boolean = {
         _dependees.contains(ep.e)
-    }
-
-    @inline private[alias] final def getDependency(e: Entity): EOptionP[Entity, Property] = {
-        _dependees(e)
     }
 
     /**

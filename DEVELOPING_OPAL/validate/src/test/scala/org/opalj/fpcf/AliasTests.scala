@@ -99,20 +99,17 @@ class AliasTests extends PropertiesTest {
 
         val properties = (fields ++ allocations ++ formalParameters ++ methods)
             .map {
-                case (e, fun, a) => {
+                case (e, fun, a) =>
+                    val ase1 = if (hasTwoUVars(a))
+                        resolveUVar(a, IDToMethod, useSecond = true)
+                    else
+                        AliasSourceElement(e)(as.project)
 
-                    val ase1 = AliasSourceElement(e)(as.project)
-                    val ase2 = resolveSecondElement(ase1, a, IDToMethod, IDToEntity)
+                    val ase2 = resolveOtherElement(ase1, a, IDToMethod, IDToEntity, useSecond = false)
 
-                    val entity = AliasEntity(
-                        createContext(ase1),
-                        createContext(ase2),
-                        ase1,
-                        ase2
-                    )
+                    val entity = AliasEntity(createContext(ase1), createContext(ase2), ase1, ase2)
 
                     (entity, makeIdentifierFunctionUnique(a, fun), Seq(a))
-                }
             }
             .groupBy(_._1)
             .map(_._2.head) // remove duplicate entities
@@ -128,31 +125,21 @@ class AliasTests extends PropertiesTest {
         // println("reachable methods: " + as.project.get(TypeBasedPointsToCallGraphKey).reachableMethods().toList.size)
     }
 
-    private[this] def makeIdentifierFunctionUnique(an: AnnotationLike, fun: String => String)(implicit
-        as: TestContext
+    private[this] def makeIdentifierFunctionUnique(an: AnnotationLike, fun: String => String)(
+        implicit as: TestContext
     ): String => String = {
         an match {
-            case _: AnnotationLike if an.annotationType.asObjectType.simpleName.endsWith("UVar") =>
+            case _: AnnotationLike if isUVarAlias(an) =>
                 (s: String) => fun(s) + ";lineNumber=" + getIntValue(an, "lineNumber")
             case _ => (s: String) => fun(s) + ";id=" + getID(an)
         }
     }
 
-    private[this] def createContext(ase: AliasSourceElement
-    // a: AnnotationLike,
-    // IDToMethod: Map[String, Method],
-    )(implicit
+    private[this] def createContext(ase: AliasSourceElement)(
+        implicit
         simpleContexts:  SimpleContexts,
         declaredMethods: DeclaredMethods
-        // as: TestContext
     ): Context = {
-//        val method = ase match {
-//            case fp: AliasFP => fp.method
-//            case arv: AliasReturnValue => arv.method
-//            case _ => IDToMethod(getMethodID(a))
-//        }
-//
-//        simpleContexts(declaredMethods(method))
 
         if (ase.isMethodBound) {
             simpleContexts(declaredMethods(ase.method))
@@ -161,69 +148,70 @@ class AliasTests extends PropertiesTest {
         }
     }
 
-    private[this] def resolveSecondElement(
+    private[this] def resolveOtherElement(
         firstElement: AliasSourceElement,
         a:            AnnotationLike,
         IDToMethod:   Map[String, Method],
-        IDToEntity:   Map[String, Iterable[AliasSourceElement]]
+        IDToEntity:   Map[String, Iterable[AliasSourceElement]],
+        useSecond:    Boolean
     )(implicit as: TestContext): AliasSourceElement = {
 
         a match {
-            case _: AnnotationLike if a.annotationType.asObjectType.simpleName.endsWith("UVar") => {
+            case _: AnnotationLike if isUVarAlias(a) => resolveUVar(a, IDToMethod, useSecond)
+            case _: AnnotationLike if isNullAlias(a) => AliasNull
+            case _ =>
+                val matchingEntities = IDToEntity(getID(a)).toSeq.filter(!_.equals(firstElement))
+                if (matchingEntities.isEmpty)
+                    throw new IllegalArgumentException("No other entity with id " + getID(a) + " found")
+                if (matchingEntities.size > 1)
+                    throw new IllegalArgumentException("Multiple other entities with id " + getID(a) + " found")
+                matchingEntities.head
+        }
+    }
 
-                val method = IDToMethod(getMethodID(a))
-                val tac: EOptionP[Method, TACAI] = as.propertyStore(method, TACAI.key)
-                val body: Code = method.body.get
-                val lineNumber = getIntValue(a, "lineNumber")
+    private[this] def resolveUVar(
+        a:          AnnotationLike,
+        IDToMethod: Map[String, Method],
+        useSecond:  Boolean
+    )(implicit as: TestContext): AliasSourceElement = {
+        val method = IDToMethod(getMethodID(a, useSecond))
+        val tac: EOptionP[Method, TACAI] = as.propertyStore(method, TACAI.key)
+        val body: Code = method.body.get
+        val lineNumber = getIntValue(a, if (useSecond) "secondLineNumber" else "lineNumber")
 
-                val pc = body.instructions.zipWithIndex
-                    .filter(_._1 != null)
-                    .filter(inst => body.lineNumber(inst._2).isDefined && body.lineNumber(inst._2).get == lineNumber)
-                    .filterNot(inst =>
-                        inst._1.isLoadConstantInstruction || inst._1.isLoadLocalVariableInstruction || inst._1.isStackManagementInstruction
-                    )
-                    .map(_._2)
-                    .head
+        val pc = body.instructions.zipWithIndex
+            .filter(_._1 != null)
+            .filter(inst => body.lineNumber(inst._2).isDefined && body.lineNumber(inst._2).get == lineNumber)
+            .filterNot(inst =>
+                inst._1.isLoadConstantInstruction || inst._1.isLoadLocalVariableInstruction || inst._1.isStackManagementInstruction
+            )
+            .map(_._2)
+            .head
 
-                val stmts = tac.ub.tac.get.stmts
-                val stmt: Stmt[DUVar[ValueInformation]] = tac.ub.tac.get.stmts(tac.ub.tac.get.pcToIndex(pc))
+        val stmts = tac.ub.tac.get.stmts
+        val stmt: Stmt[DUVar[ValueInformation]] = tac.ub.tac.get.stmts(tac.ub.tac.get.pcToIndex(pc))
 
-                stmt match {
-                    case c: Call[_]                                    => handleCall(a, c, method, stmts)
-                    case expr: ExprStmt[DUVar[ValueInformation]]       => handleExpr(a, expr.expr, method, stmts)
-                    case putStatic: PutStatic[DUVar[ValueInformation]] => handleExpr(a, putStatic.value, method, stmts)
-                    case putField: PutField[DUVar[ValueInformation]]   => handleExpr(a, putField.value, method, stmts)
-                    case returnValue: ReturnValue[DUVar[ValueInformation]] =>
-                        handleExpr(a, returnValue.expr, method, stmts)
-                    case _ => throw new IllegalArgumentException("No UVar found")
-                }
-
-            }
-
-            case _ => if (isNullAlias(a)) {
-                    new AliasNull
-                } else {
-                    val matchingEntities = IDToEntity(getID(a)).toSeq.filter(!_.equals(firstElement))
-                    if (matchingEntities.isEmpty) {
-                        throw new IllegalArgumentException("No other entity with id " + getID(a) + " found")
-                    }
-                    if (matchingEntities.size > 1) {
-                        throw new IllegalArgumentException("Multiple other entities with id " + getID(a) + " found")
-                    }
-                    matchingEntities.head
-                }
-
+        stmt match {
+            case c: Call[_]                              => handleCall(a, c, method, stmts, useSecond)
+            case expr: ExprStmt[DUVar[ValueInformation]] => handleExpr(a, expr.expr, method, stmts, useSecond)
+            case putStatic: PutStatic[DUVar[ValueInformation]] =>
+                handleExpr(a, putStatic.value, method, stmts, useSecond)
+            case putField: PutField[DUVar[ValueInformation]] => handleExpr(a, putField.value, method, stmts, useSecond)
+            case returnValue: ReturnValue[DUVar[ValueInformation]] =>
+                handleExpr(a, returnValue.expr, method, stmts, useSecond)
+            case _ => throw new IllegalArgumentException("No UVar found")
         }
     }
 
     private[this] def handleCall(
-        an:     AnnotationLike,
-        c:      Call[_],
-        method: Method,
-        stmts:  Array[Stmt[DUVar[ValueInformation]]]
+        an:        AnnotationLike,
+        c:         Call[_],
+        method:    Method,
+        stmts:     Array[Stmt[DUVar[ValueInformation]]],
+        useSecond: Boolean
     )(implicit as: TestContext): AliasSourceElement = {
 
-        val parameterIndex = getIntValue(an, "parameterIndex")
+        val parameterIndex = getIntValue(an, if (useSecond) "secondParameterIndex" else "parameterIndex")
         val param: Expr[_] = if (parameterIndex == -1) c.receiverOption.get else c.params(parameterIndex)
 
         param match {
@@ -233,14 +221,15 @@ class AliasTests extends PropertiesTest {
     }
 
     private[this] def handleExpr(
-        an:     AnnotationLike,
-        expr:   Expr[DUVar[ValueInformation]],
-        method: Method,
-        stmts:  Array[Stmt[DUVar[ValueInformation]]]
+        an:        AnnotationLike,
+        expr:      Expr[DUVar[ValueInformation]],
+        method:    Method,
+        stmts:     Array[Stmt[DUVar[ValueInformation]]],
+        useSecond: Boolean
     )(implicit as: TestContext): AliasSourceElement = {
 
         expr match {
-            case c: Call[_]                   => handleCall(an, c, method, stmts)
+            case c: Call[_]                   => handleCall(an, c, method, stmts, useSecond)
             case uVar: UVar[ValueInformation] => AliasUVar(persistentUVar(uVar)(stmts), method, as.project)
             case _                            => throw new IllegalArgumentException("No UVar found")
         }
@@ -256,8 +245,8 @@ class AliasTests extends PropertiesTest {
         getStringValue(a, "clazz") + "." + getIntValue(a, "id")
     }
 
-    private[this] def getMethodID(a: AnnotationLike)(implicit as: TestContext): String = {
-        getStringValue(a, "clazz") + "." + getIntValue(a, "methodID")
+    private[this] def getMethodID(a: AnnotationLike, useSecond: Boolean)(implicit as: TestContext): String = {
+        getStringValue(a, "clazz") + "." + getIntValue(a, if (useSecond) "secondMethodID" else "methodID")
     }
 
     /**
@@ -270,9 +259,8 @@ class AliasTests extends PropertiesTest {
 
         a.elementValuePairs.filter(_.name == element).collectFirst {
             case ElementValuePair(`element`, value) => value.asIntValue.value
-        }.getOrElse(as.project.classFile(a.annotationType.asObjectType).get.findMethod(
-            element
-        ).head.annotationDefault.get.asIntValue.value)
+        }.getOrElse(as.project.classFile(a.annotationType.asObjectType).get.findMethod(element)
+            .head.annotationDefault.get.asIntValue.value)
     }
 
     private[this] def getStringValue(a: AnnotationLike, element: String): String = {
@@ -320,6 +308,14 @@ class AliasTests extends PropertiesTest {
         a.elementValuePairs.find(_.name == "aliasWithNull").exists(_.value.asBooleanValue.value)
     }
 
+    private[this] def isUVarAlias(a: AnnotationLike): Boolean = {
+        annotationName(a).endsWith("UVar")
+    }
+
+    private[this] def hasTwoUVars(a: AnnotationLike)(implicit as: TestContext): Boolean = {
+        getIntValue(a, "secondMethodID") != -1
+    }
+
     /**
      * Returns all alias annotations that are contained in the given annotation.
      * The given annotation must be an alias annotation.
@@ -331,10 +327,10 @@ class AliasTests extends PropertiesTest {
             .filter(annotationName(_) != "AliasMethodID")
             .flatMap {
                 case a: AnnotationLike
-                    if annotationName(a).endsWith("UVars") || annotationName(a).endsWith("Aliases") => {
+                    if annotationName(a).endsWith("UVars") || annotationName(a).endsWith("Aliases") =>
                     val x = a.elementValuePairs.filter(_.name == "value")
                     x.head.value.asArrayValue.values.map(_.asAnnotationValue.annotation)
-                }
+
                 case a => Seq(a)
             }
     }

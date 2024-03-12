@@ -76,8 +76,6 @@ sealed trait AliasSourceElement {
 
     def isAliasNull: Boolean = false
 
-    def asAliasNull: AliasNull = throw new UnsupportedOperationException()
-
     def isAliasReturnValue: Boolean = false
 
     def asAliasReturnValue: AliasReturnValue = throw new UnsupportedOperationException()
@@ -111,7 +109,7 @@ object AliasSourceElement {
             case (pc: PC, m: Method)               => AliasDS(pc, m, project)
             case dm: Method                        => AliasReturnValue(dm, project)
             case f: Field                          => AliasField(f)
-            case null                              => AliasNull()
+            case null                              => AliasNull
             case (uVar: PersistentUVar, m: Method) => AliasUVar(uVar, m, project)
             case _                                 => throw new UnknownError("unhandled entity type")
         }
@@ -135,14 +133,13 @@ case class AliasField(field: Field) extends AliasSourceElement {
 /**
  * Represents the null value that is part of an alias relation.
  */
-case class AliasNull() extends AliasSourceElement {
+object AliasNull extends AliasSourceElement {
+
     override def element: AnyRef = throw new UnsupportedOperationException()
 
     override def isMethodBound: Boolean = false
 
     override def isAliasNull: Boolean = true
-
-    override def asAliasNull: AliasNull = this
 }
 
 /**

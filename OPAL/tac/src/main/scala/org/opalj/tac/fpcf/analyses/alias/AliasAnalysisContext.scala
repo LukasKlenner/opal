@@ -30,8 +30,8 @@ class AliasAnalysisContext(
 
     def element2: AliasSourceElement = entity.element2
 
-    def isElement1(e: AliasSourceElement): Boolean = element1 == e
+    def isElement1(e: AliasSourceElement): Boolean = element1 eq e
 
-    def isElement2(e: AliasSourceElement): Boolean = element2 == e
+    def isElement2(e: AliasSourceElement): Boolean = element2 eq e
 
 }

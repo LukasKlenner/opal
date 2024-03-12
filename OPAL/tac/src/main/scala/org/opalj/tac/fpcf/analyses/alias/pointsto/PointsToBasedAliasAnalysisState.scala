@@ -4,20 +4,22 @@ package org.opalj.tac.fpcf.analyses.alias.pointsto
 import org.opalj.br.PC
 import org.opalj.br.fpcf.properties.Context
 import org.opalj.br.fpcf.properties.alias.AliasSourceElement
+import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.Entity
+import org.opalj.fpcf.Property
 import org.opalj.tac.fpcf.analyses.alias.AliasAnalysisContext
 import org.opalj.tac.fpcf.analyses.alias.AliasAnalysisState
 
 class PointsToBasedAliasAnalysisState extends AliasAnalysisState {
 
-    private[this] var _pointsTo1: Set[(Context, PC)] = Set[(Context, PC)]()
-    private[this] var _pointsTo2: Set[(Context, PC)] = Set[(Context, PC)]()
+    private[this] var _pointsTo1: Set[(Context, PC)] = Set.empty[(Context, PC)]
+    private[this] var _pointsTo2: Set[(Context, PC)] = Set.empty[(Context, PC)]
 
-    private[this] var _pointsToFinal: Map[Entity, Boolean] = Map[Entity, Boolean]()
+    private[this] var _element1Dependees = Set[Entity]()
+    private[this] var _element2Dependees = Set[Entity]()
 
-    private[this] var _pointsToElementsHandled: Map[Entity, Int] = Map[Entity, Int]()
-
-    private[this] var _entityToAliasEntity: Map[Entity, AliasSourceElement] = Map[Entity, AliasSourceElement]()
+    private[this] var _pointsToElementsHandledElement1: Map[Entity, Int] = Map.empty[Entity, Int]
+    private[this] var _pointsToElementsHandledElement2: Map[Entity, Int] = Map.empty[Entity, Int]
 
     private[this] var _somePointsTo: Boolean = false
 
@@ -29,6 +31,39 @@ class PointsToBasedAliasAnalysisState extends AliasAnalysisState {
 
     def pointsTo2: Set[(Context, PC)] = _pointsTo2
 
+    def element1Dependees: Set[Entity] = _element1Dependees
+
+    def element2Dependees: Set[Entity] = _element2Dependees
+
+    def addElementDependency(ase: AliasSourceElement,
+                             dependency: EOptionP[Entity, Property]
+                            )(implicit context: AliasAnalysisContext): Unit = {
+
+        addDependency(dependency)
+
+        if (context.isElement1(ase)) {
+            _element1Dependees += dependency.e
+        } else {
+            _element2Dependees += dependency.e
+        }
+    }
+
+    def removeElementDependency(dependency: EOptionP[Entity, Property]): Unit = {
+
+        removeDependency(dependency)
+
+        _element1Dependees -= dependency.e
+        _element2Dependees -= dependency.e
+    }
+
+    def element1HasDependency(dependency: EOptionP[Entity, Property]): Boolean = {
+        element1Dependees.contains(dependency.e)
+    }
+
+    def element2HasDependency(dependency: EOptionP[Entity, Property]): Boolean = {
+        element2Dependees.contains(dependency.e)
+    }
+
     def addPointsTo(e: AliasSourceElement, pointsTo: (Context, PC))(implicit context: AliasAnalysisContext): Unit = {
         if (context.isElement1(e)) {
             _pointsTo1 += pointsTo
@@ -37,34 +72,20 @@ class PointsToBasedAliasAnalysisState extends AliasAnalysisState {
         }
     }
 
-    def pointsToElementsHandled(e: (Entity, AliasSourceElement)): Int = {
-        _pointsToElementsHandled.getOrElse(e, 0)
+    def pointsToElementsHandled(ase: AliasSourceElement, e: Entity)(implicit context: AliasAnalysisContext): Int = {
+        if (context.isElement1(ase)) _pointsToElementsHandledElement1.getOrElse(e, 0)
+        else _pointsToElementsHandledElement2.getOrElse(e, 0)
     }
 
-    def incPointsToElementsHandled(e: (Entity, AliasSourceElement)): Unit = {
-        _pointsToElementsHandled += e -> (pointsToElementsHandled(e) + 1)
-    }
-
-    def entityToAliasSourceElement(e: Entity): AliasSourceElement = {
-        _entityToAliasEntity(e)
-    }
-
-    def addEntityToAliasSourceElement(e: Entity, ase: AliasSourceElement): Unit = {
-        _entityToAliasEntity += e -> ase
+    def incPointsToElementsHandled(ase: AliasSourceElement, e: Entity)(implicit context: AliasAnalysisContext): Unit = {
+        if (context.isElement1(ase)) _pointsToElementsHandledElement1 += e -> (pointsToElementsHandled(ase, e) + 1)
+        else _pointsToElementsHandledElement2 += e -> (pointsToElementsHandled(ase, e) + 1)
     }
 
     def somePointsTo: Boolean = _somePointsTo
 
     def setSomePointsTo(): Unit = {
         _somePointsTo = true
-    }
-
-    def allPointsToFinal(): Boolean = {
-        _pointsToFinal.values.forall(identity)
-    }
-
-    def setPointsToFinal(entity: Entity, boolean: Boolean): Unit = {
-        _pointsToFinal += entity -> boolean
     }
 
     def pointsToNull1: Boolean = _pointsToNull1

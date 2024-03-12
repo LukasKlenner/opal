@@ -49,13 +49,13 @@ import org.opalj.value.ValueInformation
 
 trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with AbstractPointsToBasedAnalysis {
 
-    override type AnalysisContext = PointsToBasedAliasAnalysisContext
-    override type AnalysisState = PointsToBasedAliasAnalysisState
+    override protected[this] type AnalysisContext = PointsToBasedAliasAnalysisContext
+    override protected[this] type AnalysisState = PointsToBasedAliasAnalysisState
 
-    type Tac = TACode[TACMethodParameter, DUVar[ValueInformation]]
-    type AliasPointsToSet = Set[(Context, PC)]
+    private[this] type Tac = TACode[TACMethodParameter, DUVar[ValueInformation]]
+    private[this] type AliasPointsToSet = Set[(Context, PC)]
 
-    override def analyzeTAC()(implicit
+    override protected[this] def analyzeTAC()(implicit
         context: AnalysisContext,
         state:   AnalysisState
     ): ProperPropertyComputationResult = {
@@ -66,7 +66,8 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
         createResult()
     }
 
-    private[this] def handleEntity(ase: AliasSourceElement, tac: Option[Tac])(implicit
+    private[this] def handleEntity(ase: AliasSourceElement, tac: Option[Tac])(
+        implicit
         state:   AnalysisState,
         context: AnalysisContext
     ): Unit = {
@@ -90,7 +91,6 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
     }
 
     private[this] def getPointsTo(defSite: Int, context: Context, tac: Tac): EOptionP[Entity, PointsToSet] = {
-
         propertyStore(
             toEntity(if (defSite < 0) defSite else tac.properStmtIndexForPC(defSite), context, tac.stmts),
             pointsToPropertyKey
@@ -98,7 +98,6 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
     }
 
     private[this] def getPointsToOfField(field: Field): EOptionP[Entity, PointsToSet] = {
-
         propertyStore(
             declaredFields.apply(field),
             pointsToPropertyKey
@@ -106,27 +105,23 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
     }
 
     private[this] def getPointsToOfReturnValue(callContext: Context): EOptionP[Entity, PointsToSet] = {
-
         propertyStore(
             callContext,
             pointsToPropertyKey
         )
     }
 
-    private[this] def handlePointsToEntity(ase: AliasSourceElement, eps: EOptionP[Entity, PointsToSet])(implicit
+    private[this] def handlePointsToEntity(ase: AliasSourceElement, eps: EOptionP[Entity, PointsToSet])(
+        implicit
         state:   AnalysisState,
         context: AnalysisContext
     ): Unit = {
 
         val e: Entity = eps.e
-        state.addEntityToAliasSourceElement(e, ase)
 
         if (eps.isRefinable) {
             state.addDependency(eps)
-            state.setPointsToFinal(e, false)
-            return
-        } else {
-            state.setPointsToFinal(e, true)
+            state.addElementDependency(ase, eps)
         }
 
         handlePointsToSet(ase, e, eps.ub.asInstanceOf[AllocationSitePointsToSet])
@@ -139,13 +134,13 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
         context: AnalysisContext
     ): Unit = {
 
-        pointsToSet.forNewestNElements(pointsToSet.numElements - state.pointsToElementsHandled((e, ase))) { value =>
+        pointsToSet.forNewestNElements(pointsToSet.numElements - state.pointsToElementsHandled(ase, e)) { value =>
             val encodedAllocationSite: AllocationSite = value
 
             val allocationSite: (Context, PC, Int) = longToAllocationSite(encodedAllocationSite)
 
             state.addPointsTo(ase, (allocationSite._1, allocationSite._2))
-            state.incPointsToElementsHandled((e, ase))
+            state.incPointsToElementsHandled(ase, e)
         }
 
         if (pointsToSet.pointsToNull)
@@ -153,7 +148,8 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
 
     }
 
-    private[this] def createResult()(implicit
+    private[this] def createResult()(
+        implicit
         state:   AnalysisState,
         context: AnalysisContext
     ): ProperPropertyComputationResult = {
@@ -168,12 +164,12 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
         val intersection = pointsTo1.intersect(pointsTo2)
 
         if (intersection.isEmpty) {
-            return if (state.allPointsToFinal()) Result(context.entity, NoAlias)
-            else InterimResult(context.entity, NoAlias, MayAlias, state.getDependees, continuation)
+            return if (state.hasDependees) InterimResult(context.entity, NoAlias, MayAlias, state.getDependees, continuation)
+            else Result(context.entity, NoAlias)
 
         } else if (checkMustAlias(intersection)) {
-            return if (state.allPointsToFinal()) Result(context.entity, MustAlias)
-            else InterimResult(context.entity, MustAlias, MayAlias, state.getDependees, continuation)
+            return if (state.hasDependees) InterimResult(context.entity, MustAlias, MayAlias, state.getDependees, continuation)
+            else Result(context.entity, MustAlias)
         }
 
         Result(context.entity, MayAlias)
@@ -207,21 +203,29 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
         false
     }
 
-    override protected[this] def continuation(someEPS: SomeEPS)(implicit
+    override protected[this] def continuation(someEPS: SomeEPS)(
+        implicit
         context: AnalysisContext,
         state:   AnalysisState
     ): ProperPropertyComputationResult = {
 
         someEPS match {
-            case UBP(ub: AllocationSitePointsToSet) => {
+            case UBP(pointsToSet: AllocationSitePointsToSet) =>
 
-                val e: Entity = someEPS.e
-                val ase: AliasSourceElement = state.entityToAliasSourceElement(e)
+                val element1Dependence = state.element1HasDependency(someEPS)
+                val element2Dependence = state.element2HasDependency(someEPS)
 
-                handlePointsToSet(ase, e, ub)
+                if (element1Dependence) handlePointsToSet(context.element1, someEPS.e, pointsToSet)
+                if (element2Dependence) handlePointsToSet(context.element2, someEPS.e, pointsToSet)
+
+                state.removeElementDependency(someEPS)
+
+                if (someEPS.isRefinable) {
+                    if (element1Dependence) state.addElementDependency(context.element1, someEPS)
+                    if (element2Dependence) state.addElementDependency(context.element2, someEPS)
+                }
 
                 createResult()
-            }
             case _ => super.continuation(someEPS)
         }
     }

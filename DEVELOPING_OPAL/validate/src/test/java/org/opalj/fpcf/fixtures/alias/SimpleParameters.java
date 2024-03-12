@@ -3,7 +3,6 @@ package org.opalj.fpcf.fixtures.alias;
 
 import org.opalj.fpcf.properties.alias.AliasMethodID;
 import org.opalj.fpcf.properties.alias.MayAlias;
-import org.opalj.fpcf.properties.alias.MustAlias;
 import org.opalj.fpcf.properties.alias.NoAlias;
 import org.opalj.fpcf.properties.alias.u_var.MayAliasUVar;
 import org.opalj.fpcf.properties.alias.u_var.NoAliasUVar;
@@ -14,11 +13,12 @@ public class SimpleParameters {
         noAliasWithLocal(new Object());
         noAliasWithParam(new Object(), new Object());
         mayAliasWithLocal(new Object());
-        mayAliasWithParam(new Object(), new Object());
+        mayAliasWithParam1(new Object(), new Object());
 
         Object o1 = new Object();
-        mustAliasWithParam(o1, o1);
-        mayAliasWithParam(o1, o1);
+        mayAliasWithParam1(o1, o1);
+
+        mayAliasWithParam2(new Object(), new Object());
     }
 
     @AliasMethodID(id = 0, clazz = SimpleParameters.class)
@@ -50,8 +50,8 @@ public class SimpleParameters {
         o2.hashCode();
     }
 
-    public static void mayAliasWithParam(@MayAlias(reason = "mayAlias", id = 1, clazz = SimpleParameters.class) Object o1,
-                                         @MayAlias(reason = "mayAlias", id = 1, clazz = SimpleParameters.class) Object o2) {
+    public static void mayAliasWithParam1(@MayAlias(reason = "mayAlias", id = 1, clazz = SimpleParameters.class) Object o1,
+                                          @MayAlias(reason = "mayAlias", id = 1, clazz = SimpleParameters.class) Object o2) {
 
         o1.hashCode();
         o2.hashCode();
@@ -63,10 +63,16 @@ public class SimpleParameters {
         o2.hashCode();
     }
 
-    public static void mustAliasWithParam(@MustAlias(reason = "identical variable used at call", id = 2, clazz = SimpleParameters.class) Object o1,
-                                 @MustAlias(reason = "identical variable used at call", id = 2, clazz = SimpleParameters.class) Object o2) {
+    public static void mayAliasWithParam2(@MayAlias(reason = "mayAlias", id = 2, clazz = SimpleParameters.class) Object o1,
+                                          @MayAlias(reason = "mayAlias", id = 2, clazz = SimpleParameters.class) Object o2) {
 
         o1.hashCode();
+        o2.hashCode();
+
+        if (Math.random() > 0.5) {
+            o2 = o1;
+        }
+
         o2.hashCode();
     }
 
