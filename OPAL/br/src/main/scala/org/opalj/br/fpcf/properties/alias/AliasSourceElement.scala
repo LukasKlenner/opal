@@ -17,9 +17,10 @@ import org.opalj.value.ValueInformation
  *
  * Valid elements are:
  * - [[AliasFP]]: A formal parameter
- * - [[AliasDS]]: A definition site
  * - [[AliasReturnValue]]: A method return value
  * - [[AliasNull]]: The null value
+ * - [[AliasField]]: A field, represented by a [[FieldReference]]
+ * - [[AliasUVar]]: A UVar, represented by a [[PersistentUVar]] and a [[Method]]
  */
 sealed trait AliasSourceElement {
 
@@ -51,15 +52,6 @@ sealed trait AliasSourceElement {
     def declaredMethod: DeclaredMethod = throw new UnsupportedOperationException()
 
     /**
-     * Returns the definition site of this element.
-     * If such a definition site does not exist, an exception is thrown.
-     *
-     * @throws UnsupportedOperationException if the element is not associated with a definition site
-     * @return The definition site of this element.
-     */
-    def definitionSite: Int = throw new UnsupportedOperationException() // TODO remove?
-
-    /**
      * Returns `true` if this element is associated with a method.
      * If this method returns `true`, [[method]] and [[declaredMethod]] can be safely called.
      *
@@ -72,6 +64,10 @@ sealed trait AliasSourceElement {
     def isAliasField: Boolean = false
 
     def asAliasField: AliasField = throw new UnsupportedOperationException()
+
+    def isAliasStaticField: Boolean = false
+
+    def asAliasStaticField: AliasStaticField = throw new UnsupportedOperationException()
 
     def isAliasNull: Boolean = false
 
@@ -102,7 +98,7 @@ object AliasSourceElement {
         element match {
             case fp: VirtualFormalParameter        => AliasFP(fp)
             case dm: Method                        => AliasReturnValue(dm, project)
-            case f: Field                          => AliasField(f)
+            case f: FieldReference                 => AliasField(f)
             case null                              => AliasNull
             case (uVar: PersistentUVar, m: Method) => AliasUVar(uVar, m, project)
             case _                                 => throw new UnknownError("unhandled entity type")
@@ -111,17 +107,41 @@ object AliasSourceElement {
 }
 
 /**
- * Represents a field that is part of an alias relation.
+ * Encapsulates a reference to a specific field. it contains the possible definition sites of the field
+ * and the context in which the field is referenced.
+ *
+ * @param field The field that is referenced
+ * @param context The context in which the field is referenced
+ * @param defSites The possible definition sites of the field
  */
-case class AliasField(field: Field) extends AliasSourceElement {
+case class FieldReference(field: Field, context: Context, defSites: IntTrieSet)
+
+/**
+ * Represents a non-static field that is part of an alias relation.
+ */
+case class AliasField(field: FieldReference) extends AliasSourceElement {
+
+    override def element: FieldReference = field
+
+    override def isMethodBound: Boolean = true
+
+    override def declaredMethod: DeclaredMethod = field.context.method
+
+    override def isAliasField: Boolean = true
+
+    override def asAliasField: AliasField = this
+}
+
+case class AliasStaticField(field: Field) extends AliasSourceElement {
 
     override def element: Field = field
 
     override def isMethodBound: Boolean = false
 
-    override def isAliasField: Boolean = true
+    override def isAliasStaticField: Boolean = true
 
-    override def asAliasField: AliasField = this
+    override def asAliasStaticField: AliasStaticField = this
+
 }
 
 /**
@@ -166,8 +186,6 @@ case class AliasFP(fp: VirtualFormalParameter) extends AliasSourceElement {
     override def element: VirtualFormalParameter = fp
 
     override def method: Method = fp.method.definedMethod
-
-    override def definitionSite: Int = fp.origin
 
     override def declaredMethod: DeclaredMethod = fp.method
 

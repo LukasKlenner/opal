@@ -21,8 +21,6 @@ class PointsToBasedAliasAnalysisState extends AliasAnalysisState {
     private[this] var _pointsToElementsHandledElement1: Map[Entity, Int] = Map.empty[Entity, Int]
     private[this] var _pointsToElementsHandledElement2: Map[Entity, Int] = Map.empty[Entity, Int]
 
-    private[this] var _somePointsTo: Boolean = false
-
     private[this] var _pointsToNull1: Boolean = false
 
     private[this] var _pointsToNull2: Boolean = false
@@ -80,12 +78,6 @@ class PointsToBasedAliasAnalysisState extends AliasAnalysisState {
     def incPointsToElementsHandled(ase: AliasSourceElement, e: Entity)(implicit context: AliasAnalysisContext): Unit = {
         if (context.isElement1(ase)) _pointsToElementsHandledElement1 += e -> (pointsToElementsHandled(ase, e) + 1)
         else _pointsToElementsHandledElement2 += e -> (pointsToElementsHandled(ase, e) + 1)
-    }
-
-    def somePointsTo: Boolean = _somePointsTo
-
-    def setSomePointsTo(): Unit = {
-        _somePointsTo = true
     }
 
     def pointsToNull1: Boolean = _pointsToNull1
