@@ -89,7 +89,8 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
                     handlePointsToEntity(ase, getPointsTo(ds, context.contextOf(ase), tac.get))
                 })
 
-            case AliasFormalParameter(fp) => handlePointsToEntity(ase, getPointsTo(fp.origin, context.contextOf(ase), tac.get))
+            case AliasFormalParameter(fp) =>
+                handlePointsToEntity(ase, getPointsTo(fp.origin, context.contextOf(ase), tac.get))
 
             case AliasStaticField(field) => handlePointsToEntity(ase, getPointsToOfStaticField(field))
 

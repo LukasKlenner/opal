@@ -1,4 +1,9 @@
-package org.opalj.tac.fpcf.analyses.alias
+/* BSD 2-Clause License - see OPAL/LICENSE for details. */
+package org.opalj
+package tac
+package fpcf
+package analyses
+package alias
 
 import org.opalj.br.Method
 import org.opalj.fpcf.SomeEPS

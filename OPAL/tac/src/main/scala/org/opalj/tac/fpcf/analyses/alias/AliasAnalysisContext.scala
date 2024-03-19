@@ -1,6 +1,5 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org
-package opalj
+package org.opalj
 package tac
 package fpcf
 package analyses
@@ -51,7 +50,6 @@ class AliasAnalysisContext(
      * @return The first [[AliasSourceElement]] of the [[AliasEntity]].
      */
     def element1: AliasSourceElement = entity.element1
-
 
     /**
      * @return The second [[AliasSourceElement]] of the [[AliasEntity]]

@@ -1,5 +1,10 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.tac.fpcf.analyses.alias.pointsto
+package org.opalj
+package tac
+package fpcf
+package analyses
+package alias
+package pointsto
 
 import org.opalj.br.PC
 import org.opalj.br.fpcf.properties.Context
@@ -9,7 +14,6 @@ import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.Property
 import org.opalj.tac.fpcf.analyses.alias.AliasAnalysisContext
 import org.opalj.tac.fpcf.analyses.alias.TacBasedAliasAnalysisState
-
 
 /**
  * Encapsulates the current state of an points-to based alias analysis.
@@ -172,8 +176,9 @@ class PointsToBasedAliasAnalysisState extends TacBasedAliasAnalysisState {
     /**
      * Adds the given entity property pair to the set of field dependees of the given [[AliasSourceElement]].
      */
-    def addFieldDependency(ase: AliasSourceElement, dependency: EOptionP[Entity, Property])
-                          (implicit context: AliasAnalysisContext): Unit = {
+    def addFieldDependency(ase: AliasSourceElement, dependency: EOptionP[Entity, Property])(implicit
+        context: AliasAnalysisContext
+    ): Unit = {
         if (context.isElement1(ase)) _field1Dependees += dependency.e
         else _field2Dependees += dependency.e
     }

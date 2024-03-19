@@ -1,5 +1,9 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.br.fpcf.properties.alias
+package org.opalj
+package br
+package fpcf
+package properties
+package alias
 
 import org.opalj.fpcf.Entity
 import org.opalj.fpcf.OrderedProperty
