@@ -41,19 +41,11 @@ abstract class AliasPropertyMatcher(val property: Alias) extends AbstractPropert
         a:          AnnotationLike,
         properties: Iterable[Property]
     ): Option[String] = {
-
-        if (properties.isEmpty) {
-            return Some("No Properties assigned to entity")
-        }
-        if (properties.count(_.isInstanceOf[Alias]) > 1) {
-            return Some("Multiple alias properties found")
-        }
         if (!properties.exists(p => p == property)) {
             Some(a.elementValuePairs.head.value.asStringValue.value)
         } else {
             None
         }
-
     }
 }
 
