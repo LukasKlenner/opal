@@ -6,6 +6,7 @@ import scala.collection.mutable
 import org.opalj.br.Method
 import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.SomeProject
+import org.opalj.br.analyses.VirtualFormalParameter
 import org.opalj.br.analyses.VirtualFormalParametersKey
 import org.opalj.br.fpcf.BasicFPCFEagerAnalysisScheduler
 import org.opalj.br.fpcf.BasicFPCFLazyAnalysisScheduler
@@ -16,19 +17,21 @@ import org.opalj.br.fpcf.properties.SimpleContextsKey
 import org.opalj.br.fpcf.properties.alias.Alias
 import org.opalj.br.fpcf.properties.alias.AliasEntity
 import org.opalj.br.fpcf.properties.alias.AliasField
-import org.opalj.br.fpcf.properties.alias.AliasFP
+import org.opalj.br.fpcf.properties.alias.AliasFormalParameter
+import org.opalj.br.fpcf.properties.alias.AliasNull
 import org.opalj.br.fpcf.properties.alias.AliasReturnValue
 import org.opalj.br.fpcf.properties.alias.AliasSourceElement
+import org.opalj.br.fpcf.properties.alias.AliasStaticField
 import org.opalj.br.fpcf.properties.alias.AliasUVar
+import org.opalj.br.fpcf.properties.alias.FieldReference
 import org.opalj.br.fpcf.properties.cg.Callers
 import org.opalj.br.fpcf.properties.cg.NoCallers
 import org.opalj.fpcf.PropertyBounds
 import org.opalj.fpcf.PropertyStore
-import org.opalj.tac.Assignment
 import org.opalj.tac.Call
 import org.opalj.tac.DUVar
-import org.opalj.tac.DVar
 import org.opalj.tac.ExprStmt
+import org.opalj.tac.PutField
 import org.opalj.tac.TACMethodParameter
 import org.opalj.tac.TACode
 import org.opalj.tac.UVar
@@ -38,9 +41,16 @@ import org.opalj.tac.fpcf.analyses.pointsto.AllocationSiteBasedAnalysis
 import org.opalj.tac.fpcf.properties.TACAI
 import org.opalj.value.ValueInformation
 
+/**
+ * An alias analysis based on points-to information that are computed using allocation sites.
+ * @param project The project
+ */
 class AllocationSitePointsToBasedAliasAnalysis(final val project: SomeProject)
     extends AbstractPointsToBasedAliasAnalysis with AbstractPointsToAnalysis with AllocationSiteBasedAnalysis
 
+/**
+ * A scheduler for a lazy, allocation site, points-to based alias analysis.
+ */
 object LazyPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalysisScheduler
     with BasicFPCFLazyAnalysisScheduler {
     override def derivesLazily: Some[PropertyBounds] = Some(derivedProperty)
@@ -62,18 +72,28 @@ object LazyPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalysi
     }
 }
 
+/**
+ * A best effort scheduler for a eager, allocation site, points-to based alias analysis.
+ *
+ * This scheduler is best effort because it does not guarantee that all possible entities are computed.
+ *
+ * Only reachable methods are considered.
+ *
+ * Warning: This scheduler should only be used for very small projects. Otherwise, due to the quadratic blowup of the
+ * number of entities, the analysis will take a lot of time and resources to complete.
+ */
 object EagerPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalysisScheduler
     with BasicFPCFEagerAnalysisScheduler {
 
     override def start(p: SomeProject, ps: PropertyStore, unused: Null): FPCFAnalysis = {
         val analysis = new AllocationSitePointsToBasedAliasAnalysis(p)
+
         val simpleContexts = p.get(SimpleContextsKey)
         val declaredMethods = p.get(DeclaredMethodsKey)
 
         val methods = declaredMethods.declaredMethods
-        val callersProperties = ps(methods.to(Iterable), Callers)
-        assert(callersProperties.forall(_.isFinal))
 
+        val callersProperties = ps(methods.to(Iterable), Callers)
         val reachableMethods = callersProperties
             .filterNot(_.asFinal.p == NoCallers)
             .map { v => v.e -> v.ub }
@@ -81,20 +101,19 @@ object EagerPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalys
 
         type Tac = TACode[TACMethodParameter, DUVar[ValueInformation]]
 
-        val uVars: mutable.Set[(UVar[ValueInformation], Method, Tac)] =
-            mutable.Set.empty[(UVar[ValueInformation], Method, Tac)]
-        val dVars: mutable.Set[(DVar[ValueInformation], Method, Tac)] =
-            mutable.Set.empty[(DVar[ValueInformation], Method, Tac)]
+        val uVars: mutable.Set[AliasUVar] = mutable.Set.empty[AliasUVar]
 
-        def handleCall(call: Call[_], m: Method, tac: Tac) = {
+        val fieldReferences: mutable.Set[FieldReference] = mutable.Set.empty[FieldReference]
+
+        def handleCall(call: Call[_], m: Method, tac: Tac): Unit = {
             call.allParams.foreach {
-                case uVar: UVar[ValueInformation] => uVars.add((uVar, m, tac))
+                case uVar: UVar[ValueInformation] => uVars += AliasUVar(persistentUVar(uVar)(tac.stmts), m, p)
                 case _                            =>
             }
 
             if (call.receiverOption.isDefined) {
                 call.receiverOption.get match {
-                    case uVar: UVar[ValueInformation] => uVars.add((uVar, m, tac))
+                    case uVar: UVar[ValueInformation] => uVars += AliasUVar(persistentUVar(uVar)(tac.stmts), m, p)
                     case _                            =>
                 }
             }
@@ -109,30 +128,47 @@ object EagerPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalys
                         val tac = ps(m, TACAI.key).asFinal.p.tac.get
 
                         tac.stmts.foreach {
-                            case Assignment(_, dVar: DVar[ValueInformation], _) => dVars.add((dVar, m, tac))
-                            case call: Call[_]                                  => handleCall(call, m, tac)
+                            case call: Call[_] => handleCall(call, m, tac)
                             case ExprStmt(_, expr) => expr match {
-                                    case uVar: UVar[ValueInformation] => uVars.add((uVar, m, tac))
-                                    case call: Call[_]                => handleCall(call, m, tac)
-                                    case _                            =>
+                                    case uVar: UVar[ValueInformation] =>
+                                        uVars += AliasUVar(persistentUVar(uVar)(tac.stmts), m, p)
+                                    case call: Call[_] => handleCall(call, m, tac)
+                                    case _             =>
                                 }
+                            case PutField(_, _, name, declaredFieldType, UVar(_, objRefDefSites), _) =>
+                                fieldReferences +=
+                                    FieldReference(
+                                        m.classFile.findField(name, declaredFieldType).get,
+                                        simpleContexts(declaredMethods(m)),
+                                        objRefDefSites
+                                    )
                             case _ =>
                         }
                     }
 
                 })
             )
+
         val formalParameters = p
             .get(VirtualFormalParametersKey)
             .virtualFormalParameters
             .filter(fp => reachableMethods.contains(fp.method))
 
-        val fields = p.allFields
-            .filter(f => reachableMethods.exists(_._1.declaringClassType.fqn.eq(f.classFile.fqn)))
+        val thisParameter = reachableMethods.keys
+            .filter(m => !m.definedMethod.isStatic)
+            .map(m => VirtualFormalParameter(m, -1))
 
-        val aliasEntities: Seq[AliasSourceElement] = formalParameters.map(AliasFP).toSeq ++
-            uVars.map(uVar => AliasUVar(persistentUVar(uVar._1)(uVar._3.stmts), uVar._2, p)) ++
-            fields.map(AliasField)
+        val staticFields = p.allFields.filter(_.isStatic)
+
+        val aliasEntities = {
+            Seq(AliasNull) ++
+                formalParameters.map(AliasFormalParameter) ++
+                thisParameter.map(AliasFormalParameter) ++
+                staticFields.map(AliasStaticField) ++
+                fieldReferences.map(AliasField) ++
+                reachableMethods.keys.map(m => AliasReturnValue(m.definedMethod, p)) ++
+                uVars
+        }
 
         def getContext(ase: AliasSourceElement): Context = {
             if (ase.isMethodBound) {
@@ -142,21 +178,8 @@ object EagerPointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAnalys
             }
         }
 
-        def getClass(e: AliasSourceElement): String = {
-            e match {
-                case AliasFP(fp)                 => fp.method.definedMethod.classFile.fqn
-                case AliasUVar(_, m, _)          => m.classFile.fqn
-                case AliasField(field)           => field.classFile.fqn
-                case AliasReturnValue(method, _) => method.classFile.fqn
-                case _                           => ""
-            }
-        }
-
         val entities = (for (e1 <- aliasEntities; e2 <- aliasEntities) yield (e1, e2))
             .distinct
-            .filterNot(e => e._1.isMethodBound && e._2.isMethodBound && e._1.method != e._2.method)
-            .filterNot(e => e._1.isAliasField && !e._2.isAliasField && getClass(e._1) != getClass(e._2))
-            .filterNot(e => !e._1.isAliasField && e._2.isAliasField && getClass(e._1) != getClass(e._2))
             .map(e => AliasEntity(getContext(e._1), getContext(e._2), e._1, e._2))
             .distinct
 

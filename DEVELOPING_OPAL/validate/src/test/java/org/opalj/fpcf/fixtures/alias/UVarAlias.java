@@ -2,14 +2,14 @@
 package org.opalj.fpcf.fixtures.alias;
 
 import org.opalj.fpcf.properties.alias.AliasMethodID;
-import org.opalj.fpcf.properties.alias.u_var.MayAliasUVar;
-import org.opalj.fpcf.properties.alias.u_var.MustAliasUVar;
-import org.opalj.fpcf.properties.alias.u_var.NoAliasUVar;
+import org.opalj.fpcf.properties.alias.line.MayAliasLine;
+import org.opalj.fpcf.properties.alias.line.MustAliasLine;
+import org.opalj.fpcf.properties.alias.line.NoAliasLine;
 
 public class UVarAlias {
 
     @AliasMethodID(id = 0, clazz = UVarAlias.class)
-    @MustAliasUVar(reason = "same local variable with single defSite without loop used",
+    @MustAliasLine(reason = "same local variable with single defSite without loop used",
             lineNumber = 19, methodID = 0,
             secondLineNumber = 20, secondMethodID = 0,
             clazz = UVarAlias.class)
@@ -21,7 +21,7 @@ public class UVarAlias {
     }
 
     @AliasMethodID(id = 1, clazz = UVarAlias.class)
-    @MayAliasUVar(reason = "same local variable with single defSite with loop used",
+    @MayAliasLine(reason = "same local variable with single defSite with loop used",
             lineNumber = 31, methodID = 1,
             secondLineNumber = 31, secondMethodID = 1,
             clazz = UVarAlias.class)
@@ -33,7 +33,7 @@ public class UVarAlias {
     }
 
     @AliasMethodID(id = 2, clazz = UVarAlias.class)
-    @MustAliasUVar(reason = "same local variable with single defSite with loop in front of defSite",
+    @MustAliasLine(reason = "same local variable with single defSite with loop in front of defSite",
             lineNumber = 47, methodID = 2,
             secondLineNumber = 48, secondMethodID = 2,
             clazz = UVarAlias.class)
@@ -49,7 +49,7 @@ public class UVarAlias {
     }
 
     @AliasMethodID(id = 3, clazz = UVarAlias.class)
-    @MustAliasUVar(reason = "same local variable with single defSite with loop behind defSite",
+    @MustAliasLine(reason = "same local variable with single defSite with loop behind defSite",
             lineNumber = 59, methodID = 3,
             secondLineNumber = 60, secondMethodID = 3,
             clazz = UVarAlias.class)
@@ -65,7 +65,7 @@ public class UVarAlias {
     }
 
     @AliasMethodID(id = 4, clazz = UVarAlias.class)
-    @MustAliasUVar(reason = "same local variable with single defSite with loop behind defSite",
+    @MustAliasLine(reason = "same local variable with single defSite with loop behind defSite",
             lineNumber = 76, methodID = 4,
             secondLineNumber = 76, secondMethodID = 4,
             clazz = UVarAlias.class)
@@ -78,7 +78,7 @@ public class UVarAlias {
     }
 
     @AliasMethodID(id = 5, clazz = UVarAlias.class)
-    @MayAliasUVar(reason = "same local variable with single defSite with recursion",
+    @MayAliasLine(reason = "same local variable with single defSite with recursion",
             lineNumber = 86, methodID = 5,
             secondLineNumber = 88, secondMethodID = 5, secondParameterIndex = 0,
             clazz = UVarAlias.class)
@@ -89,7 +89,7 @@ public class UVarAlias {
     }
 
     @AliasMethodID(id = 6, clazz = UVarAlias.class)
-    @MustAliasUVar(reason = "same local variable with single defSite with irrelevant recursion",
+    @MustAliasLine(reason = "same local variable with single defSite with irrelevant recursion",
             lineNumber = 98, methodID = 6,
             secondLineNumber = 99, secondMethodID = 6, secondParameterIndex = 0,
             clazz = UVarAlias.class)
@@ -100,7 +100,7 @@ public class UVarAlias {
     }
 
     @AliasMethodID(id = 7, clazz = UVarAlias.class)
-    @MayAliasUVar(reason = "same local variable with single defSite in other method",
+    @MayAliasLine(reason = "same local variable with single defSite in other method",
             lineNumber = 110, methodID = 7,
             secondLineNumber = 111, secondMethodID = 7,
             clazz = UVarAlias.class)
@@ -112,7 +112,7 @@ public class UVarAlias {
     }
 
     @AliasMethodID(id = 8, clazz = UVarAlias.class)
-    @MayAliasUVar(reason = "different local variable with single defSite in other method",
+    @MayAliasLine(reason = "different local variable with single defSite in other method",
             lineNumber = 123, methodID = 8,
             secondLineNumber = 124, secondMethodID = 8,
             clazz = UVarAlias.class)
@@ -129,7 +129,7 @@ public class UVarAlias {
     }
 
     @AliasMethodID(id = 9, clazz = UVarAlias.class)
-    @NoAliasUVar(reason = "no alias with local variables",
+    @NoAliasLine(reason = "no alias with local variables",
             lineNumber = 139, methodID = 9,
             secondLineNumber = 140, secondMethodID = 9,
             clazz = UVarAlias.class)
@@ -141,7 +141,7 @@ public class UVarAlias {
     }
 
     @AliasMethodID(id = 10, clazz = UVarAlias.class)
-    @MayAliasUVar(reason = "may alias with local variables",
+    @MayAliasLine(reason = "may alias with local variables",
             lineNumber = 156, methodID = 10,
             secondLineNumber = 157, secondMethodID = 10,
             clazz = UVarAlias.class)

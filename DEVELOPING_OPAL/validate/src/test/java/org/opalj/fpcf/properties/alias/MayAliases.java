@@ -2,7 +2,6 @@
 package org.opalj.fpcf.properties.alias;
 
 import org.opalj.fpcf.properties.PropertyValidator;
-import org.opalj.fpcf.properties.alias.u_var.MayAliasUVars;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;

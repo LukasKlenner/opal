@@ -16,11 +16,18 @@ import org.opalj.value.ValueInformation
  * Represents a source code element which can be part of an alias relation.
  *
  * Valid elements are:
- * - [[AliasFP]]: A formal parameter
- * - [[AliasReturnValue]]: A method return value
- * - [[AliasNull]]: The null value
- * - [[AliasField]]: A field, represented by a [[FieldReference]]
- * - [[AliasUVar]]: A UVar, represented by a [[PersistentUVar]] and a [[Method]]
+ *
+ * - [[AliasFormalParameter]]: A formal parameter.
+ *
+ * - [[AliasReturnValue]]: A method return value.
+ *
+ * - [[AliasNull]]: The null value.
+ *
+ * - [[AliasField]]: A non-static field, represented by a [[FieldReference]].
+ *
+ * - [[AliasStaticField]]: A static field.
+ *
+ * - [[AliasUVar]]: A UVar, represented by a [[PersistentUVar]] and a [[Method]].
  */
 sealed trait AliasSourceElement {
 
@@ -77,7 +84,7 @@ sealed trait AliasSourceElement {
 
     def isAliasFP: Boolean = false
 
-    def asAliasFP: AliasFP = throw new UnsupportedOperationException()
+    def asAliasFP: AliasFormalParameter = throw new UnsupportedOperationException()
 
     def isAliasUVar: Boolean = false
 
@@ -96,9 +103,14 @@ object AliasSourceElement {
      */
     def apply(element: AnyRef)(implicit project: SomeProject): AliasSourceElement = {
         element match {
-            case fp: VirtualFormalParameter        => AliasFP(fp)
-            case dm: Method                        => AliasReturnValue(dm, project)
-            case f: FieldReference                 => AliasField(f)
+            case fp: VirtualFormalParameter => AliasFormalParameter(fp)
+            case dm: Method                 => AliasReturnValue(dm, project)
+            case f: FieldReference =>
+                if (!f.field.isStatic) AliasField(f)
+                else throw new IllegalArgumentException("Static fields must be represented by a normal Field")
+            case f: Field =>
+                if (f.isStatic) AliasStaticField(f)
+                else throw new IllegalArgumentException("Non-static fields must be represented by a FieldReference")
             case null                              => AliasNull
             case (uVar: PersistentUVar, m: Method) => AliasUVar(uVar, m, project)
             case _                                 => throw new UnknownError("unhandled entity type")
@@ -107,11 +119,10 @@ object AliasSourceElement {
 }
 
 /**
- * Encapsulates a reference to a specific field. it contains the possible definition sites of the field
- * and the context in which the field is referenced.
+ * Encapsulates a reference to a specific field. it contains the possible definition sites of the object used to access
+ * the field and the context in which the field is referenced.
  *
  * @param field The field that is referenced
- * @param context The context in which the field is referenced
  * @param defSites The possible definition sites of the field
  */
 case class FieldReference(field: Field, context: Context, defSites: IntTrieSet)
@@ -119,19 +130,24 @@ case class FieldReference(field: Field, context: Context, defSites: IntTrieSet)
 /**
  * Represents a non-static field that is part of an alias relation.
  */
-case class AliasField(field: FieldReference) extends AliasSourceElement {
+case class AliasField(fieldRefernce: FieldReference) extends AliasSourceElement {
 
-    override def element: FieldReference = field
+    override def element: FieldReference = fieldRefernce
 
     override def isMethodBound: Boolean = true
 
-    override def declaredMethod: DeclaredMethod = field.context.method
+    override def declaredMethod: DeclaredMethod = fieldRefernce.context.method
+
+    override def method: Method = fieldRefernce.context.method.definedMethod
 
     override def isAliasField: Boolean = true
 
     override def asAliasField: AliasField = this
 }
 
+/**
+ * Represents a static field that is part of an alias relation.
+ */
 case class AliasStaticField(field: Field) extends AliasSourceElement {
 
     override def element: Field = field
@@ -181,7 +197,7 @@ case class AliasReturnValue(override val method: Method, project: SomeProject) e
 /**
  * Represents a formal parameter of a method that is part of an alias relation.
  */
-case class AliasFP(fp: VirtualFormalParameter) extends AliasSourceElement {
+case class AliasFormalParameter(fp: VirtualFormalParameter) extends AliasSourceElement {
 
     override def element: VirtualFormalParameter = fp
 
@@ -193,7 +209,7 @@ case class AliasFP(fp: VirtualFormalParameter) extends AliasSourceElement {
 
     override def isAliasFP: Boolean = true
 
-    override def asAliasFP: AliasFP = this
+    override def asAliasFP: AliasFormalParameter = this
 }
 
 /**
@@ -203,6 +219,9 @@ case class AliasFP(fp: VirtualFormalParameter) extends AliasSourceElement {
  */
 case class PersistentUVar(valueInformation: ValueInformation, defSites: IntTrieSet)
 
+/**
+ * Represents a UVar that is part of an alias relation.
+ */
 case class AliasUVar(
     uVar:                PersistentUVar,
     override val method: Method,

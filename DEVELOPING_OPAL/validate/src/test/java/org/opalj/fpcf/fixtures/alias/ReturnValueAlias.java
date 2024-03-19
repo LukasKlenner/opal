@@ -4,13 +4,13 @@ package org.opalj.fpcf.fixtures.alias;
 import org.opalj.fpcf.properties.alias.AliasMethodID;
 import org.opalj.fpcf.properties.alias.MayAlias;
 import org.opalj.fpcf.properties.alias.NoAlias;
-import org.opalj.fpcf.properties.alias.u_var.MayAliasUVar;
-import org.opalj.fpcf.properties.alias.u_var.NoAliasUVar;
+import org.opalj.fpcf.properties.alias.line.MayAliasLine;
+import org.opalj.fpcf.properties.alias.line.NoAliasLine;
 
 public class ReturnValueAlias {
 
     @AliasMethodID(id = 0, clazz = ReturnValueAlias.class)
-    @NoAliasUVar(reason = "no Alias with local variable", lineNumber = 17, methodID = 0, clazz = ReturnValueAlias.class)
+    @NoAliasLine(reason = "no Alias with local variable", lineNumber = 17, methodID = 0, clazz = ReturnValueAlias.class)
     public static Object noAliasWithLocal() {
         Object o1 = new Object();
 
@@ -20,7 +20,7 @@ public class ReturnValueAlias {
     }
 
     @AliasMethodID(id = 1, clazz = ReturnValueAlias.class)
-    @MayAliasUVar(reason = "mayAlias with local variable", lineNumber = 32, methodID = 1, clazz = ReturnValueAlias.class)
+    @MayAliasLine(reason = "mayAlias with local variable", lineNumber = 32, methodID = 1, clazz = ReturnValueAlias.class)
     public static Object mayAliasWithLocal1() {
         Object o1 = new Object();
         Object o2 = new Object();
@@ -35,7 +35,7 @@ public class ReturnValueAlias {
     }
 
     @AliasMethodID(id = 2, clazz = ReturnValueAlias.class)
-    @MayAliasUVar(reason = "mayAlias with local variable", lineNumber = 42, methodID = 2, clazz = ReturnValueAlias.class)
+    @MayAliasLine(reason = "mayAlias with local variable", lineNumber = 42, methodID = 2, clazz = ReturnValueAlias.class)
     public static Object mayAliasWithLocal2() {
         Object o1 = new Object();
 

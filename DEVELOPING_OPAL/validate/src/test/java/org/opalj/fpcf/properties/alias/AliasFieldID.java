@@ -6,19 +6,20 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.ElementType.FIELD;
 
 /**
- * Annotation used to set the ID of a method.
- * This is used to specify the enclosing method in the alias line annotations.
+ * Annotation used to set the ID of a field.
+ * This is used to specify the referenced field in the alias annotations.
  */
 @Documented
-@Target({METHOD})
+@Target({FIELD})
 @Retention(RetentionPolicy.CLASS)
-public @interface AliasMethodID {
+public @interface AliasFieldID {
 
     int id();
 
     Class<?> clazz();
 
 }
+

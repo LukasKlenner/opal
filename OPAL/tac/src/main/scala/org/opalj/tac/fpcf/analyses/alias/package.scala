@@ -15,10 +15,23 @@ package object alias {
 
     type V = DUVar[ValueInformation]
 
+    /**
+     * Converts the given [[UVar]] into an equivalent [[PersistentUVar]].
+     *
+     * @param uVar The UVar to convert.
+     * @param stmts The statements of the method the UVar is defined in.
+     * @return A persistent UVar for the given UVar.
+     */
     final def persistentUVar(uVar: UVar[ValueInformation])(implicit stmts: Array[Stmt[V]]): PersistentUVar = {
         PersistentUVar(uVar.value, uVar.definedBy.map(pcOfDefSite _))
     }
 
+    /**
+     * Returns the program counter of the given definition site.
+     * @param valueOrigin The value origin of the definition site.
+     * @param stmts The statements of the method the definition site is in.
+     * @return The program counter of the definition site.
+     */
     final def pcOfDefSite(valueOrigin: ValueOrigin)(implicit stmts: Array[Stmt[V]]): PC = {
         org.opalj.tac.fpcf.analyses.cg.pcOfDefSite(valueOrigin)
     }

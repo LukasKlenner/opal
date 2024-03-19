@@ -22,7 +22,7 @@ import org.opalj.br.fpcf.properties
 import org.opalj.br.fpcf.properties.SimpleContextsKey
 import org.opalj.br.fpcf.properties.alias.Alias
 import org.opalj.br.fpcf.properties.alias.AliasEntity
-import org.opalj.br.fpcf.properties.alias.AliasFP
+import org.opalj.br.fpcf.properties.alias.AliasFormalParameter
 import org.opalj.br.fpcf.properties.alias.AliasNull
 import org.opalj.br.fpcf.properties.alias.AliasReturnValue
 import org.opalj.br.fpcf.properties.alias.AliasSourceElement
@@ -44,12 +44,12 @@ import org.opalj.tac.fpcf.properties.TACAI
 class IntraProceduralNoAliasAnalysis(final val project: SomeProject) extends TacBasedAliasAnalysis {
 
     override type AnalysisContext = AliasAnalysisContext
-    override type AnalysisState = AliasAnalysisState
+    override type AnalysisState = TacBasedAliasAnalysisState
 
     protected[this] def analyzeTAC()(
         implicit
-        context: AliasAnalysisContext,
-        state:   AliasAnalysisState
+        context: AnalysisContext,
+        state:   AnalysisState
     ): ProperPropertyComputationResult = {
         assert(state.tacai1.isDefined)
 
@@ -95,13 +95,13 @@ class IntraProceduralNoAliasAnalysis(final val project: SomeProject) extends Tac
 
                         result(MayAlias)
                     case _ =>
-                        var anyMatch: Boolean = false
+                        val anyMatch: Boolean = false
                         for (returnExpr <- allReturnExpr) {
 
                             if (returnExpr.isVar) {
-                                if (returnExpr.asVar.definedBy.contains(state.defSite2)) {
-                                    anyMatch = true;
-                                }
+//                                if (returnExpr.asVar.definedBy.contains(state.defSite2)) {
+//                                    anyMatch = true;
+//                                }
                             }
 
                         }
@@ -121,21 +121,21 @@ class IntraProceduralNoAliasAnalysis(final val project: SomeProject) extends Tac
 
                 }
             }
-            case (fp1: AliasFP, fp2: AliasFP) => result(MayAlias)
+            case (fp1: AliasFormalParameter, fp2: AliasFormalParameter) => result(MayAlias)
             case _ => {
-                for (use <- state.uses1) {
-
-                    if (state.uses2.contains(use)) {
-                        return result(MayAlias)
-                    }
-                }
+//                for (use <- state.uses1) {
+//
+//                    if (state.uses2.contains(use)) {
+//                        return result(MayAlias)
+//                    }
+//                }
                 result(NoAlias)
             }
 
         }
     }
 
-    private[this] def allReturnExpr(implicit state: AliasAnalysisState): Array[Expr[V]] = {
+    private[this] def allReturnExpr(implicit state: AnalysisState): Array[Expr[V]] = {
         state.tacai1.get.stmts.filter(stmt => stmt.isReturnValue).map(_.asReturnValue.expr)
     }
 
@@ -149,8 +149,7 @@ class IntraProceduralNoAliasAnalysis(final val project: SomeProject) extends Tac
         Result(context.entity, alias)
     }
 
-    override protected[this] def createState: AliasAnalysisState =
-        new AliasAnalysisState
+    override protected[this] def createState: AnalysisState = new TacBasedAliasAnalysisState
 
     override protected[this] def createContext(
         entity: AliasEntity
@@ -200,7 +199,7 @@ object EagerIntraProceduralAliasAnalysis extends IntraProceduralAliasAnalysisSch
             .filter(_.descriptor.returnType.isReferenceType)
 
         val aliasEntities: Seq[AliasSourceElement] =
-            (formalParameters.map(AliasFP) ++
+            (formalParameters.map(AliasFormalParameter) ++
                 returnValues.map(m => AliasReturnValue(m.definedMethod, p))).toSeq
 
         val entities: ArrayBuffer[AliasEntity] = ArrayBuffer.empty

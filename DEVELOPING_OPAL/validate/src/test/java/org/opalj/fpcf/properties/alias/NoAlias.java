@@ -11,9 +11,18 @@ import java.lang.annotation.*;
 import static java.lang.annotation.ElementType.*;
 
 /**
- * Annotation to specify that this element is part of the NoAlias relation with the given ID.
- *
- * @see Alias
+ * Annotation to specify that this element is part of a NoAlias relation.
+ * <p>
+ * The first element of the relation is the annotated element itself, the second element is specified by another
+ * NoAlias annotation with the same id within the same class. The following exceptions apply:
+ * <ul>
+ *     <li>
+ *         If aliasWithNull is true, the second element is the null value.
+ *     </li>
+ *     <li>
+ *         If thisParameter is true, the second element is the this reference of the annotated method.
+ *     </li>
+ * </ul>
  */
 @PropertyValidator(key = "AliasProperty", validator = NoAliasMatcher.class)
 @Repeatable(NoAliases.class)
@@ -28,12 +37,26 @@ public @interface NoAlias {
     String reason();
 
     /**
-     * The id of this NoAlias relation.
+     * The id of this MayAlias relation.
      * It is used to associate this element with the other element that is part of this relation.
-     * @return The id of this NoAlias relation.
+     * <p>
+     * The id of the relation must be unique within the class.
      */
     int id();
 
+    /**
+     * true, iff the second element is the null value.
+     */
+    boolean aliasWithNull() default false;
+
+    /**
+     * true, iff the second element is the {@code this} parameter of the annotated method.
+     */
+    boolean thisParameter() default false;
+
+    /**
+     * The {@link Class} to which this relation belongs.
+     */
     Class<?> clazz();
 
     /**
@@ -44,12 +67,4 @@ public @interface NoAlias {
             AllocationSitePointsToBasedAliasAnalysis.class,
             IntraProceduralNoAliasAnalysis.class
     };
-
-    int methodID() default -1;
-
-    /**
-     * Indicates whether this element is part of a NoAlias relation with null.
-     * @return Whether this element is part of a NoAlias relation with null.
-     */
-    boolean aliasWithNull() default false;
 }
