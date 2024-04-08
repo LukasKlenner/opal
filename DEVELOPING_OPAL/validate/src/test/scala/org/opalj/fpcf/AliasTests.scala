@@ -54,7 +54,7 @@ import org.opalj.value.ValueInformation
 class AliasTests extends PropertiesTest {
 
     override def fixtureProjectPackage: List[String] = {
-        List("org/opalj/fpcf/fixtures/alias")
+        List("org/opalj/fpcf/fixtures/alias/eval")
     }
 
     override def init(p: Project[URL]): Unit = {
@@ -157,7 +157,7 @@ class AliasTests extends PropertiesTest {
         simpleContexts:  SimpleContexts,
         declaredMethods: DeclaredMethods
     ): AliasSourceElement = {
-         if (isLineAlias(a) && (hasTwoLines(a) || isNullAlias(a)))
+        if (isLineAlias(a) && (hasTwoLines(a) || isNullAlias(a)))
             resolveLine(a, IDToMethod, IDToField, useSecond = false)
         else if (isThisParameterAlias(a))
             AliasFormalParameter(VirtualFormalParameter(declaredMethods(e.asInstanceOf[Method]), -1))
@@ -312,7 +312,7 @@ class AliasTests extends PropertiesTest {
      */
     private[this] def createContext(ase: AliasSourceElement)(
         implicit
-        simpleContexts: SimpleContexts,
+        simpleContexts:  SimpleContexts,
         declaredMethods: DeclaredMethods
     ): Context = {
         if (ase.isMethodBound) {
