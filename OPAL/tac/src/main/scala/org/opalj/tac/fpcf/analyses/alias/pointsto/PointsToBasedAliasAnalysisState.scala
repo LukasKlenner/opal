@@ -141,12 +141,14 @@ class PointsToBasedAliasAnalysisState extends TacBasedAliasAnalysisState {
     /**
      * @return `true` iff the first [[AliasSourceElement]] can point to `null`.
      */
-    def pointsToNull1: Boolean = _pointsToNull1
+    def pointsToNull1(implicit context: AliasAnalysisContext): Boolean = _pointsToNull1 ||
+        (context.element2.isAliasField && !context.element2.asAliasField.fieldRefernce.field.isFinal)
 
     /**
      * @return `true` iff the second [[AliasSourceElement]] can point to `null`.
      */
-    def pointsToNull2: Boolean = _pointsToNull2
+    def pointsToNull2(implicit context: AliasAnalysisContext): Boolean = _pointsToNull2 ||
+        (context.element2.isAliasField && !context.element2.asAliasField.fieldRefernce.field.isFinal)
 
     /**
      * Stores that the given [[AliasSourceElement]] can point to `null`.

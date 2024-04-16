@@ -4,7 +4,7 @@ package org.opalj.fpcf.fixtures.alias.eval.objects;
 public class Q {
 	// Class P extends class Q
 
-	private A a;
+	public A a;
 
 	public Q(A a) {
 		this.a = a;

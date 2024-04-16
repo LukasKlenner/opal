@@ -7,6 +7,8 @@ import org.opalj.fpcf.properties.alias.line.MayAliasLine;
 import org.opalj.fpcf.properties.alias.line.NoAliasLine;
 
 /*
+ * testcases taken from: https://github.com/secure-software-engineering/PointerBench
+ *
  * @testcase Branching1
  * 
  * @version 1.0
@@ -20,16 +22,16 @@ public class Branching1 {
 
   @AliasMethodID(id = 0, clazz = Branching1.class)
   @NoAliasLine(reason = "branching1 a no i",
-          lineNumber = 45, methodID = 0,
-          secondLineNumber = 46, secondMethodID = 0,
-          clazz = Branching1.class)
-  @MayAliasLine(reason = "branching1 a may a",
-          lineNumber = 46, methodID = 0,
-          secondLineNumber = 47, secondMethodID = 0,
-          clazz = Branching1.class)
-  @MayAliasLine(reason = "branching1 a may b",
           lineNumber = 47, methodID = 0,
           secondLineNumber = 48, secondMethodID = 0,
+          clazz = Branching1.class)
+  @MayAliasLine(reason = "branching1 a may a",
+          lineNumber = 48, methodID = 0,
+          secondLineNumber = 49, secondMethodID = 0,
+          clazz = Branching1.class)
+  @MayAliasLine(reason = "branching1 a may b",
+          lineNumber = 49, methodID = 0,
+          secondLineNumber = 50, secondMethodID = 0,
           clazz = Branching1.class)
   public static void main(String[] args) {
     Integer i = 0;

@@ -15,6 +15,7 @@ import org.opalj.br.ReferenceType
 import org.opalj.br.analyses.VirtualFormalParameter
 import org.opalj.br.fpcf.analyses.SimpleContextProvider
 import org.opalj.br.fpcf.properties.Context
+import org.opalj.br.fpcf.properties.pointsto.AllocationSitePointsToSet
 import org.opalj.br.fpcf.properties.pointsto.PointsToSetLike
 import org.opalj.collection.immutable.IntTrieSet
 import org.opalj.fpcf.Entity
@@ -92,6 +93,15 @@ trait PointsToAnalysisBase extends AbstractPointsToBasedAnalysis with TypeConsum
         typeIterator match {
             case _: SimpleContextProvider => fp
             case _                        => (context, fp)
+        }
+    }
+
+    @inline protected[this] def includeNull(pointsToSet: PointsToSet): Unit = {
+        // this could be extracted into an abstract method which is override in the
+        // AllocationSiteBasedPointsToAnalysis but that causes an AbstractMethodError despite the
+        // method being override (and working in the debugger) for some reason
+        if (pointsToSet.isInstanceOf[AllocationSitePointsToSet]) {
+            pointsToSet.asInstanceOf[AllocationSitePointsToSet].includeNull()
         }
     }
 
@@ -185,7 +195,13 @@ trait PointsToAnalysisBase extends AbstractPointsToBasedAnalysis with TypeConsum
         val defSiteObject = getDefSite(pc)
         val fakeEntity = (defSiteObject, fieldOpt, filter)
         state.addGetFieldEntity(fakeEntity)
-        state.includeSharedPointsToSet(defSiteObject, emptyPointsToSet, PointsToSetLike.noFilter)
+
+        val emptyPTS = emptyPointsToSet
+        // we have to always include null because the compiler will not generate an instruction that explicitly assigns
+        // null to a field when no default value is set for the field (i.e. public Object a;)
+        includeNull(emptyPTS)
+
+        state.includeSharedPointsToSet(defSiteObject, emptyPTS, PointsToSetLike.noFilter)
         currentPointsToOfDefSites(fakeEntity, objRefDefSites).foreach { pts =>
             pts.forNewestNElements(pts.numElements) { as =>
                 val tpe = getTypeOf(as)
@@ -215,9 +231,15 @@ trait PointsToAnalysisBase extends AbstractPointsToBasedAnalysis with TypeConsum
     )(implicit state: State): Unit = {
         val filter = getFilter(pc, checkForCast)
         val defSiteObject = getDefSite(pc)
+
+        val currentPTS = currentPointsTo(defSiteObject, field, filter)
+        // we have to always include null because the compiler will not generate an instruction that explicitly assigns
+        // null to a field when no default value is set for the field (i.e. public Object a;)
+        includeNull(currentPTS)
+
         state.includeSharedPointsToSet(
             defSiteObject,
-            currentPointsTo(defSiteObject, field, filter),
+            currentPTS,
             filter
         )
     }

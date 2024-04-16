@@ -54,7 +54,7 @@ import org.opalj.value.ValueInformation
 class AliasTests extends PropertiesTest {
 
     override def fixtureProjectPackage: List[String] = {
-        List("org/opalj/fpcf/fixtures/alias/eval")
+        List("org/opalj/fpcf/fixtures/alias/test")
     }
 
     override def init(p: Project[URL]): Unit = {
@@ -302,7 +302,7 @@ class AliasTests extends PropertiesTest {
     ): String => String = {
         a match {
             case _: AnnotationLike if isLineAlias(a) =>
-                (s: String) => fun(s) + ";lineNumber=" + getIntValue(a, "lineNumber")
+                (s: String) => fun(s) + ";lineNumber=" + getIntValue(a, "lineNumber") + getStringValue(a, "reason")
             case _ => (s: String) => fun(s) + ";id=" + getID(a)
         }
     }

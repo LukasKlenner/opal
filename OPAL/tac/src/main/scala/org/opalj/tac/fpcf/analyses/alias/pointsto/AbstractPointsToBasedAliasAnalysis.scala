@@ -232,6 +232,12 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
         val pointsTo1 = state.pointsTo1
         val pointsTo2 = state.pointsTo2
 
+        if (pointsTo1.isEmpty && pointsTo2.isEmpty && state.pointsToNull1 && state.pointsToNull2) {
+            return if (state.hasDependees)
+                InterimResult(context.entity, NoAlias, MayAlias, state.getDependees, continuation)
+            else Result(context.entity, MustAlias)
+        }
+
         if (context.element1.isAliasNull) {
             val relation = if (state.pointsToNull2)
                 if (pointsTo2.isEmpty) MustAlias else MayAlias
