@@ -3,7 +3,6 @@ package org.opalj
 package fpcf
 
 import java.net.URL
-
 import org.opalj.ai.domain.l1
 import org.opalj.ai.fpcf.properties.AIDomainFactoryKey
 import org.opalj.br.AnnotationLike
@@ -18,6 +17,7 @@ import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.Project
 import org.opalj.br.analyses.SomeProject
 import org.opalj.br.analyses.VirtualFormalParameter
+import org.opalj.br.fpcf.BasicFPCFLazyAnalysisScheduler
 import org.opalj.br.fpcf.properties.Context
 import org.opalj.br.fpcf.properties.NoContext
 import org.opalj.br.fpcf.properties.SimpleContexts
@@ -26,7 +26,6 @@ import org.opalj.br.fpcf.properties.alias.Alias
 import org.opalj.br.fpcf.properties.alias.AliasEntity
 import org.opalj.br.fpcf.properties.alias.AliasField
 import org.opalj.br.fpcf.properties.alias.AliasFormalParameter
-import org.opalj.br.fpcf.properties.alias.AliasNull
 import org.opalj.br.fpcf.properties.alias.AliasSourceElement
 import org.opalj.br.fpcf.properties.alias.AliasUVar
 import org.opalj.br.fpcf.properties.alias.FieldReference
@@ -42,8 +41,9 @@ import org.opalj.tac.ReturnValue
 import org.opalj.tac.Stmt
 import org.opalj.tac.UVar
 import org.opalj.tac.cg.AllocationSiteBasedPointsToCallGraphKey
+import org.opalj.tac.fpcf.analyses.alias.LazyIntraProceduralAliasAnalysisScheduler
 import org.opalj.tac.fpcf.analyses.alias.persistentUVar
-import org.opalj.tac.fpcf.analyses.alias.pointsto.LazyPointsToBasedAliasAnalysisScheduler
+import org.opalj.tac.fpcf.analyses.alias.pointsto.LazyAllocationSitePointsToBasedAliasAnalysisScheduler
 import org.opalj.tac.fpcf.properties.TACAI
 import org.opalj.value.ValueInformation
 
@@ -54,7 +54,7 @@ import org.opalj.value.ValueInformation
 class AliasTests extends PropertiesTest {
 
     override def fixtureProjectPackage: List[String] = {
-        List("org/opalj/fpcf/fixtures/alias/test")
+        List("org/opalj/fpcf/fixtures/alias/eval")
     }
 
     override def init(p: Project[URL]): Unit = {
@@ -67,10 +67,21 @@ class AliasTests extends PropertiesTest {
 
     }
 
-    describe("run all alias analyses") {
+    describe("run points-to based alias analyses") {
+        runAliasTests(LazyAllocationSitePointsToBasedAliasAnalysisScheduler)
+    }
 
+    describe("run intraProcedural alias analysis") {
+        runAliasTests(LazyIntraProceduralAliasAnalysisScheduler)
+    }
+
+    /**
+     * Resolves all entities using the alias properties and validates that the analysis executed by the given scheduler
+     * correctly computes the associated properties.
+     */
+    private[this] def runAliasTests(scheduler: BasicFPCFLazyAnalysisScheduler): Unit = {
         implicit val as: TestContext = executeAnalyses(
-            Set(LazyPointsToBasedAliasAnalysisScheduler)
+            Set(scheduler)
         )
 
         val fields = fieldsWithTypeAnnotations(as.project)
@@ -168,8 +179,6 @@ class AliasTests extends PropertiesTest {
     /**
      * Resolves the second element of an alias relation.
      *
-     * If the annotation describes an alias relation with null, the first element is [[AliasNull]].
-     *
      * If the given annotation describes an alias relation with a line, the second element is resolved using the line number.
      * If the annotation contains two line numbers, the second element is resolved using the second line number.
      *
@@ -193,9 +202,7 @@ class AliasTests extends PropertiesTest {
         simpleContexts:  SimpleContexts,
         declaredMethods: DeclaredMethods
     ): AliasSourceElement = {
-        if (isNullAlias(a))
-            AliasNull
-        else if (isLineAlias(a))
+        if (isLineAlias(a))
             resolveLine(a, IDToMethod, IDToField, useSecond = hasTwoLines(a))
         else {
             val matchingEntities = IDToEntity(getID(a)).toSeq.filter(!_.equals(firstElement))

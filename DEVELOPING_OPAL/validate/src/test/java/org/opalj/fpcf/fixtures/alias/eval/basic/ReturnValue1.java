@@ -4,7 +4,6 @@ package org.opalj.fpcf.fixtures.alias.eval.basic;
 import org.opalj.fpcf.fixtures.alias.eval.objects.A;
 import org.opalj.fpcf.properties.alias.AliasMethodID;
 import org.opalj.fpcf.properties.alias.line.MayAliasLine;
-import org.opalj.fpcf.properties.alias.line.MustAliasLine;
 
 /*
  * Testcases taken from: https://github.com/secure-software-engineering/PointerBench
@@ -25,13 +24,13 @@ public class ReturnValue1 {
   }
 
   @AliasMethodID(id = 0, clazz = ReturnValue1.class)
-  @MustAliasLine(reason = "ReturnValue1 b may b",
-          lineNumber = 43, methodID = 0,
-          secondLineNumber = 44, secondMethodID = 0,
+  @MayAliasLine(reason = "ReturnValue1 b may b",
+          lineNumber = 42, methodID = 0,
+          secondLineNumber = 43, secondMethodID = 0,
           clazz = ReturnValue1.class)
   @MayAliasLine(reason = "ReturnValue1 b may a",
-          lineNumber = 43, methodID = 0,
-          secondLineNumber = 42, secondMethodID = 0,
+          lineNumber = 42, methodID = 0,
+          secondLineNumber = 41, secondMethodID = 0,
           clazz = ReturnValue1.class)
   public static void main(String[] args) {
 

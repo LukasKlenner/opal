@@ -22,7 +22,7 @@ public class Branching1 {
 
   @AliasMethodID(id = 0, clazz = Branching1.class)
   @NoAliasLine(reason = "branching1 a no i",
-          lineNumber = 47, methodID = 0,
+          lineNumber = 47, methodID = 0, parameterIndex = 0,
           secondLineNumber = 48, secondMethodID = 0,
           clazz = Branching1.class)
   @MayAliasLine(reason = "branching1 a may a",
@@ -34,17 +34,17 @@ public class Branching1 {
           secondLineNumber = 50, secondMethodID = 0,
           clazz = Branching1.class)
   public static void main(String[] args) {
-    Integer i = 0;
+    int i = 0;
 
     //Benchmark.alloc(1);
     A a = new A();
     //Benchmark.alloc(2);
     A b = new A();
 
-    if (i < 0)
+    if (i < Math.random())
       a = b;
 
-    i.hashCode();
+    useInt(i);
     a.hashCode();
     a.hashCode();
     b.hashCode();
@@ -52,5 +52,9 @@ public class Branching1 {
     //Benchmark.test("a",
     //    "{allocId:1, mayAlias:[a], notMayAlias:[i,b], mustAlias:[a], notMustAlias:[i,b]},"
     //        + "{allocId:2, mayAlias:[a,b], notMayAlias:[i], mustAlias:[a], notMustAlias:[i,b]}");
+  }
+
+  private static void useInt(int i) {
+
   }
 }

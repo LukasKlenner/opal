@@ -4,7 +4,7 @@ package org.opalj.fpcf.properties.alias.line;
 import org.opalj.br.fpcf.FPCFAnalysis;
 import org.opalj.fpcf.properties.PropertyValidator;
 import org.opalj.fpcf.properties.alias.NoAliasMatcher;
-import org.opalj.tac.fpcf.analyses.alias.IntraProceduralNoAliasAnalysis;
+import org.opalj.tac.fpcf.analyses.alias.IntraProceduralAliasAnalysis;
 import org.opalj.tac.fpcf.analyses.alias.pointsto.AllocationSitePointsToBasedAliasAnalysis;
 
 import java.lang.annotation.Documented;
@@ -96,11 +96,6 @@ public @interface NoAliasLine {
     //other information
 
     /**
-     * true, iff the second element is the null value.
-     */
-    boolean aliasWithNull() default false;
-
-    /**
      * true, iff the second element is the {@code this} parameter of the annotated method.
      */
     boolean thisParameter() default false;
@@ -115,6 +110,6 @@ public @interface NoAliasLine {
      */
     Class<? extends FPCFAnalysis>[] analyses() default {
             AllocationSitePointsToBasedAliasAnalysis.class,
-            IntraProceduralNoAliasAnalysis.class
+            IntraProceduralAliasAnalysis.class
     };
 }

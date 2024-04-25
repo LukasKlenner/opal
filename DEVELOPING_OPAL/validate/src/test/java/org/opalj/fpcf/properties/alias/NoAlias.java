@@ -3,7 +3,7 @@ package org.opalj.fpcf.properties.alias;
 
 import org.opalj.br.fpcf.FPCFAnalysis;
 import org.opalj.fpcf.properties.PropertyValidator;
-import org.opalj.tac.fpcf.analyses.alias.IntraProceduralNoAliasAnalysis;
+import org.opalj.tac.fpcf.analyses.alias.IntraProceduralAliasAnalysis;
 import org.opalj.tac.fpcf.analyses.alias.pointsto.AllocationSitePointsToBasedAliasAnalysis;
 
 import java.lang.annotation.Documented;
@@ -20,15 +20,8 @@ import static java.lang.annotation.ElementType.TYPE_USE;
  * Annotation to specify that this element is part of a NoAlias relation.
  * <p>
  * The first element of the relation is the annotated element itself, the second element is specified by another
- * NoAlias annotation with the same id within the same class. The following exceptions apply:
- * <ul>
- *     <li>
- *         If aliasWithNull is true, the second element is the null value.
- *     </li>
- *     <li>
- *         If thisParameter is true, the second element is the this reference of the annotated method.
- *     </li>
- * </ul>
+ * NoAlias annotation with the same id within the same class.
+ * If thisParameter is true, the second element is the this reference of the annotated method.
  */
 @PropertyValidator(key = "AliasProperty", validator = NoAliasMatcher.class)
 @Repeatable(NoAliases.class)
@@ -51,11 +44,6 @@ public @interface NoAlias {
     int id();
 
     /**
-     * true, iff the second element is the null value.
-     */
-    boolean aliasWithNull() default false;
-
-    /**
      * true, iff the second element is the {@code this} parameter of the annotated method.
      */
     boolean thisParameter() default false;
@@ -71,6 +59,6 @@ public @interface NoAlias {
      */
     Class<? extends FPCFAnalysis>[] analyses() default {
             AllocationSitePointsToBasedAliasAnalysis.class,
-            IntraProceduralNoAliasAnalysis.class
+            IntraProceduralAliasAnalysis.class
     };
 }

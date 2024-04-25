@@ -4,7 +4,6 @@ package org.opalj.fpcf.fixtures.alias.eval.basic;
 import org.opalj.fpcf.fixtures.alias.eval.objects.A;
 import org.opalj.fpcf.properties.alias.AliasMethodID;
 import org.opalj.fpcf.properties.alias.line.MayAliasLine;
-import org.opalj.fpcf.properties.alias.line.MustAliasLine;
 import org.opalj.fpcf.properties.alias.line.NoAliasLine;
 
 /*
@@ -28,17 +27,17 @@ public class ReturnValue2 {
   }
 
   @AliasMethodID(id = 0, clazz = ReturnValue2.class)
-  @MustAliasLine(reason = "ReturnValue2 b may b",
-          lineNumber = 51, methodID = 0,
-          secondLineNumber = 52, secondMethodID = 0,
+  @MayAliasLine(reason = "ReturnValue2 b may b",
+          lineNumber = 50, methodID = 0,
+          secondLineNumber = 51, secondMethodID = 0,
           clazz = ReturnValue2.class)
   @MayAliasLine(reason = "ReturnValue2 b may a",
-          lineNumber = 51, methodID = 0,
-          secondLineNumber = 50, secondMethodID = 0,
+          lineNumber = 50, methodID = 0,
+          secondLineNumber = 49, secondMethodID = 0,
           clazz = ReturnValue2.class)
   @NoAliasLine(reason = "ReturnValue2 b no rv2",
-          lineNumber = 51, methodID = 0,
-          secondLineNumber = 53, secondMethodID = 0,
+          lineNumber = 50, methodID = 0,
+          secondLineNumber = 52, secondMethodID = 0,
           clazz = ReturnValue2.class)
   public static void main(String[] args) {
 

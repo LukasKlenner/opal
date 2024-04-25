@@ -6,6 +6,7 @@ package analyses
 
 import org.opalj.ai.ValueOrigin
 import org.opalj.br.PC
+import org.opalj.br.fpcf.properties.Context
 import org.opalj.br.fpcf.properties.alias.PersistentUVar
 import org.opalj.tac.DUVar
 import org.opalj.value.ValueInformation
@@ -13,6 +14,8 @@ import org.opalj.value.ValueInformation
 package object alias {
 
     type V = DUVar[ValueInformation]
+
+    type AllocationSite = (Context, PC)
 
     /**
      * Converts the given [[UVar]] into an equivalent [[PersistentUVar]].

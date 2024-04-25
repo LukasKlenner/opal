@@ -5,8 +5,8 @@ package fpcf
 package analyses
 package alias
 
-import org.opalj.fpcf.Entity
 import org.opalj.fpcf.EOptionP
+import org.opalj.fpcf.Entity
 import org.opalj.fpcf.Property
 import org.opalj.fpcf.SomeEOptionP
 
@@ -17,7 +17,7 @@ import org.opalj.fpcf.SomeEOptionP
  *
  * It can be overridden to provide additional state information to the computation.
  */
-class AliasAnalysisState {
+trait AliasAnalysisState {
 
     private[this] var _dependees = Map.empty[Entity, EOptionP[Entity, Property]]
     private[this] var _dependeesSet = Set.empty[SomeEOptionP]
@@ -51,4 +51,5 @@ class AliasAnalysisState {
      * @return `true` if there are any dependees, `false` otherwise.
      */
     private[alias] final def hasDependees: Boolean = _dependees.nonEmpty
+
 }

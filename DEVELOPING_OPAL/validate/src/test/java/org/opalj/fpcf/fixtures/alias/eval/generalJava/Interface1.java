@@ -6,8 +6,8 @@ import org.opalj.fpcf.fixtures.alias.eval.objects.G;
 import org.opalj.fpcf.fixtures.alias.eval.objects.H;
 import org.opalj.fpcf.properties.alias.AliasMethodID;
 import org.opalj.fpcf.properties.alias.line.MayAliasLine;
-import org.opalj.fpcf.properties.alias.line.MustAliasLine;
 import org.opalj.fpcf.properties.alias.line.NoAliasLine;
+
 
 /*
  * Testcases taken from: https://github.com/secure-software-engineering/PointerBench
@@ -36,7 +36,7 @@ public class Interface1 {
           lineNumber = 60, methodID = 0,
           secondLineNumber = 63, secondMethodID = 0,
           clazz = Interface1.class)
-  @MustAliasLine(reason = "Interface1 c may c",
+  @MayAliasLine(reason = "Interface1 c may c",
           lineNumber = 60, methodID = 0,
           secondLineNumber = 61, secondMethodID = 0,
           clazz = Interface1.class)

@@ -4,7 +4,6 @@ package org.opalj.fpcf.fixtures.alias.eval.generalJava;
 import org.opalj.fpcf.fixtures.alias.eval.objects.A;
 import org.opalj.fpcf.fixtures.alias.eval.objects.B;
 import org.opalj.fpcf.properties.alias.AliasMethodID;
-import org.opalj.fpcf.properties.alias.line.MustAliasLine;
 import org.opalj.fpcf.properties.alias.line.NoAliasLine;
 
 /*
@@ -20,17 +19,13 @@ import org.opalj.fpcf.properties.alias.line.NoAliasLine;
 public class Null2 {
 
 	@AliasMethodID(id = 0, clazz = Null2.class)
-	@MustAliasLine(reason = "Null2 x must null",
-			lineNumber = 44, methodID = 0,
-			aliasWithNull = true,
-			clazz = Null2.class)
 	@NoAliasLine(reason = "Null2 x no a",
-			lineNumber = 44, methodID = 0,
-			secondLineNumber = 42, secondMethodID = 0,
+			lineNumber = 39, methodID = 0,
+			secondLineNumber = 37, secondMethodID = 0,
 			clazz = Null2.class)
 	@NoAliasLine(reason = "Null2 x no b",
-			lineNumber = 44, methodID = 0,
-			secondLineNumber = 43, secondMethodID = 0,
+			lineNumber = 39, methodID = 0,
+			secondLineNumber = 38, secondMethodID = 0,
 			clazz = Null2.class)
 	public static void main(String[] args) {
 

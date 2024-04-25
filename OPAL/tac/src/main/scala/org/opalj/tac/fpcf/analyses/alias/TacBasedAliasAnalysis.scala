@@ -5,14 +5,13 @@ package fpcf
 package analyses
 package alias
 
+import org.opalj.br.ClassHierarchy
 import org.opalj.br.Method
 import org.opalj.br.fpcf.properties.alias.MayAlias
-import org.opalj.br.fpcf.properties.alias.MustAlias
 import org.opalj.br.fpcf.properties.alias.NoAlias
 import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.InterimResult
 import org.opalj.fpcf.ProperPropertyComputationResult
-import org.opalj.fpcf.Result
 import org.opalj.fpcf.SomeEPS
 import org.opalj.fpcf.UBP
 import org.opalj.tac.fpcf.properties.TACAI
@@ -30,14 +29,23 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
         state:   AnalysisState
     ): ProperPropertyComputationResult = {
 
-        if (context.element1.isAliasNull && context.element2.isAliasNull)
-            Result(context.entity, MustAlias)
-
         if (context.element1.isMethodBound) retrieveTAC(context.element1.method)
         if (context.element2.isMethodBound) retrieveTAC(context.element2.method)
 
-        if (bothTacaisDefined) analyzeTAC()
-        else InterimResult(context.entity, NoAlias, MayAlias, state.getDependees, continuation)
+        if (bothTacaisDefined) {
+
+            if (!context.element1.isReferenceType || !context.element2.isReferenceType)
+                return result(NoAlias)
+
+            val type1 = context.element1.referenceType.mostPreciseObjectType
+            val type2 = context.element2.referenceType.mostPreciseObjectType
+            implicit val classHierarchy: ClassHierarchy = project.classHierarchy
+
+            if ((type1.isASubtypeOf(type2) || type2.isASubtypeOf(type1)).isNo)
+                return result(NoAlias)
+
+            analyzeTAC()
+        } else interimResult(NoAlias, MayAlias)
     }
 
     /**
@@ -81,7 +89,7 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
     /**
      * Continues the computation when a TACAI property is updated.
      */
-    protected[this] def continuation(
+    override protected[this] def continuation(
         someEPS: SomeEPS
     )(
         implicit

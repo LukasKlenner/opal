@@ -15,7 +15,7 @@ import org.opalj.tac.TACode
  *
  * It additionally contains the TACAI for the first and second alias source element if they are method bound.
  */
-class TacBasedAliasAnalysisState extends AliasAnalysisState {
+trait TacBasedAliasAnalysisState extends AliasAnalysisState {
 
     private[this] var _tacai1: Option[TACode[TACMethodParameter, V]] = None
     private[this] var _tacai2: Option[TACode[TACMethodParameter, V]] = None

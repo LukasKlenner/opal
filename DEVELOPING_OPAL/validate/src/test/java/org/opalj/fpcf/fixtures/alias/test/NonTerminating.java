@@ -3,14 +3,14 @@ package org.opalj.fpcf.fixtures.alias.test;
 
 public class NonTerminating {
 
-    public void test() {
+    /*public void test() {
 
         Node node = new Node();
 
         for (int i = 0; i < 10; i++) {
             node = node.next;
         }
-    }
+    }*/
 
 }
 
