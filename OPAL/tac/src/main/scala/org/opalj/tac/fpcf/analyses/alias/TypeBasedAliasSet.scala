@@ -1,8 +1,9 @@
+/* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.tac.fpcf.analyses.alias
 
-import org.opalj.br.ReferenceType
-
 import scala.collection.mutable
+
+import org.opalj.br.ReferenceType
 
 class TypeBasedAliasSet extends AliasSetLike[ReferenceType, TypeBasedAliasSet] {
 
@@ -10,7 +11,7 @@ class TypeBasedAliasSet extends AliasSetLike[ReferenceType, TypeBasedAliasSet] {
 
     override def allPointsTo: mutable.Set[ReferenceType] = _pointsTo
 
-    override def intersection(other: TypeBasedAliasSet): TypeBasedAliasSet =  {
+    override def intersection(other: TypeBasedAliasSet): TypeBasedAliasSet = {
         val intersection = new TypeBasedAliasSet
 
         // we could theoretically optimize this by stopping once two intersecting elements have been found

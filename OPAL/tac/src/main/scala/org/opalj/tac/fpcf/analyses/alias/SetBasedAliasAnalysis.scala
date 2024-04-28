@@ -1,3 +1,4 @@
+/* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.tac.fpcf.analyses.alias
 
 import org.opalj.br.fpcf.properties.alias.MayAlias
@@ -36,7 +37,7 @@ trait SetBasedAliasAnalysis extends AbstractAliasAnalysis {
      * This method always returns false and should be overriden if more precise must alias checks can be performed
      */
     protected[this] def checkMustAlias(intersection: AliasSet)(implicit
-                                                               state:   AnalysisState,
-                                                               context: AnalysisContext
+        state:   AnalysisState,
+        context: AnalysisContext
     ): Boolean = false
 }

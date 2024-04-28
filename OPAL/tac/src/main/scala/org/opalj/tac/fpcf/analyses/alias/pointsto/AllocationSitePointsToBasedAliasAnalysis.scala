@@ -35,9 +35,9 @@ class AllocationSitePointsToBasedAliasAnalysis(final val project: SomeProject)
     override protected[this] type AnalysisState = AllocationSitePointsToBasedAliasAnalysisState
 
     override protected[this] def handlePointsToSetElement(
-                                                             ase:         AliasSourceElement,
-                                                             pointsToEntity:           Entity,
-                                                             element:     pointsto.AllocationSite
+        ase:            AliasSourceElement,
+        pointsToEntity: Entity,
+        element:        pointsto.AllocationSite
     )(
         implicit
         state:   AnalysisState,

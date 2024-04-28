@@ -12,7 +12,6 @@ import org.opalj.br.analyses.DeclaredMethodsKey
 import org.opalj.br.analyses.SomeProject
 import org.opalj.br.analyses.VirtualFormalParameter
 import org.opalj.br.fpcf.properties.Context
-import org.opalj.br.fpcf.properties.SimpleContextsKey
 import org.opalj.collection.immutable.IntTrieSet
 import org.opalj.value.ValueInformation
 
@@ -193,8 +192,6 @@ case class AliasReturnValue(override val method: Method, project: SomeProject) e
 
     private[this] val dm = project.get(DeclaredMethodsKey)(method)
 
-    private[this] val context = project.get(SimpleContextsKey)(dm)
-
     override def element: AnyRef = method
 
     override def declaredMethod: DeclaredMethod = dm
@@ -208,8 +205,6 @@ case class AliasReturnValue(override val method: Method, project: SomeProject) e
     override def isAliasReturnValue: Boolean = true
 
     override def asAliasReturnValue: AliasReturnValue = this
-
-    def callContext: Context = context
 }
 
 /**

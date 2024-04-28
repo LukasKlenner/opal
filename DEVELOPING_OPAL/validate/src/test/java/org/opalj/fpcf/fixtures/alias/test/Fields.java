@@ -2,8 +2,6 @@
 package org.opalj.fpcf.fixtures.alias.test;
 
 import org.opalj.fpcf.properties.alias.AliasFieldID;
-import org.opalj.fpcf.properties.alias.AliasMethodID;
-import org.opalj.fpcf.properties.alias.line.MayAliasLine;
 
 public class Fields {
 

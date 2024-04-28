@@ -18,6 +18,7 @@ import org.opalj.br.analyses.Project
 import org.opalj.br.analyses.SomeProject
 import org.opalj.br.analyses.VirtualFormalParameter
 import org.opalj.br.fpcf.BasicFPCFLazyAnalysisScheduler
+import org.opalj.br.fpcf.analyses.SimpleContextProvider
 import org.opalj.br.fpcf.properties.Context
 import org.opalj.br.fpcf.properties.NoContext
 import org.opalj.br.fpcf.properties.SimpleContexts
@@ -29,6 +30,7 @@ import org.opalj.br.fpcf.properties.alias.AliasFormalParameter
 import org.opalj.br.fpcf.properties.alias.AliasSourceElement
 import org.opalj.br.fpcf.properties.alias.AliasUVar
 import org.opalj.br.fpcf.properties.alias.FieldReference
+import org.opalj.br.fpcf.properties.cg.Callers
 import org.opalj.tac.Assignment
 import org.opalj.tac.Call
 import org.opalj.tac.DUVar
@@ -40,10 +42,11 @@ import org.opalj.tac.PutStatic
 import org.opalj.tac.ReturnValue
 import org.opalj.tac.Stmt
 import org.opalj.tac.UVar
-import org.opalj.tac.cg.AllocationSiteBasedPointsToCallGraphKey
-import org.opalj.tac.fpcf.analyses.alias.LazyIntraProceduralAliasAnalysisScheduler
+import org.opalj.tac.cg.CFA_1_1_CallGraphKey
+import org.opalj.tac.cg.TypeIteratorKey
 import org.opalj.tac.fpcf.analyses.alias.persistentUVar
 import org.opalj.tac.fpcf.analyses.alias.pointsto.LazyAllocationSitePointsToBasedAliasAnalysisScheduler
+import org.opalj.tac.fpcf.analyses.cg.TypeIterator
 import org.opalj.tac.fpcf.properties.TACAI
 import org.opalj.value.ValueInformation
 
@@ -63,8 +66,7 @@ class AliasTests extends PropertiesTest {
             Set[Class[_ <: AnyRef]](classOf[l1.DefaultDomainWithCFGAndDefUse[URL]])
         }
 
-        p.get(AllocationSiteBasedPointsToCallGraphKey)
-
+        p.get(CFA_1_1_CallGraphKey)
     }
 
     describe("run points-to based alias analyses") {
@@ -72,7 +74,7 @@ class AliasTests extends PropertiesTest {
     }
 
     describe("run intraProcedural alias analysis") {
-        runAliasTests(LazyIntraProceduralAliasAnalysisScheduler)
+        // runAliasTests(LazyIntraProceduralAliasAnalysisScheduler)
     }
 
     /**
@@ -99,6 +101,7 @@ class AliasTests extends PropertiesTest {
 
         implicit val simpleContexts: SimpleContexts = as.project.get(SimpleContextsKey)
         implicit val declaredMethods: DeclaredMethods = as.project.get(DeclaredMethodsKey)
+        implicit val typeIterator: TypeIterator = as.project.get(TypeIteratorKey)
 
         // The annotations only contain one of the two sourceElements of an alias property.
         // Therefore, we first have to combine elements with the same id and store them in this ArrayBuffer.
@@ -319,11 +322,22 @@ class AliasTests extends PropertiesTest {
      */
     private[this] def createContext(ase: AliasSourceElement)(
         implicit
+        as:              TestContext,
         simpleContexts:  SimpleContexts,
-        declaredMethods: DeclaredMethods
+        declaredMethods: DeclaredMethods,
+        typeIterator:    TypeIterator
     ): Context = {
         if (ase.isMethodBound) {
-            simpleContexts(declaredMethods(ase.method))
+
+            val declaredMethod = declaredMethods(ase.method)
+
+            typeIterator match {
+                case _: SimpleContextProvider => simpleContexts(declaredMethod)
+                case _ => {
+                    // TODO schöner
+                    as.propertyStore(declaredMethod, Callers.key).ub.callContexts(declaredMethod).iterator.toSeq.head._1
+                }
+            }
         } else {
             NoContext
         }

@@ -1,7 +1,7 @@
+/* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.tac.fpcf.analyses.alias
 
 import org.opalj.br.fpcf.properties.alias.AliasSourceElement
-
 
 /**
  * Encapsulates the current state of an alias analysis that uses an [[AliasSetLike]] to store the elements
@@ -10,7 +10,8 @@ import org.opalj.br.fpcf.properties.alias.AliasSourceElement
  * It additionally stores and handles an [[AliasSetLike]] for each [[AliasSourceElement]] and provides methods for
  * interacting with it.
  */
-trait SetBasedAliasAnalysisState[ElementType, AliasSet <: AliasSetLike[ElementType, AliasSet]] extends AliasAnalysisState {
+trait SetBasedAliasAnalysisState[ElementType, AliasSet <: AliasSetLike[ElementType, AliasSet]]
+    extends AliasAnalysisState {
 
     private[this] val _pointsTo1: AliasSet = createAliasSet()
     private[this] val _pointsTo2: AliasSet = createAliasSet()
@@ -53,7 +54,7 @@ trait SetBasedAliasAnalysisState[ElementType, AliasSet <: AliasSetLike[ElementTy
 
     /**
      * Creates a new [[AliasSetLike]] of the used type
- *
+     *
      * @return
      */
     protected[this] def createAliasSet(): AliasSet

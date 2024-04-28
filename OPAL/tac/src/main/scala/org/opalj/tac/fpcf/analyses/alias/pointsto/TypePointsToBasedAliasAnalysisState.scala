@@ -1,3 +1,4 @@
+/* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.tac.fpcf.analyses.alias.pointsto
 
 import org.opalj.br.ReferenceType
@@ -10,6 +11,4 @@ import org.opalj.tac.fpcf.analyses.alias.TypeBasedAliasSet
  * @see [[PointsToBasedAliasAnalysisState]]
  */
 class TypePointsToBasedAliasAnalysisState extends TypeBasedAliasAnalysisState
-    with PointsToBasedAliasAnalysisState[ReferenceType, TypeBasedAliasSet] {
-
-}
+    with PointsToBasedAliasAnalysisState[ReferenceType, TypeBasedAliasSet] {}

@@ -27,7 +27,7 @@ import org.opalj.tac.fpcf.analyses.alias.TacBasedAliasAnalysisState
  */
 trait PointsToBasedAliasAnalysisState[ElementType, AliasSet <: AliasSetLike[ElementType, AliasSet]]
     extends TacBasedAliasAnalysisState
-        with SetBasedAliasAnalysisState[ElementType, AliasSet] {
+    with SetBasedAliasAnalysisState[ElementType, AliasSet] {
 
     private[this] var _element1Dependees = Set[Entity]()
     private[this] var _element2Dependees = Set[Entity]()

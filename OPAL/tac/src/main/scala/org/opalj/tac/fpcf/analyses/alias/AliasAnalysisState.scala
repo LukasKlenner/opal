@@ -5,8 +5,8 @@ package fpcf
 package analyses
 package alias
 
-import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.Entity
+import org.opalj.fpcf.EOptionP
 import org.opalj.fpcf.Property
 import org.opalj.fpcf.SomeEOptionP
 

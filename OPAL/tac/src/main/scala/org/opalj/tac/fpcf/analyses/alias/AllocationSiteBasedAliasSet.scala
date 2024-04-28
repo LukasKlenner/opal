@@ -1,10 +1,10 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.tac.fpcf.analyses.alias
 
+import scala.collection.mutable
+
 import org.opalj.br.PC
 import org.opalj.br.fpcf.properties.Context
-
-import scala.collection.mutable
 
 class AllocationSiteBasedAliasSet extends AliasSetLike[AllocationSite, AllocationSiteBasedAliasSet] {
 

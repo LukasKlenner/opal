@@ -1,3 +1,4 @@
+/* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.tac.fpcf.analyses.alias.pointsto
 
 import org.opalj.br.ReferenceType
@@ -28,9 +29,9 @@ class TypePointsToBasedAliasAnalysis(final val project: SomeProject)
     override protected[this] type AnalysisState = TypePointsToBasedAliasAnalysisState
 
     override protected[this] def handlePointsToSetElement(
-                                                             ase:         AliasSourceElement,
-                                                             pointsToEntity:           Entity,
-                                                             element:     ReferenceType
+        ase:            AliasSourceElement,
+        pointsToEntity: Entity,
+        element:        ReferenceType
     )(
         implicit
         state:   AnalysisState,
@@ -45,7 +46,6 @@ class TypePointsToBasedAliasAnalysis(final val project: SomeProject)
     override protected[this] def createState: AnalysisState = new TypePointsToBasedAliasAnalysisState
 }
 
-
 /**
  * A scheduler for a lazy, type, points-to based alias analysis.
  */
@@ -54,10 +54,10 @@ object LazyTypePointsToBasedAliasAnalysisScheduler extends PointsToBasedAliasAna
     override def derivesLazily: Some[PropertyBounds] = Some(derivedProperty)
 
     override def register(
-                             project:       SomeProject,
-                             propertyStore: PropertyStore,
-                             i:             LazyTypePointsToBasedAliasAnalysisScheduler.InitializationData
-                         ): FPCFAnalysis = {
+        project:       SomeProject,
+        propertyStore: PropertyStore,
+        i:             LazyTypePointsToBasedAliasAnalysisScheduler.InitializationData
+    ): FPCFAnalysis = {
 
         val analysis = new TypePointsToBasedAliasAnalysis(project)
 

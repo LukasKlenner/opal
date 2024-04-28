@@ -102,7 +102,8 @@ class IntraProceduralAliasAnalysis(final val project: SomeProject) extends Alloc
         state.setPointsToAny(ase)
     }
 
-    override protected[this] def createState: AnalysisState = new AllocationSiteBasedAliasAnalysisState with TacBasedAliasAnalysisState
+    override protected[this] def createState: AnalysisState =
+        new AllocationSiteBasedAliasAnalysisState with TacBasedAliasAnalysisState
 
     override protected[this] def createContext(
         entity: AliasEntity
