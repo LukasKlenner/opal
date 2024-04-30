@@ -13,7 +13,9 @@ trait AliasSetLike[ElementType, T <: AliasSetLike[ElementType, T]] {
 
     def setPointsToAny(): Unit = _pointsToAny = true
 
-    def isEmpty: Boolean = allPointsTo.isEmpty
+    def pointsToAny: Boolean = _pointsToAny
+
+    def isEmpty: Boolean = allPointsTo.isEmpty && !_pointsToAny
 
     def size: Int = allPointsTo.size
 

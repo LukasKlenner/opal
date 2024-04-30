@@ -2,7 +2,6 @@
 package org.opalj.support.info
 
 import java.net.URL
-
 import org.opalj.br.analyses.BasicReport
 import org.opalj.br.analyses.Project
 import org.opalj.br.analyses.ProjectAnalysisApplication
@@ -12,7 +11,7 @@ import org.opalj.br.fpcf.properties.alias.MayAlias
 import org.opalj.br.fpcf.properties.alias.MustAlias
 import org.opalj.br.fpcf.properties.alias.NoAlias
 import org.opalj.tac.cg.AllocationSiteBasedPointsToCallGraphKey
-import org.opalj.tac.fpcf.analyses.alias.pointsto.LazyAllocationSitePointsToBasedAliasAnalysisScheduler
+import org.opalj.tac.fpcf.analyses.alias.pointsto.EagerFieldAccessAllocationSitePointsToBasedAliasAnalysisScheduler
 
 object Alias extends ProjectAnalysisApplication {
     override def doAnalyze(
@@ -24,7 +23,7 @@ object Alias extends ProjectAnalysisApplication {
         project.get(AllocationSiteBasedPointsToCallGraphKey)
 
         val (ps, _ /*executed analyses*/ ) = project.get(FPCFAnalysesManagerKey).runAll(
-            LazyAllocationSitePointsToBasedAliasAnalysisScheduler
+            EagerFieldAccessAllocationSitePointsToBasedAliasAnalysisScheduler
         )
 
         val mayAlias = ps.finalEntities(MayAlias).toSeq

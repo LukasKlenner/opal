@@ -1,8 +1,8 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.fpcf.fixtures.alias.eval.basic;
 
-import org.opalj.fpcf.fixtures.alias.eval.objects.A;
 import org.opalj.fpcf.fixtures.alias.eval.objects.B;
+import org.opalj.fpcf.fixtures.alias.eval.objects.A;
 import org.opalj.fpcf.properties.alias.AliasMethodID;
 import org.opalj.fpcf.properties.alias.line.MayAliasLine;
 import org.opalj.fpcf.properties.alias.line.NoAliasLine;

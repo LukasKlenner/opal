@@ -24,17 +24,21 @@ public class ContextSensitivity3 {
     }
 
     @AliasMethodID(id = 0, clazz = ContextSensitivity3.class)
-    @MayAliasLine(reason = "ContextSensitivity3 b may a",
-            lineNumber = 41, methodID = 0,
-            secondLineNumber = 40, secondMethodID = 0,
+    @MayAliasLine(reason = "ContextSensitivity3 b may a context test111",
+            lineNumber = 45, methodID = 0, callerContext = "test111",
+            secondLineNumber = 44, secondMethodID = 0, secondCallerContext = "test111",
             clazz = ContextSensitivity3.class)
-    @MayAliasLine(reason = "ContextSensitivity3 b may b",
-            lineNumber = 41, methodID = 0,
-            secondLineNumber = 42, secondMethodID = 0,
+    @MayAliasLine(reason = "ContextSensitivity3 b may b context test111",
+            lineNumber = 45, methodID = 0, callerContext = "test111",
+            secondLineNumber = 46, secondMethodID = 0, secondCallerContext = "test111",
             clazz = ContextSensitivity3.class)
-    @NoAliasLine(reason = "ContextSensitivity3 b no a",
-            lineNumber = 41, methodID = 0,
-            secondLineNumber = 43, secondMethodID = 0,
+    @NoAliasLine(reason = "ContextSensitivity3 b no a context test222",
+            lineNumber = 45, methodID = 0, callerContext = "test222",
+            secondLineNumber = 44, secondMethodID = 0, secondCallerContext = "test222",
+            clazz = ContextSensitivity3.class)
+    @MayAliasLine(reason = "ContextSensitivity3 b may b context test222",
+            lineNumber = 45, methodID = 0, callerContext = "test222",
+            secondLineNumber = 46, secondMethodID = 0, secondCallerContext = "test222",
             clazz = ContextSensitivity3.class)
     public void callee(A a, A b) {
         a.hashCode();

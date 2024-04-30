@@ -24,23 +24,26 @@ public class ContextSensitivity2 {
     }
 
     @AliasMethodID(id = 0, clazz = ContextSensitivity2.class)
-    @MayAliasLine(reason = "ContextSensitivity2 b may a",
-            lineNumber = 41, methodID = 0,
-            secondLineNumber = 40, secondMethodID = 0,
+    @MayAliasLine(reason = "ContextSensitivity2 b may a context test11",
+            lineNumber = 45, methodID = 0, callerContext = "test11",
+            secondLineNumber = 44, secondMethodID = 0, secondCallerContext = "test11",
             clazz = ContextSensitivity2.class)
-    @MayAliasLine(reason = "ContextSensitivity2 b may b",
-            lineNumber = 41, methodID = 0,
-            secondLineNumber = 42, secondMethodID = 0,
+    @MayAliasLine(reason = "ContextSensitivity2 b may b context test11",
+            lineNumber = 45, methodID = 0, callerContext = "test11",
+            secondLineNumber = 46, secondMethodID = 0, secondCallerContext = "test11",
             clazz = ContextSensitivity2.class)
-    @NoAliasLine(reason = "ContextSensitivity2 b no a",
-            lineNumber = 41, methodID = 0,
-            secondLineNumber = 43, secondMethodID = 0,
+    @NoAliasLine(reason = "ContextSensitivity2 b no a context test22",
+            lineNumber = 45, methodID = 0, callerContext = "test22",
+            secondLineNumber = 44, secondMethodID = 0, secondCallerContext = "test22",
+            clazz = ContextSensitivity2.class)
+    @MayAliasLine(reason = "ContextSensitivity2 b may b context test22",
+            lineNumber = 45, methodID = 0, callerContext = "test22",
+            secondLineNumber = 46, secondMethodID = 0, secondCallerContext = "test22",
             clazz = ContextSensitivity2.class)
     public void callee(A a, A b) {
         a.hashCode();
         b.hashCode();
         b.hashCode();
-        a.hashCode();
         //Benchmark.test("b",
         //    "{allocId:1, mayAlias:[a,b], notMayAlias:[], mustAlias:[a,b], notMustAlias:[]},"
         //        + "{allocId:2, mayAlias:[a], notMayAlias:[b], mustAlias:[a], notMustAlias:[b]}");

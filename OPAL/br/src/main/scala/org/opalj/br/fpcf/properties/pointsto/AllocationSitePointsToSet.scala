@@ -232,7 +232,7 @@ object AllocationSitePointsToSet extends AllocationSitePointsToSetPropertyMetaIn
     ): AllocationSitePointsToSet = {
 
         if (elements.isEmpty) {
-            NoAllocationSites()
+            NoAllocationSites
         } else if (elements.size == 1) {
             new AllocationSitePointsToSet1(elements.head, orderedTypes.head)
         } else {
@@ -246,7 +246,7 @@ object AllocationSitePointsToSet extends AllocationSitePointsToSetPropertyMetaIn
             name,
             (_: PropertyStore, reason: FallbackReason, _: Entity) =>
                 reason match {
-                    case PropertyIsNotDerivedByPreviouslyExecutedAnalysis => NoAllocationSites()
+                    case PropertyIsNotDerivedByPreviouslyExecutedAnalysis => NoAllocationSites
                     case _ =>
                         throw new IllegalStateException(s"no analysis is scheduled for property: $name")
                 }
@@ -292,7 +292,7 @@ case class AllocationSitePointsToSetN private[pointsto] (
     override def getNewestElement(): AllocationSite = elements.head
 }
 
-case class NoAllocationSites() extends AllocationSitePointsToSet {
+object NoAllocationSites extends AllocationSitePointsToSet {
 
     override def included(other: AllocationSitePointsToSet): AllocationSitePointsToSet = {
         other
@@ -369,7 +369,7 @@ case class AllocationSitePointsToSet1(
                     allocatedType
                 )
 
-            case NoAllocationSites() =>
+            case NoAllocationSites =>
                 this
 
             case AllocationSitePointsToSetN(otherAllocationSites, otherTypes, otherOrderedTypes) =>
@@ -491,10 +491,7 @@ case class AllocationSitePointsToSet1(
         if ((typeFilter eq PointsToSetLike.noFilter) || typeFilter(allocatedType)) {
             this
         } else {
-            val pointsToSet = NoAllocationSites()
-            if (pointsToNull)
-                pointsToSet.includeNull()
-            pointsToSet
+            NoAllocationSites
         }
     }
 

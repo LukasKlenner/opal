@@ -23,7 +23,6 @@ import org.opalj.br.fpcf.properties.alias.AliasSourceElement
 import org.opalj.br.fpcf.properties.alias.AliasStaticField
 import org.opalj.br.fpcf.properties.alias.AliasUVar
 import org.opalj.br.fpcf.properties.cg.Callees
-import org.opalj.br.fpcf.properties.pointsto.AllocationSite
 import org.opalj.br.fpcf.properties.pointsto.AllocationSitePointsToSet
 import org.opalj.br.fpcf.properties.pointsto.PointsToSetLike
 import org.opalj.fpcf.Entity
@@ -121,9 +120,7 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
         context: AnalysisContext
     ): Iterable[EOptionP[Entity, PointsToSet]] = {
 
-        // TODO was bei type based machen?
-
-        val allocationSites = ArrayBuffer.empty[AllocationSite]
+        val allocationSites = ArrayBuffer.empty[ElementType]
 
         field.fieldReference.defSites.map(getPointsToOfDefSite(_, fieldContext, tac))
             .foreach(pts => {
@@ -137,7 +134,7 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
                 pts.ub.forNewestNElements(pts.ub.numElements - state.pointsToElementsHandled(field, fieldReferenceEntity)) {
                     value =>
                         {
-                            allocationSites += value.asInstanceOf[AllocationSite]
+                            allocationSites += value
                             state.incPointsToElementsHandled(field, fieldReferenceEntity)
                         }
                 }

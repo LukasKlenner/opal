@@ -6,6 +6,7 @@ import org.opalj.fpcf.properties.PropertyValidator;
 import org.opalj.fpcf.properties.alias.NoAliasMatcher;
 import org.opalj.tac.fpcf.analyses.alias.IntraProceduralAliasAnalysis;
 import org.opalj.tac.fpcf.analyses.alias.pointsto.AllocationSitePointsToBasedAliasAnalysis;
+import org.opalj.tac.fpcf.analyses.alias.pointsto.TypePointsToBasedAliasAnalysis;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Repeatable;
@@ -79,6 +80,8 @@ public @interface NoAliasLine {
 
     Class<?> fieldClass() default Object.class;
 
+    String callerContext() default "";
+
     // information about second line
 
     int secondLineNumber() default -1;
@@ -92,6 +95,8 @@ public @interface NoAliasLine {
     int secondFieldID() default -1;
 
     Class<?> secondFieldClass() default Object.class;
+
+    String secondCallerContext() default "";
 
     //other information
 
@@ -110,6 +115,7 @@ public @interface NoAliasLine {
      */
     Class<? extends FPCFAnalysis>[] analyses() default {
             AllocationSitePointsToBasedAliasAnalysis.class,
+            TypePointsToBasedAliasAnalysis.class,
             IntraProceduralAliasAnalysis.class
     };
 }

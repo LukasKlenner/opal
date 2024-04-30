@@ -3,7 +3,7 @@ package org.opalj.tac.fpcf.analyses.alias
 
 import org.opalj.br.PC
 import org.opalj.br.fpcf.properties.Context
-import org.opalj.br.fpcf.properties.SimpleContext
+import org.opalj.br.fpcf.properties.NoContext
 import org.opalj.tac.Goto
 
 trait AllocationSiteAndTacBasedAliasAnalysis extends AllocationSiteBasedAliasAnalysis with TacBasedAliasAnalysis {
@@ -27,7 +27,10 @@ trait AllocationSiteAndTacBasedAliasAnalysis extends AllocationSiteBasedAliasAna
         // is inside a loop or a different method and is executed multiple times)
 
         val (pointsToContext: Context, pc: PC) = pointsTo1.allPointsTo.head
-        val method = pointsToContext.asInstanceOf[SimpleContext].method
+        val method = pointsToContext match {
+            case NoContext => context.element1.declaredMethod
+            case _         => pointsToContext.method
+        }
 
         if (context.element1.isAliasUVar &&
             context.element2.isAliasUVar &&

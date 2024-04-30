@@ -5,15 +5,23 @@ package fpcf
 package analyses
 package alias
 
+import org.opalj.br.ArrayType
+import org.opalj.br.BaseType
+import org.opalj.br.ClassHierarchy
+import org.opalj.br.ObjectType
+import org.opalj.br.ReferenceType
 import org.opalj.br.fpcf.FPCFAnalysis
 import org.opalj.br.fpcf.properties.alias.Alias
 import org.opalj.br.fpcf.properties.alias.AliasEntity
+import org.opalj.br.fpcf.properties.alias.NoAlias
 import org.opalj.fpcf.Entity
 import org.opalj.fpcf.InterimResult
 import org.opalj.fpcf.ProperPropertyComputationResult
 import org.opalj.fpcf.Result
 import org.opalj.fpcf.SomeEPS
 import org.opalj.value.ValueInformation
+
+import scala.annotation.tailrec
 
 /**
  * A base trait for all alias analyses.
@@ -32,8 +40,52 @@ trait AbstractAliasAnalysis extends FPCFAnalysis {
     def determineAlias(e: Entity): ProperPropertyComputationResult = {
         e match {
             case entity: AliasEntity =>
-                doDetermineAlias(createContext(entity), createState)
+                val context = createContext(entity)
+
+                if (checkTypeCompatibility(context)) doDetermineAlias(context, createState)
+                else result(NoAlias)(context)
             case _ => throw new UnknownError("unhandled entity type")
+        }
+    }
+
+    /**
+     * Determines if the types of the given elements are compatible, i.e. it is possible that they refer to the same objects.
+     * Two elements are compatible if they are both reference types and one is a subtype of the other.
+     * In any other case, e.g., an Integer and a String, the elements cannot possibly refer to the same object.
+     *
+     * @param context The alias analysis context to check the types for.
+     * @return True if the types are compatible, false otherwise.
+     */
+    private[this] def checkTypeCompatibility(context: AliasAnalysisContext): Boolean = {
+        if (!context.element1.isReferenceType || !context.element2.isReferenceType)
+            return false
+
+        if (context.element1.referenceType.isArrayType != context.element2.referenceType.isArrayType)
+            return false
+
+        val type1 = getObjectType(context.element1.referenceType)
+        val type2 = getObjectType(context.element2.referenceType)
+        implicit val classHierarchy: ClassHierarchy = project.classHierarchy
+
+        if (type1.isEmpty || type2.isEmpty)
+            return false
+
+        if (type1.get._2 != type2.get._2)
+            return false
+
+        if ((type1.get._1.isASubtypeOf(type2.get._1) || type2.get._1.isASubtypeOf(type1.get._1)).isNo)
+            return false
+
+        true
+    }
+
+    @tailrec
+    private[this] def getObjectType(refType: ReferenceType, arrayDepth: Int = 0): Option[(ObjectType, Int)] = {
+        refType match {
+            case ot: ObjectType                          => Some((ot, arrayDepth))
+            case ArrayType(_: BaseType)                  => None
+            case ArrayType(componentType: ReferenceType) => getObjectType(componentType, arrayDepth + 1)
+            case _                                       => None
         }
     }
 

@@ -4,7 +4,6 @@ package org.opalj.fpcf.fixtures.alias.eval.generalJava;
 import org.opalj.fpcf.fixtures.alias.eval.objects.A;
 import org.opalj.fpcf.properties.alias.AliasMethodID;
 import org.opalj.fpcf.properties.alias.line.MayAliasLine;
-import org.opalj.fpcf.properties.alias.line.MustAliasLine;
 
 /*
  * Testcases taken from: https://github.com/secure-software-engineering/PointerBench
@@ -21,13 +20,13 @@ import org.opalj.fpcf.properties.alias.line.MustAliasLine;
 public class Exception1 {
 
   @AliasMethodID(id = 0, clazz = Exception1.class)
-  @MustAliasLine(reason = "Exception1 b may b",
-          lineNumber = 45, methodID = 0,
-          secondLineNumber = 46, secondMethodID = 0,
+  @MayAliasLine(reason = "Exception1 b may b",
+          lineNumber = 44, methodID = 0,
+          secondLineNumber = 45, secondMethodID = 0,
           clazz = Exception1.class)
   @MayAliasLine(reason = "Exception1 b may a",
-          lineNumber = 45, methodID = 0,
-          secondLineNumber = 44, secondMethodID = 0,
+          lineNumber = 44, methodID = 0,
+          secondLineNumber = 43, secondMethodID = 0,
           clazz = Exception1.class)
   public static void main(String[] args) {
 

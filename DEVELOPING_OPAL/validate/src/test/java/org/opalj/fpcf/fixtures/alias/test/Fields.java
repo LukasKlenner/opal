@@ -1,37 +1,39 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.fpcf.fixtures.alias.test;
 
-import org.opalj.fpcf.properties.alias.AliasFieldID;
+import org.opalj.fpcf.properties.alias.AliasMethodID;
+import org.opalj.fpcf.properties.alias.line.MayAliasLine;
 
 public class Fields {
 
-    /*@MayAliasLine(reason = "Test",
-            lineNumber = 20, fieldReference = true, fieldID = 0, fieldClass = Field.class, methodID = 0,
-            secondLineNumber =23, secondFieldReference = true, secondFieldID = 0, secondFieldClass = Field.class, secondMethodID = 0,
-            clazz = Fields.class)
     @AliasMethodID(id = 0, clazz = Fields.class)
-    public void main() {
-        //Object o = new Object();
-        Field f1 = new Field();
-        f1.a = new Object();
+    @MayAliasLine(reason = "Fields a may b",
+            lineNumber = 19, methodID = 0,
+            secondLineNumber = 20, secondMethodID = 0,
+            clazz = Fields.class)
+    public void test() {
 
-        f1.a.hashCode();
+        FieldClass a = new FieldClass();
+        FieldClass b = new FieldClass();
 
-        f1.a = new Object();
-        f1.a.hashCode();
-        //f2.a.hashCode();
+        a.hashCode();
+        b.hashCode();
 
-    }*/
+        a.fc = new FieldClass();
 
+        m(a.f);
+        b.f.hashCode();
+        a.fc.f.hashCode();
+
+        m(FieldClass.sf);
+    }
+
+    public void m(Object o) {}
 }
 
-class Field {
+class FieldClass {
+    public Object f = new Object();
+    public FieldClass fc;
 
-    @AliasFieldID(id = 0, clazz = Field.class)
-    public Object a;
-
-    /*public Field(Object a) {
-        this.a = a;
-    }*/
-
+    static Object sf = new Object();
 }

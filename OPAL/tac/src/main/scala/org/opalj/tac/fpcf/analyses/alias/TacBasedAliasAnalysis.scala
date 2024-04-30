@@ -5,7 +5,6 @@ package fpcf
 package analyses
 package alias
 
-import org.opalj.br.ClassHierarchy
 import org.opalj.br.Method
 import org.opalj.br.fpcf.properties.alias.MayAlias
 import org.opalj.br.fpcf.properties.alias.NoAlias
@@ -32,20 +31,8 @@ trait TacBasedAliasAnalysis extends AbstractAliasAnalysis {
         if (context.element1.isMethodBound) retrieveTAC(context.element1.method)
         if (context.element2.isMethodBound) retrieveTAC(context.element2.method)
 
-        if (bothTacaisDefined) {
-
-            if (!context.element1.isReferenceType || !context.element2.isReferenceType)
-                return result(NoAlias)
-
-            val type1 = context.element1.referenceType.mostPreciseObjectType
-            val type2 = context.element2.referenceType.mostPreciseObjectType
-            implicit val classHierarchy: ClassHierarchy = project.classHierarchy
-
-            if ((type1.isASubtypeOf(type2) || type2.isASubtypeOf(type1)).isNo)
-                return result(NoAlias)
-
-            analyzeTAC()
-        } else interimResult(NoAlias, MayAlias)
+        if (bothTacaisDefined) analyzeTAC()
+        else interimResult(NoAlias, MayAlias)
     }
 
     /**

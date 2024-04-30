@@ -8,6 +8,7 @@ import org.opalj.ai.fpcf.properties.AIDomainFactoryKey
 import org.opalj.br.AnnotationLike
 import org.opalj.br.ClassValue
 import org.opalj.br.Code
+import org.opalj.br.ElementValue
 import org.opalj.br.ElementValuePair
 import org.opalj.br.Field
 import org.opalj.br.Method
@@ -19,6 +20,7 @@ import org.opalj.br.analyses.SomeProject
 import org.opalj.br.analyses.VirtualFormalParameter
 import org.opalj.br.fpcf.BasicFPCFLazyAnalysisScheduler
 import org.opalj.br.fpcf.analyses.SimpleContextProvider
+import org.opalj.br.fpcf.properties.CallStringContext
 import org.opalj.br.fpcf.properties.Context
 import org.opalj.br.fpcf.properties.NoContext
 import org.opalj.br.fpcf.properties.SimpleContexts
@@ -42,9 +44,10 @@ import org.opalj.tac.PutStatic
 import org.opalj.tac.ReturnValue
 import org.opalj.tac.Stmt
 import org.opalj.tac.UVar
-import org.opalj.tac.cg.CFA_1_1_CallGraphKey
+import org.opalj.tac.cg.AllocationSiteBasedPointsToCallGraphKey
 import org.opalj.tac.cg.TypeIteratorKey
 import org.opalj.tac.fpcf.analyses.alias.persistentUVar
+import org.opalj.tac.fpcf.analyses.alias.pointsto.EagerFieldAccessAllocationSitePointsToBasedAliasAnalysisScheduler
 import org.opalj.tac.fpcf.analyses.alias.pointsto.LazyAllocationSitePointsToBasedAliasAnalysisScheduler
 import org.opalj.tac.fpcf.analyses.cg.TypeIterator
 import org.opalj.tac.fpcf.properties.TACAI
@@ -57,7 +60,7 @@ import org.opalj.value.ValueInformation
 class AliasTests extends PropertiesTest {
 
     override def fixtureProjectPackage: List[String] = {
-        List("org/opalj/fpcf/fixtures/alias/eval")
+        List("org/opalj/fpcf/fixtures/alias/test")
     }
 
     override def init(p: Project[URL]): Unit = {
@@ -66,15 +69,19 @@ class AliasTests extends PropertiesTest {
             Set[Class[_ <: AnyRef]](classOf[l1.DefaultDomainWithCFGAndDefUse[URL]])
         }
 
-        p.get(CFA_1_1_CallGraphKey)
+        p.get(AllocationSiteBasedPointsToCallGraphKey)
     }
 
     describe("run points-to based alias analyses") {
-        runAliasTests(LazyAllocationSitePointsToBasedAliasAnalysisScheduler)
+        // runAliasTests(LazyTypePointsToBasedAliasAnalysisScheduler)
     }
 
     describe("run intraProcedural alias analysis") {
-        // runAliasTests(LazyIntraProceduralAliasAnalysisScheduler)
+        executeAnalyses(
+            Set(EagerFieldAccessAllocationSitePointsToBasedAliasAnalysisScheduler)
+        )
+        runAliasTests(LazyAllocationSitePointsToBasedAliasAnalysisScheduler)
+
     }
 
     /**
@@ -127,12 +134,15 @@ class AliasTests extends PropertiesTest {
                     val ase1 = resolveFirstElement(e, a, IDToMethod, IDToField, IDToEntity)
                     val ase2 = resolveOtherElement(ase1, a, IDToMethod, IDToField, IDToEntity)
 
-                    val entity = AliasEntity(createContext(ase1), createContext(ase2), ase1, ase2)
+                    val entity = AliasEntity(
+                        createContext(ase1, a, second = false),
+                        createContext(ase2, a, second = true),
+                        ase1,
+                        ase2
+                    )
 
                     (entity, createUniqueIdentifierFunction(a, fun), Seq(a))
             }
-            .groupBy(_._1)
-            .map(_._2.head) // remove duplicate entities
 
         // force the computation of the alias property because we are using a lazy scheduler to avoid unnecessary computations
         // (a eager scheduler would cause a quadratic blowup of the number of possible alias pairs)
@@ -320,7 +330,7 @@ class AliasTests extends PropertiesTest {
     /**
      * Creates a context for the given alias source element.
      */
-    private[this] def createContext(ase: AliasSourceElement)(
+    private[this] def createContext(ase: AliasSourceElement, a: AnnotationLike, second: Boolean)(
         implicit
         as:              TestContext,
         simpleContexts:  SimpleContexts,
@@ -334,8 +344,17 @@ class AliasTests extends PropertiesTest {
             typeIterator match {
                 case _: SimpleContextProvider => simpleContexts(declaredMethod)
                 case _ => {
-                    // TODO schöner
-                    as.propertyStore(declaredMethod, Callers.key).ub.callContexts(declaredMethod).iterator.toSeq.head._1
+                    val callContexts =
+                        as.propertyStore(declaredMethod, Callers.key).ub.callContexts(
+                            declaredMethod
+                        ).iterator.toSeq.map(_._1.asInstanceOf[CallStringContext])
+
+                    callContexts.find(c =>
+                        c.callString.nonEmpty && c.callString.head._1.name == getStringValue(
+                            a,
+                            if (second) "secondCallerContext" else "callerContext"
+                        )
+                    ).getOrElse(callContexts.head)
                 }
             }
         } else {
@@ -361,33 +380,31 @@ class AliasTests extends PropertiesTest {
     }
 
     private[this] def getIntValue(a: AnnotationLike, element: String)(implicit as: TestContext): Int = {
-
-        a.elementValuePairs.filter(_.name == element).collectFirst {
-            case ElementValuePair(`element`, value) => value.asIntValue.value
-        }.getOrElse(as.project.classFile(a.annotationType.asObjectType).get.findMethod(element)
-            .head.annotationDefault.get.asIntValue.value)
+        getValue(a, element).asIntValue.value
     }
 
     private[this] def getBooleanValue(a: AnnotationLike, element: String)(implicit as: TestContext): Boolean = {
-        a.elementValuePairs.filter(_.name == element).collectFirst {
-            case ElementValuePair(`element`, value) => value.asBooleanValue.value
-        }.getOrElse(as.project.classFile(a.annotationType.asObjectType).get.findMethod(element)
-            .head.annotationDefault.get.asBooleanValue.value)
+        getValue(a, element).asBooleanValue.value
     }
 
-    private[this] def getStringValue(a: AnnotationLike, element: String): String = {
-
-        val evp = a.elementValuePairs.filter(_.name == element)
-
-        if (evp.isEmpty) {
-            throw new RuntimeException("No element value pair found for " + element)
-        }
-
-        evp.head.value match {
+    private[this] def getStringValue(a: AnnotationLike, element: String)(implicit as: TestContext): String = {
+        getValue(a, element) match {
             case str: StringValue => str.value
             case ClassValue(t)    => t.asObjectType.fqn
             case _                => throw new RuntimeException("Unexpected value type")
         }
+    }
+
+    private[this] def getValue(a: AnnotationLike, element: String)(implicit as: TestContext): ElementValue = {
+        a.elementValuePairs.filter(_.name == element).collectFirst {
+            case ElementValuePair(`element`, value) => value
+        }.getOrElse(as.project.classFile(a.annotationType.asObjectType)
+            .get
+            .findMethod(element)
+            .headOption
+            .getOrElse(throw new RuntimeException("No element value pair found for " + element))
+            .annotationDefault
+            .get)
     }
 
     private[this] def isNullAlias(a: AnnotationLike): Boolean = {

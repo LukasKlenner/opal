@@ -1,8 +1,8 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
 package org.opalj.fpcf.fixtures.alias.eval.generalJava;
 
-import org.opalj.fpcf.fixtures.alias.eval.objects.A;
 import org.opalj.fpcf.fixtures.alias.eval.objects.B;
+import org.opalj.fpcf.fixtures.alias.eval.objects.A;
 import org.opalj.fpcf.properties.alias.AliasMethodID;
 import org.opalj.fpcf.properties.alias.line.NoAliasLine;
 
@@ -33,7 +33,7 @@ public class Null1 {
 
     // No allocation site
     A h = new A();
-    B a = h.h;
+    B a = h.getH();
     B b = a;
 
     a.hashCode();

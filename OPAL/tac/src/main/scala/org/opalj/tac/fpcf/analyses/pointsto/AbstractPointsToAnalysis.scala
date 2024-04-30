@@ -135,11 +135,10 @@ trait AbstractPointsToAnalysis extends PointsToAnalysisBase with ReachableMethod
                 val defSite = getDefSite(pc)
                 state.setAllocationSitePointsToSet(
                     defSite,
-                    if (const.isNullExpr) {
-                        val pointsToSet = emptyPointsToSet
-                        includeNull(pointsToSet)
-                        pointsToSet
-                    } else
+                    if (const.isNullExpr)
+                        emptyPointsToSet
+                    // note, this is wrong for alias analyses
+                    else
                         createPointsToSet(
                             pc,
                             state.callContext,

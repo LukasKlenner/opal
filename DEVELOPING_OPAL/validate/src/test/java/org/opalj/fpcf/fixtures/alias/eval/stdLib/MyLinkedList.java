@@ -1,5 +1,5 @@
 /* BSD 2-Clause License - see OPAL/LICENSE for details. */
-package org.opalj.fpcf.fixtures.alias.eval.stdBib;
+package org.opalj.fpcf.fixtures.alias.eval.stdLib;
 
 /**
  * A simple linked list implementation similar to the one in the standard library.

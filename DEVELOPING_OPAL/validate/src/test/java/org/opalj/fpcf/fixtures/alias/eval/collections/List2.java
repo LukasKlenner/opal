@@ -2,7 +2,7 @@
 package org.opalj.fpcf.fixtures.alias.eval.collections;
 
 import org.opalj.fpcf.fixtures.alias.eval.objects.A;
-import org.opalj.fpcf.fixtures.alias.eval.stdBib.MyLinkedList;
+import org.opalj.fpcf.fixtures.alias.eval.stdLib.MyLinkedList;
 import org.opalj.fpcf.properties.alias.AliasMethodID;
 import org.opalj.fpcf.properties.alias.line.MayAliasLine;
 import org.opalj.fpcf.properties.alias.line.MustAliasLine;

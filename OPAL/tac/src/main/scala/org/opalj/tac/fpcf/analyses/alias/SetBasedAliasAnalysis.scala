@@ -25,7 +25,7 @@ trait SetBasedAliasAnalysis extends AbstractAliasAnalysis {
 
         if (intersection.isEmpty) {
             return if (state.hasDependees) interimResult(NoAlias, MayAlias) else result(NoAlias)
-        } else if (checkMustAlias(intersection)) {
+        } else if (!intersection.pointsToAny && checkMustAlias(intersection)) {
             return if (state.hasDependees) interimResult(MustAlias, MayAlias) else result(MustAlias)
         }
 

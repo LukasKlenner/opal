@@ -24,23 +24,26 @@ public class ContextSensitivity1 {
     }
 
     @AliasMethodID(id = 0, clazz = ContextSensitivity1.class)
-    @MayAliasLine(reason = "ContextSensitivity1 b may a",
-            lineNumber = 41, methodID = 0,
-            secondLineNumber = 40, secondMethodID = 0,
+    @MayAliasLine(reason = "ContextSensitivity1 b may a test1 context",
+            lineNumber = 45, methodID = 0, callerContext = "test1",
+            secondLineNumber = 44, secondMethodID = 0, secondCallerContext = "test1",
             clazz = ContextSensitivity1.class)
-    @MayAliasLine(reason = "ContextSensitivity1 b may b",
-            lineNumber = 41, methodID = 0,
-            secondLineNumber = 42, secondMethodID = 0,
+    @MayAliasLine(reason = "ContextSensitivity1 b may b test1 context",
+            lineNumber = 45, methodID = 0, callerContext = "test1",
+            secondLineNumber = 46, secondMethodID = 0, secondCallerContext = "test1",
             clazz = ContextSensitivity1.class)
-    @NoAliasLine(reason = "ContextSensitivity1 b no a",
-            lineNumber = 41, methodID = 0,
-            secondLineNumber = 43, secondMethodID = 0,
+    @NoAliasLine(reason = "ContextSensitivity1 b no a test2 context",
+            lineNumber = 45, methodID = 0, callerContext = "test2",
+            secondLineNumber = 44, secondMethodID = 0, secondCallerContext = "test2",
+            clazz = ContextSensitivity1.class)
+    @MayAliasLine(reason = "ContextSensitivity1 b may b test2 context",
+            lineNumber = 45, methodID = 0, callerContext = "test2",
+            secondLineNumber = 46, secondMethodID = 0, secondCallerContext = "test2",
             clazz = ContextSensitivity1.class)
     public void callee(A a, A b) {
         a.hashCode();
         b.hashCode();
         b.hashCode();
-        a.hashCode();
         //Benchmark.test("b",
         //    "{allocId:1, mayAlias:[a,b], notMayAlias:[], mustAlias:[a,b], notMustAlias:[]},"
         //        + "{allocId:2, mayAlias:[a], notMayAlias:[b], mustAlias:[a], notMustAlias:[b]}");

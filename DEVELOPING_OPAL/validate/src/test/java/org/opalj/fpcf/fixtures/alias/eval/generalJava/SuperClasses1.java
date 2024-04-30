@@ -22,7 +22,7 @@ import org.opalj.fpcf.properties.alias.line.NoAliasLine;
 public class SuperClasses1 {
 
     @AliasMethodID(id = 0, clazz = SuperClasses1.class)
-    @NoAliasLine(reason = "SuperClasses1 h may a",
+    @NoAliasLine(reason = "SuperClasses1 h no a",
             lineNumber = 52, methodID = 0,
             secondLineNumber = 50, secondMethodID = 0,
             clazz = SuperClasses1.class)

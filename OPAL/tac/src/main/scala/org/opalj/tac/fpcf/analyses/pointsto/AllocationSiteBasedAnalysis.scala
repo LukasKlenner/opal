@@ -112,7 +112,7 @@ trait AllocationSiteBasedAnalysis extends AbstractPointsToBasedAnalysis {
     }
 
     @inline protected[this] def emptyPointsToSet: AllocationSitePointsToSet = {
-        NoAllocationSites()
+        NoAllocationSites
     }
 }
 

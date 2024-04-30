@@ -3,7 +3,7 @@ package org.opalj.fpcf.fixtures.alias.eval.collections;
 
 
 import org.opalj.fpcf.fixtures.alias.eval.objects.A;
-import org.opalj.fpcf.fixtures.alias.eval.stdBib.MyHashSet;
+import org.opalj.fpcf.fixtures.alias.eval.stdLib.MyHashSet;
 import org.opalj.fpcf.properties.alias.AliasMethodID;
 import org.opalj.fpcf.properties.alias.line.MayAliasLine;
 import org.opalj.fpcf.properties.alias.line.NoAliasLine;
