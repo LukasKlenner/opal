@@ -29,28 +29,23 @@ import static java.lang.annotation.ElementType.TYPE_USE;
  *         lineNumber: The line in which the element is used.
  *     </li>
  *     <li>
- *         methodID: The ID of the method in which the line is located.
- *         The ID of a method is set via {@link org.opalj.fpcf.properties.alias.AliasMethodID}.
+ *         methodName: The name of the method in which the element is used. If no method name is provided, the method
+ *         this annotation is attached to is used.
  *     </li>
  *     <li>
  *         parameterIndex: If the element is used as a parameter in a method call, this value is the index the element has in the parameter list.
  *         -1 is the this Parameter. Other parameter indices start wit 0 and increase by 1.
  *     </li>
  *     <li>
- *         fieldReference: If this value is set to true, the first element is the field reference used at the given line.
- *         Otherwise the value is a UVar
+ *         fieldName: If the element is a fieldReference, this value is the name of the field.
  *     </li>
  *     <li>
- *         fieldID: If fieldReference is set to true, this value is the ID of the reference Field.
- *         The ID of a field is set via {@link org.opalj.fpcf.properties.alias.AliasFieldID}.
- *     </li>
- *     <li>
- *         fieldClass: If fieldReference is set to true, this value is the class in which the referenced field is defined.
+ *         fieldClass: If the element is a fieldReference, this value is the class in which the referenced field is defined.
  *     </li>
  * </ul>
  *
  * <p>
- * If secondMethodID or secondFieldID is set to a non-default value, the second element is resolved the same way as the
+ * If secondLineNumber set to a non-default value, the second element is resolved the same way as the
  * first but using the values starting with "second*". Otherwise, the second element is resolved the same way as a
  * normal {@link org.opalj.fpcf.properties.alias.MustAlias} annotation would resolve its element.
  */
@@ -70,16 +65,13 @@ public @interface MustAliasLine {
 
     int lineNumber();
 
-    int methodID();
+    String methodName() default "";
 
     int parameterIndex() default -1;
 
-    boolean fieldReference() default false;
-
-    int fieldID() default -1;
+    String fieldName() default "";
 
     Class<?> fieldClass() default Object.class;
-
 
     String callerContext() default "";
 
@@ -89,11 +81,9 @@ public @interface MustAliasLine {
 
     int secondParameterIndex() default -1;
 
-    int secondMethodID() default -1;
+    String secondMethodName() default "";
 
-    boolean secondFieldReference() default false;
-
-    int secondFieldID() default -1;
+    String secondFieldName() default "";
 
     Class<?> secondFieldClass() default Object.class;
 
@@ -105,11 +95,6 @@ public @interface MustAliasLine {
      * true, iff the second element is the {@code this} parameter of the annotated method.
      */
     boolean thisParameter() default false;
-
-    /**
-     * The {@link Class} to which this relation belongs.
-     */
-    Class<?> clazz();
 
     /**
      * All analyses that should be able to correctly detect this relation.

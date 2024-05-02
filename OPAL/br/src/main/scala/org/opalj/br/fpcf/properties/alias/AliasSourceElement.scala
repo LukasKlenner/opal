@@ -13,6 +13,7 @@ import org.opalj.br.analyses.SomeProject
 import org.opalj.br.analyses.VirtualFormalParameter
 import org.opalj.br.fpcf.properties.Context
 import org.opalj.collection.immutable.IntTrieSet
+import org.opalj.value.IsNullValue
 import org.opalj.value.ValueInformation
 
 /**
@@ -74,6 +75,13 @@ sealed trait AliasSourceElement {
      * @return `true` if the type of the represented element is a reference type.
      */
     def isReferenceType: Boolean
+
+    /**
+     * Returns `true` if the value of the element is the null value.
+     *
+     * @return `true` if the value of the element is the null value.
+     */
+    def isNullValue: Boolean = false
 
     /**
      * Returns the [[ReferenceType]] of the represented element.
@@ -220,10 +228,15 @@ case class AliasFormalParameter(fp: VirtualFormalParameter) extends AliasSourceE
 
     override def isMethodBound: Boolean = true
 
-    override def isReferenceType: Boolean = fp.method.definedMethod.parameterTypes(fp.parameterIndex).isReferenceType
+    override def isReferenceType: Boolean = {
+        if (fp.parameterIndex == -1) fp.method.declaringClassType.isObjectType
+        else fp.method.definedMethod.parameterTypes(fp.parameterIndex).isReferenceType
+    }
 
-    override def referenceType: ReferenceType =
-        fp.method.definedMethod.parameterTypes(fp.parameterIndex).asReferenceType
+    override def referenceType: ReferenceType = {
+        if (fp.parameterIndex == -1) fp.method.declaringClassType.asReferenceType
+        else fp.method.definedMethod.parameterTypes(fp.parameterIndex).asReferenceType
+    }
 
     override def isAliasFP: Boolean = true
 
@@ -241,22 +254,24 @@ case class PersistentUVar(valueInformation: ValueInformation, defSites: IntTrieS
  * Represents a UVar that is part of an alias relation.
  */
 case class AliasUVar(
-    persistantUVar:      PersistentUVar,
+    persistentUVar:      PersistentUVar,
     override val method: Method,
     project:             SomeProject
 ) extends AliasSourceElement {
 
     private[this] val dm = project.get(DeclaredMethodsKey)(method)
 
-    override def element: (PersistentUVar, Method) = (persistantUVar, method)
+    override def element: (PersistentUVar, Method) = (persistentUVar, method)
 
     override def isMethodBound: Boolean = true
 
     override def declaredMethod: DeclaredMethod = dm
 
-    override def isReferenceType: Boolean = persistantUVar.valueInformation.isReferenceValue
+    override def isReferenceType: Boolean = persistentUVar.valueInformation.isReferenceValue
 
-    override def referenceType: ReferenceType = persistantUVar.valueInformation.asReferenceValue.asReferenceType
+    override def isNullValue: Boolean = persistentUVar.valueInformation.isInstanceOf[IsNullValue]
+
+    override def referenceType: ReferenceType = persistentUVar.valueInformation.asReferenceValue.asReferenceType
 
     override def isAliasUVar: Boolean = true
 

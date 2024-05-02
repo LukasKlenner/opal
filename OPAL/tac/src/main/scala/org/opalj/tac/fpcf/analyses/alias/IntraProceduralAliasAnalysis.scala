@@ -69,7 +69,7 @@ class IntraProceduralAliasAnalysis(final val project: SomeProject) extends Alloc
         context: AnalysisContext
     ): Unit = {
 
-        uVar.persistantUVar.defSites.foreach(pc => {
+        uVar.persistentUVar.defSites.foreach(pc => {
 
             if (pc < 0) {
                 state.setPointsToAny(uVar)

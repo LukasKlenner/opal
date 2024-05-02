@@ -57,6 +57,10 @@ trait AbstractAliasAnalysis extends FPCFAnalysis {
      * @return True if the types are compatible, false otherwise.
      */
     private[this] def checkTypeCompatibility(context: AliasAnalysisContext): Boolean = {
+
+        if (context.element1.isNullValue || context.element2.isNullValue)
+            return true
+
         if (!context.element1.isReferenceType || !context.element2.isReferenceType)
             return false
 
