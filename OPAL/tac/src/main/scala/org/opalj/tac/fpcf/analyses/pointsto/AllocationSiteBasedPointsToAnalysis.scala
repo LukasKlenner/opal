@@ -19,3 +19,11 @@ object AllocationSiteBasedPointsToAnalysisScheduler extends AbstractPointsToAnal
     override val createAnalysis: SomeProject => AllocationSiteBasedPointsToAnalysis =
         new AllocationSiteBasedPointsToAnalysis(_)
 }
+
+object EagerAllocationSiteBasedPointsToAnalysisScheduler extends EagerAbstractPointsToAnalysisScheduler {
+
+    override val propertyKind: PropertyMetaInformation = AllocationSitePointsToSet
+    override val createAnalysis: SomeProject => AllocationSiteBasedPointsToAnalysis =
+        new AllocationSiteBasedPointsToAnalysis(_)
+
+}

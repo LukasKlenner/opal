@@ -125,20 +125,23 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
         field.fieldReference.defSites.map(getPointsToOfDefSite(_, fieldContext, tac))
             .foreach(pts => {
 
-                if (pts.isRefinable) {
+                if (pts.isEPK) {
                     state.addDependency(pts)
                     state.addFieldDependency(field, pts)
-                }
+                } else {
 
-                val fieldReferenceEntity = (field.fieldReference, pts.e)
-                pts.ub.forNewestNElements(pts.ub.numElements - state.pointsToElementsHandled(field, fieldReferenceEntity)) {
-                    value =>
-                        {
-                            allocationSites += value
-                            state.incPointsToElementsHandled(field, fieldReferenceEntity)
-                        }
+                    val fieldReferenceEntity = (field.fieldReference, pts.e)
+                    pts.ub.forNewestNElements(pts.ub.numElements - state.pointsToElementsHandled(
+                        field,
+                        fieldReferenceEntity
+                    )) {
+                        value =>
+                            {
+                                allocationSites += value
+                                state.incPointsToElementsHandled(field, fieldReferenceEntity)
+                            }
+                    }
                 }
-
             })
 
         allocationSites.map(allocSite =>
@@ -178,12 +181,10 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
 
         val pointsToEntity: Entity = eps.e
 
-        if (eps.isRefinable) {
+        if (eps.isEPK) {
             state.addDependency(eps)
             state.addElementDependency(ase, eps)
-        }
-
-        handlePointsToSet(ase, pointsToEntity, eps.ub)
+        } else handlePointsToSet(ase, pointsToEntity, eps.ub)
     }
 
     /**
@@ -248,6 +249,7 @@ trait AbstractPointsToBasedAliasAnalysis extends TacBasedAliasAnalysis with Abst
                 if (someEPS.isRefinable) {
                     if (field1Dependence) state.addField1Dependency(someEPS)
                     if (field2Dependence) state.addField2Dependency(someEPS)
+
                 }
 
                 val element1Dependence = state.element1HasDependency(someEPS)

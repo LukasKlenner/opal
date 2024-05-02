@@ -35,7 +35,11 @@ package object pointsto {
             val pc = ai.pcOfImmediateVMException(defSite)
             definitionSites(context.method.definedMethod, stmts(pc).pc)
         } else if (defSite < 0) {
-            formalParameters.apply(context.method)(-1 - defSite)
+            val r = formalParameters.apply(context.method)(-1 - defSite)
+            if (r == null) {
+                throw new IllegalArgumentException(s"no formal parameter for $defSite in ${context.method}")
+            }
+            r
         } else {
             definitionSites(context.method.definedMethod, stmts(defSite).pc)
         }

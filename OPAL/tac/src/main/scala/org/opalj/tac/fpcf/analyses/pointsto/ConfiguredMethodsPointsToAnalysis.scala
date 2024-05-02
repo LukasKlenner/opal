@@ -146,6 +146,10 @@ abstract class ConfiguredMethodsPointsToAnalysis private[analyses] (
         implicit val state: State =
             new PointsToAnalysisState[ElementType, PointsToSet, ContextType](callContext, null)
 
+        if (!callContext.method.hasSingleDefinedMethod) {
+            return Iterator.empty
+        }
+
         var pc = -1
         // for each configured points to relation, add all points-to info from the rhs to the lhs
         for (PointsToRelation(lhs, rhs) <- data) {

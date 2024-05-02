@@ -2,7 +2,6 @@
 package org.opalj
 package fpcf
 
-import java.net.URL
 import org.opalj.ai.domain.l1
 import org.opalj.ai.fpcf.properties.AIDomainFactoryKey
 import org.opalj.br.AnnotationLike
@@ -44,14 +43,16 @@ import org.opalj.tac.PutStatic
 import org.opalj.tac.ReturnValue
 import org.opalj.tac.Stmt
 import org.opalj.tac.UVar
-import org.opalj.tac.cg.AllocationSiteBasedPointsToCallGraphKey
+import org.opalj.tac.cg.CFA_1_0_CallGraphKey
 import org.opalj.tac.cg.TypeIteratorKey
+import org.opalj.tac.fpcf.analyses.alias.LazyIntraProceduralAliasAnalysisScheduler
 import org.opalj.tac.fpcf.analyses.alias.persistentUVar
-import org.opalj.tac.fpcf.analyses.alias.pointsto.EagerFieldAccessAllocationSitePointsToBasedAliasAnalysisScheduler
-import org.opalj.tac.fpcf.analyses.alias.pointsto.LazyAllocationSitePointsToBasedAliasAnalysisScheduler
+import org.opalj.tac.fpcf.analyses.alias.pointsto.LazyTypePointsToBasedAliasAnalysisScheduler
 import org.opalj.tac.fpcf.analyses.cg.TypeIterator
 import org.opalj.tac.fpcf.properties.TACAI
 import org.opalj.value.ValueInformation
+
+import java.net.URL
 
 /**
  * Tests if the alias properties defined in the classes of the package org.opalj.fpcf.fixtures.alias (and it's subpackage)
@@ -60,7 +61,7 @@ import org.opalj.value.ValueInformation
 class AliasTests extends PropertiesTest {
 
     override def fixtureProjectPackage: List[String] = {
-        List("org/opalj/fpcf/fixtures/alias/test")
+        List("org/opalj/fpcf/fixtures/alias/eval")
     }
 
     override def init(p: Project[URL]): Unit = {
@@ -69,19 +70,15 @@ class AliasTests extends PropertiesTest {
             Set[Class[_ <: AnyRef]](classOf[l1.DefaultDomainWithCFGAndDefUse[URL]])
         }
 
-        p.get(AllocationSiteBasedPointsToCallGraphKey)
+        p.get(CFA_1_0_CallGraphKey)
     }
 
     describe("run points-to based alias analyses") {
-        // runAliasTests(LazyTypePointsToBasedAliasAnalysisScheduler)
+        runAliasTests(LazyTypePointsToBasedAliasAnalysisScheduler)
     }
 
     describe("run intraProcedural alias analysis") {
-        executeAnalyses(
-            Set(EagerFieldAccessAllocationSitePointsToBasedAliasAnalysisScheduler)
-        )
-        runAliasTests(LazyAllocationSitePointsToBasedAliasAnalysisScheduler)
-
+        runAliasTests(LazyIntraProceduralAliasAnalysisScheduler)
     }
 
     /**
@@ -332,14 +329,13 @@ class AliasTests extends PropertiesTest {
      */
     private[this] def createContext(ase: AliasSourceElement, a: AnnotationLike, second: Boolean)(
         implicit
-        as:              TestContext,
-        simpleContexts:  SimpleContexts,
-        declaredMethods: DeclaredMethods,
-        typeIterator:    TypeIterator
+        as:             TestContext,
+        simpleContexts: SimpleContexts,
+        typeIterator:   TypeIterator
     ): Context = {
         if (ase.isMethodBound) {
 
-            val declaredMethod = declaredMethods(ase.method)
+            val declaredMethod = ase.declaredMethod
 
             typeIterator match {
                 case _: SimpleContextProvider => simpleContexts(declaredMethod)

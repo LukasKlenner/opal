@@ -5,6 +5,8 @@ package fpcf
 package analyses
 package alias
 
+import scala.annotation.tailrec
+
 import org.opalj.br.ArrayType
 import org.opalj.br.BaseType
 import org.opalj.br.ClassHierarchy
@@ -20,8 +22,6 @@ import org.opalj.fpcf.ProperPropertyComputationResult
 import org.opalj.fpcf.Result
 import org.opalj.fpcf.SomeEPS
 import org.opalj.value.ValueInformation
-
-import scala.annotation.tailrec
 
 /**
  * A base trait for all alias analyses.
